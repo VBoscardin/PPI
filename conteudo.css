@@ -1,0 +1,64 @@
+* {
+    margin: 0 auto;
+    padding: 0;
+}
+
+
+:root {
+    --cor-primaria: green;
+    --cor-secundaria: white;
+}
+
+
+.cabecalho {
+    background-color: var(--cor-primaria);
+    color: var(--cor-secundaria);
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    box-sizing: content-box;
+    width: 100%;
+    max-width: 100%;
+    text-align: center;
+    padding-bottom: 1%;
+    padding-top: 1%;
+    font-family: 'Noto Sans', sans-serif;
+    margin-top: 0;
+    }
+
+    .cabecalho h1 {
+        position: absolute;
+    }
+
+    .cabecalho img {
+        margin-left: 1%;
+        height: 100px;
+        width: 80px;
+    }
+
+    .login {
+        background-color: var(--cor-primaria);
+        color: var(--cor-secundaria);
+        display: flex;
+        flex-direction: column;
+        width: 700px;
+        height: 400px;
+        margin-top: 5%;
+        border-radius: 30px;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .login p {
+        margin-left: 30px;
+        font-size: 35px;
+    }
+
+    .login form {
+        font-size: 30px;
+    }
+
+    label {
+        margin: 20%;
+    }
