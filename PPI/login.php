@@ -1,63 +1,33 @@
 <?php
-session_start();  // Inicia a session
-
-
-
-$email = $_POST['email'];
-$senha = $_POST['senha'];
-
-
-if((!$email) || (!$senha)){
-
-	echo " Por favor, todos campos devem ser preenchidos! <br /><br />";
-	
-	include "f_login.php";
-
-}
-
-else{
-
-	 $senha_encriptada = md5($senha);
-
-
-
-
-
-include "config.php";
-
-	$sql = mysqli_query($conn, "SELECT * FROM usuario WHERE email='{$email}' AND senha='{$senha_encriptada}'");
-	
-	$login_check = mysqli_num_rows($sql);
-
-	if($login_check > 0){
-
-		while($row = mysqli_fetch_array($sql)){
-
-			foreach( $row AS $key => $val ){
-
-				$$key = stripslashes( $val );
-
-			}
-
-//ainda não abordaremos as sessoes no PHP!
-
-			$_SESSION['email'] = $email;
-
-			
-//REDIRECIONAMENTO PARA A PAGINA DE LOGADO NO SISTEMA
-
-			header("Location: f_pagina_inicial.php");
-
-		}
-
-	}
-	else{
-
-		echo " Voc&ecirc; n&atilde;o pode logar-se! <br />Este usu&aacute;rio e/ou senha n&atilde;o s&atilde;o v&aacute;lidos!<br />
-			Por favor tente novamente ou contate o adminstrador do sistema!<br />";
-
-		include "f_login.php";
-
-	}
+// Verificar se o formulário foi enviado
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['senha'])) {
+    // Recuperar a senha do formulário
+    $senha = $_POST['senha'];
+    
+    // Gerar o hash da senha
+    $senha_hash = password_hash($senha, PASSWORD_BCRYPT);
+    
+    // Exibir o hash da senha
+    echo "<h1>Hash da Senha</h1>";
+    echo "<p><strong>Senha:</strong> " . htmlspecialchars($senha) . "</p>";
+    echo "<p><strong>Hash:</strong> " . htmlspecialchars($senha_hash) . "</p>";
+} else {
+    // Formulário não foi enviado, exibir o formulário
+    echo '<!DOCTYPE html>
+    <html lang="pt-br">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Gerar Hash da Senha</title>
+    </head>
+    <body>
+        <h1>Gerar Hash da Senha</h1>
+        <form action="" method="post">
+            <label for="senha">Senha:</label>
+            <input type="text" id="senha" name="senha" required>
+            <button type="submit">Gerar Hash</button>
+        </form>
+    </body>
+    </html>';
 }
 ?>
