@@ -20,7 +20,7 @@ if(isset($_POST['login'])) {
     $password = $_POST['password'];
 
     // Preparar e executar a consulta SQL
-    $stmt = $conn->prepare("SELECT senha FROM usuarios WHERE email = ?");
+    $stmt = $conn->prepare("SELECT password_hash FROM usuarios WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $stmt->store_result();
