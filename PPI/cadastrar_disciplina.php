@@ -16,14 +16,12 @@ if ($mysqli->connect_error) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_disciplina'])) {
     $curso_id = $_POST['curso_id'];
     $nome = $_POST['nome'];
-    $docente = $_POST['docente'];
-    $turma = $_POST['turma'];
 
     // Verificar se os campos não estão vazios
-    if (!empty($curso_id) && !empty($nome) && !empty($docente) && !empty($turma)) {
+    if (!empty($curso_id) && !empty($nome)) {
         // Preparar a consulta para evitar SQL Injection
-        $stmt = $mysqli->prepare('INSERT INTO disciplinas (curso_id, nome, docente, turma) VALUES (?, ?, ?, ?)');
-        $stmt->bind_param('isss', $curso_id, $nome, $docente, $turma);
+        $stmt = $mysqli->prepare('INSERT INTO disciplinas (curso_id, nome) VALUES (?, ?)');
+        $stmt->bind_param('is', $curso_id, $nome);
 
         if ($stmt->execute()) {
             echo 'Disciplina cadastrada com sucesso!';
@@ -72,12 +70,6 @@ $mysqli->close();
         
         <label for="nome">Nome da Disciplina:</label>
         <input type="text" id="nome" name="nome" required>
-        
-        <label for="docente">Docente:</label>
-        <input type="text" id="docente" name="docente" required>
-        
-        <label for="turma">Turma:</label>
-        <input type="text" id="turma" name="turma" required>
         
         <input type="submit" name="cadastrar_disciplina" value="Cadastrar Disciplina">
     </form>

@@ -7,9 +7,6 @@ $pass = ''; // Sua senha do banco de dados
 // Conectar ao banco de dados
 $mysqli = new mysqli($host, $user, $pass, $db);
 
-// Definir tipo de usuário como 'docente'
- $tipo = 'docente';
-
 // Verificar conexão
 if ($mysqli->connect_error) {
     die('Conexão falhou: ' . $mysqli->connect_error);
@@ -28,33 +25,72 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) 
         // Hash da senha
         $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
 
-        // Preparar a consulta para evitar SQL Injection
-        $stmt = $mysqli->prepare('INSERT INTO docentes (nome, email, cpf, senha) VALUES (?, ?, ?, ?)');
-        $stmt->bind_param('ssss', $nome, $email, $cpf, $senha_hash);
+        // Verificar se o email já está registrado na tabela docentes
+        $stmt_docentes_check = $mysqli->prepare('SELECT id FROM docentes WHERE email = ?');
+        $stmt_docentes_check->bind_param('s', $email);
+        $stmt_docentes_check->execute();
+        $stmt_docentes_check->store_result();
 
-        if ($stmt->execute()) {
-            $docente_id = $stmt->insert_id;
+        if ($stmt_docentes_check->num_rows > 0) {
+            echo 'O email já está registrado como docente!';
+        } else {
+            // Verificar se o email já está registrado na tabela usuarios
+            $stmt_usuarios_check = $mysqli->prepare('SELECT id FROM usuarios WHERE email = ?');
+            $stmt_usuarios_check->bind_param('s', $email);
+            $stmt_usuarios_check->execute();
+            $stmt_usuarios_check->store_result();
 
-            // Associar disciplinas ao docente
-            foreach ($disciplinas as $disciplina_id) {
-                $stmt_disciplina = $mysqli->prepare('INSERT INTO docentes_disciplinas (docente_id, disciplina_id) VALUES (?, ?)');
-                $stmt_disciplina->bind_param('ii', $docente_id, $disciplina_id);
-                $stmt_disciplina->execute();
-                $stmt_disciplina->close();
+            if ($stmt_usuarios_check->num_rows > 0) {
+                echo 'O email já está registrado como usuário!';
+            } else {
+                // Inserir o docente na tabela docentes
+                $stmt_docente = $mysqli->prepare('INSERT INTO docentes (nome, email, cpf, senha) VALUES (?, ?, ?, ?)');
+                $stmt_docente->bind_param('ssss', $nome, $email, $cpf, $senha_hash);
+
+                if ($stmt_docente->execute()) {
+                    $docente_id = $stmt_docente->insert_id;
+
+                    // Inserir o usuário na tabela usuarios
+                    $username = $email; // Ou qualquer outro nome de usuário que você deseje usar
+                    $tipo = 'docente';
+
+                    $stmt_usuario = $mysqli->prepare('INSERT INTO usuarios (username, email, password_hash, tipo) VALUES (?, ?, ?, ?)');
+                    $stmt_usuario->bind_param('ssss', $username, $email, $senha_hash, $tipo);
+
+                    if ($stmt_usuario->execute()) {
+                        echo 'Docente cadastrado com sucesso!';
+                    } else {
+                        echo 'Erro ao cadastrar usuário: ' . $stmt_usuario->error;
+                    }
+
+                    $stmt_usuario->close();
+                } else {
+                    echo 'Erro ao cadastrar docente: ' . $stmt_docente->error;
+                }
+
+                // Associar disciplinas ao docente
+                if (!empty($disciplinas)) {
+                    foreach ($disciplinas as $disciplina_id) {
+                        $stmt_disciplina = $mysqli->prepare('INSERT INTO docentes_disciplinas (docente_id, disciplina_id) VALUES (?, ?)');
+                        $stmt_disciplina->bind_param('ii', $docente_id, $disciplina_id);
+                        $stmt_disciplina->execute();
+                        $stmt_disciplina->close();
+                    }
+                }
+
+                $stmt_docente->close();
             }
 
-            echo 'Docente cadastrado com sucesso!';
-        } else {
-            echo 'Erro ao cadastrar docente: ' . $stmt->error;
+            $stmt_usuarios_check->close();
         }
 
-        $stmt->close();
+        $stmt_docentes_check->close();
     } else {
         echo 'Todos os campos são obrigatórios!';
     }
 }
 
-// Obter lista de disciplinas para o menu suspenso
+// Obter lista de disciplinas para checkboxes
 $disciplinas_result = $mysqli->query('SELECT id, nome FROM disciplinas');
 $disciplinas = [];
 if ($disciplinas_result) {
@@ -72,6 +108,19 @@ $mysqli->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastrar Docente</title>
+    <style>
+        .checkbox-group {
+            margin-bottom: 10px;
+        }
+        input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        fieldset {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
     <h1>Cadastrar Docente</h1>
@@ -89,14 +138,17 @@ $mysqli->close();
         <label for="senha">Senha:</label>
         <input type="password" id="senha" name="senha" required>
         
-        <label for="disciplinas">Disciplinas:</label>
-        <select id="disciplinas" name="disciplinas[]" multiple required>
+        <fieldset>
+            <legend>Disciplinas:</legend>
             <?php foreach ($disciplinas as $disciplina): ?>
-                <option value="<?php echo htmlspecialchars($disciplina['id']); ?>">
-                    <?php echo htmlspecialchars($disciplina['nome']); ?>
-                </option>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="disciplina_<?php echo htmlspecialchars($disciplina['id']); ?>" name="disciplinas[]" value="<?php echo htmlspecialchars($disciplina['id']); ?>">
+                    <label for="disciplina_<?php echo htmlspecialchars($disciplina['id']); ?>">
+                        <?php echo htmlspecialchars($disciplina['nome']); ?>
+                    </label>
+                </div>
             <?php endforeach; ?>
-        </select>
+        </fieldset>
         
         <input type="submit" name="cadastrar_docente" value="Cadastrar Docente">
     </form>

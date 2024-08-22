@@ -15,13 +15,11 @@ if ($mysqli->connect_error) {
 // Função para cadastrar curso
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_curso'])) {
     $nome = $_POST['nome'];
-    $turmas = $_POST['turmas'];
     $coordenador = $_POST['coordenador'];
-    $disciplinas = $_POST['disciplinas'];
 
     // Preparar a consulta para evitar SQL Injection
-    $stmt = $mysqli->prepare('INSERT INTO cursos (nome, turmas, coordenador, disciplinas) VALUES (?, ?, ?, ?)');
-    $stmt->bind_param('ssss', $nome, $turmas, $coordenador, $disciplinas);
+    $stmt = $mysqli->prepare('INSERT INTO cursos (nome, coordenador) VALUES (?, ?)');
+    $stmt->bind_param('ss', $nome, $coordenador);
 
     if ($stmt->execute()) {
         echo 'Curso cadastrado com sucesso!';
@@ -48,14 +46,8 @@ $mysqli->close();
         <label for="nome">Nome do Curso:</label>
         <input type="text" id="nome" name="nome" required>
         
-        <label for="turmas">Turmas:</label>
-        <input type="text" id="turmas" name="turmas" required>
-        
         <label for="coordenador">Coordenador:</label>
         <input type="text" id="coordenador" name="coordenador" required>
-        
-        <label for="disciplinas">Disciplinas:</label>
-        <input type="text" id="disciplinas" name="disciplinas" required>
         
         <input type="submit" name="cadastrar_curso" value="Cadastrar Curso">
     </form>

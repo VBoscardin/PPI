@@ -21,6 +21,9 @@
         <a href="cadastrar_setor.php">Cadastrar Setor</a>
     </p>
     <p>
+        <a href="cadastrar_turma.php">Cadastrar Turma</a>
+    </p>
+    <p>
         <a href="f_pagina_adm.php">Voltar para Início</a>
     </p>
 </body>
