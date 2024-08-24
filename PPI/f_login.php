@@ -83,6 +83,7 @@ $conn->close();
         <input type="email" id="email" name="email" required><br>
         <label for="password">Senha:</label><br>
         <input type="password" id="password" name="password" required><br><br>
+        <p><a href="recuperar_senha.php">Esqueceu a senha?</a></p>
         <input type="submit" name="login" value="Login">
     </form>
 </body>
