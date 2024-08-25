@@ -1,14 +1,13 @@
 * {
     margin: 0 auto;
     padding: 0;
+    box-sizing: border-box;
 }
-
 
 :root {
     --cor-primaria: green;
     --cor-secundaria: white;
 }
-
 
 
 .cabecalho {
@@ -21,17 +20,25 @@
     box-sizing: content-box;
     width: 100%;
     max-width: 100%;
+    height: 100px;
     text-align: center;
-    padding-bottom: 1%;
-    padding-top: 1%;
-    font-family: 'Noto Sans', sans-serif;
+    font-family: "Roboto Mono", sans-serif;
     margin-top: 0;
+    position: fixed;
+    z-index: 3;
     }
 
     .cabecalho img {
-        margin-left: 1%;
-        height: 100px;
-        width: 80px;
+        height: 75px;
+        width: 60px;
+        margin-left: 20px;
+    }
+
+    .cabecalho h1 {
+        font-size: 25px;
+        font-weight: bold;
+        flex-basis: 410px;
+        margin-left: -75px;
     }
 
     .login {
@@ -43,11 +50,10 @@
         height: 300px;
         padding-top: 25px;
         border-radius: 30px;
-        gap: 20px;
-        font-family: "Roboto", sans-serif;
-        box-sizing: border-box;
+        gap: 30px;
+        font-family: "Roboto Flex", sans-serif;
         justify-content: flex-start;
-        margin-top: 10%;
+        align-items: center;
     }
 
     .login form {
@@ -59,7 +65,7 @@
 
     .login h1 {
         margin-left: 20px;
-        font-weight: 1;
+        font-weight: 400;
     }
 
     .login form input[type = "submit"] {
@@ -72,27 +78,79 @@
         border: none;
     }
 
-    #userlogin {
-        width: 300px;
-        height: 30px;
-    }
-
-.login form img {
+    .login form img {
     width: 40px;
     height: 40px;
     transform: translateY(25%);
     margin-left: 0 auto;
-}
+    }
 
-.login form div {
-    width: 80%;
+    .login form div {
     position: relative;
     text-align: right;
     font-size: 25px;
+    display: grid;
+    column-gap: 1px;
+    row-gap: 30px;
+    grid-template-columns: 100px 300px; 
+    }
+
+.login form a{
+    color: var(--cor-secundaria);        
+    font-weight: 300; 
+    position: relative;
+    margin-left: 105px;
 }
 
 .digit {
-    width: 60%;
+    width: 300px;
     height: 30px;
     font-size: 25px;
 }
+
+.container {
+    height: 100vh; 
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;  
+    align-items: center;     
+    background-image: url("imgs/iffw.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-blend-mode: overlay;
+}
+
+.container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.7); 
+    pointer-events: none; 
+    z-index: 1; 
+  }
+
+  .container > * {
+    position: relative;
+    z-index: 2; 
+  }
+
+
+.rodape {
+    position: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin-top: 40%;
+    width: 100%;
+    height: 30px;
+    background-color: var(--cor-primaria);
+    font-family: "Roboto Flex", sans-serif;
+    font-weight: 400;
+}
+
+
