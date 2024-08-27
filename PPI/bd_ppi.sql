@@ -12,6 +12,9 @@ CREATE TABLE `usuarios` (
 INSERT INTO `usuarios` (`id`, `username`, `email`, `password_hash`, `reset_token`, `reset_expires`, `tipo`)
 VALUES
 (0, 'teste', 'teste@gmail.com', '$2y$10$QnEOOy0.g050eTuhFx2McOGuYxPLGJ0p31W8YPOiIIUsqjpoJvwG.', NULL, NULL, 'administrador');
+INSERT INTO `usuarios` (`id`, `username`, `email`, `password_hash`, `reset_token`, `reset_expires`, `tipo`)
+VALUES
+(0, 'Vicente Boscardin', 'vicenteboscardin@gmail.com', '$2y$10$QnEOOy0.g050eTuhFx2McOGuYxPLGJ0p31W8YPOiIIUsqjpoJvwG.', NULL, NULL, 'administrador');
 
 CREATE TABLE `cursos` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -62,4 +65,12 @@ CREATE TABLE `turmas` (
   `professor_regente` INT NOT NULL,
   PRIMARY KEY (`numero`, `ano`, `ano_ingresso`),
   FOREIGN KEY (`professor_regente`) REFERENCES `docentes` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+CREATE TABLE `turmas_disciplinas` (
+  `turma_numero` INT NOT NULL,
+  `turma_ano` YEAR NOT NULL,
+  `turma_ano_ingresso` YEAR NOT NULL,
+  `disciplina_id` INT NOT NULL,
+  FOREIGN KEY (`turma_numero`, `turma_ano`, `turma_ano_ingresso`) REFERENCES `turmas` (`numero`, `ano`, `ano_ingresso`),
+  FOREIGN KEY (`disciplina_id`) REFERENCES `disciplinas` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

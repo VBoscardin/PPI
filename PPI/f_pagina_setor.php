@@ -31,3 +31,16 @@ if ($conn->connect_error) {
 // Código da página para administradores aqui
 
 ?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página do Setor</title>
+    <link rel="stylesheet" href="css_inicio.css"> <!-- Incluindo o arquivo CSS -->
+</head>
+<body>
+    <h1>Bem-vindo à Página</h1>
+    <p>Este é um exemplo de página com o CSS externo incluído.</p>
+</body>
+</html>

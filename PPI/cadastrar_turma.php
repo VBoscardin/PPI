@@ -1,15 +1,49 @@
 <?php
-$host = 'localhost';
-$db = 'bd_ppi';
-$user = 'root'; // Seu usuário do banco de dados
-$pass = ''; // Sua senha do banco de dados
+session_start();
+
+// Verificar se o usuário está autenticado
+if (!isset($_SESSION['email']) || !isset($_SESSION['user_type'])) {
+    // Redirecionar para a página de login se o usuário não estiver autenticado
+    header("Location: f_login.php");
+    exit();
+}
+
+// Verificar se o usuário é um administrador
+if ($_SESSION['user_type'] !== 'administrador') {
+    // Redirecionar para uma página de acesso negado ou qualquer outra página
+    header("Location: f_login.php");
+    exit();
+}
 
 // Conectar ao banco de dados
-$mysqli = new mysqli($host, $user, $pass, $db);
+$servername = "localhost";
+$db_username = "root";
+$db_password = "";
+$dbname = "bd_ppi";
+
+$conn = new mysqli($servername, $db_username, $db_password, $dbname);
 
 // Verificar conexão
-if ($mysqli->connect_error) {
-    die('Conexão falhou: ' . $mysqli->connect_error);
+if ($conn->connect_error) {
+    die("Conexão falhou: " . $conn->connect_error);
+}
+
+// Obter lista de docentes
+$docentes_result = $conn->query('SELECT id, nome FROM docentes');
+$docentes = [];
+if ($docentes_result) {
+    while ($row = $docentes_result->fetch_assoc()) {
+        $docentes[] = $row;
+    }
+}
+
+// Obter lista de disciplinas
+$disciplinas_result = $conn->query('SELECT id, nome FROM disciplinas');
+$disciplinas = [];
+if ($disciplinas_result) {
+    while ($row = $disciplinas_result->fetch_assoc()) {
+        $disciplinas[] = $row;
+    }
 }
 
 // Função para cadastrar turma
@@ -19,35 +53,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_turma'])) {
     $ano_ingresso = $_POST['ano_ingresso'];
     $ano_oferta = $_POST['ano_oferta'];
     $professor_regente = $_POST['professor_regente'];
+    $disciplinas_selecionadas = isset($_POST['disciplinas']) ? $_POST['disciplinas'] : [];
 
     // Verificar se os campos não estão vazios
-    if (!empty($numero) && !empty($ano) && !empty($ano_ingresso) && !empty($ano_oferta) && !empty($professor_regente)) {
-        // Preparar a consulta para evitar SQL Injection
-        $stmt = $mysqli->prepare('INSERT INTO turmas (numero, ano, ano_ingresso, ano_oferta, professor_regente) VALUES (?, ?, ?, ?, ?)');
-        $stmt->bind_param('iiiii', $numero, $ano, $ano_ingresso, $ano_oferta, $professor_regente);
+    if (!empty($numero) && !empty($ano) && !empty($ano_ingresso) && !empty($ano_oferta) && !empty($professor_regente) && !empty($disciplinas_selecionadas)) {
+        // Iniciar transação
+        $conn->begin_transaction();
 
-        if ($stmt->execute()) {
+        try {
+            // Inserir a turma na tabela turmas
+            $stmt = $conn->prepare('INSERT INTO turmas (numero, ano, ano_ingresso, ano_oferta, professor_regente) VALUES (?, ?, ?, ?, ?)');
+            $stmt->bind_param('iiiii', $numero, $ano, $ano_ingresso, $ano_oferta, $professor_regente);
+            $stmt->execute();
+            $stmt->close();
+
+            // Inserir as disciplinas selecionadas na tabela turmas_disciplinas
+            $stmt = $conn->prepare('INSERT INTO turmas_disciplinas (turma_numero, turma_ano, turma_ano_ingresso, disciplina_id) VALUES (?, ?, ?, ?)');
+            foreach ($disciplinas_selecionadas as $disciplina_id) {
+                $stmt->bind_param('iiii', $numero, $ano, $ano_ingresso, $disciplina_id);
+                $stmt->execute();
+            }
+            $stmt->close();
+
+            // Confirmar transação
+            $conn->commit();
+
             echo 'Turma cadastrada com sucesso!';
-        } else {
-            echo 'Erro ao cadastrar turma: ' . $stmt->error;
+        } catch (Exception $e) {
+            // Reverter transação em caso de erro
+            $conn->rollback();
+            echo 'Erro ao cadastrar turma: ' . $e->getMessage();
         }
-
-        $stmt->close();
     } else {
         echo 'Todos os campos são obrigatórios!';
     }
 }
 
-// Obter lista de docentes para o menu suspenso
-$docentes_result = $mysqli->query('SELECT id, nome FROM docentes');
-$docentes = [];
-if ($docentes_result) {
-    while ($row = $docentes_result->fetch_assoc()) {
-        $docentes[] = $row;
-    }
-}
-
-$mysqli->close();
+// Fechar conexão
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -82,6 +125,15 @@ $mysqli->close();
                 </option>
             <?php endforeach; ?>
         </select>
+
+        <label for="disciplinas">Disciplinas:</label><br>
+        <?php foreach ($disciplinas as $disciplina): ?>
+            <input type="checkbox" id="disciplina_<?php echo htmlspecialchars($disciplina['id']); ?>" 
+                   name="disciplinas[]" value="<?php echo htmlspecialchars($disciplina['id']); ?>">
+            <label for="disciplina_<?php echo htmlspecialchars($disciplina['id']); ?>">
+                <?php echo htmlspecialchars($disciplina['nome']); ?>
+            </label><br>
+        <?php endforeach; ?>
         
         <input type="submit" name="cadastrar_turma" value="Cadastrar Turma">
     </form>

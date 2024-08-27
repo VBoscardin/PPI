@@ -45,56 +45,18 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Página do Docente</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            margin: 0;
-            min-height: 100vh; /* Definir altura mínima da janela de visualização */
-        }
-        #sidebar {
-            width: 200px;
-            background-color: #f0f0f0;
-            padding: 20px;
-        }
-        #content {
-            flex-grow: 1;
-            padding: 20px;
-            margin-left: auto;
-            text-align: right;
-            margin-right: 200px; /* Ajuste conforme necessário */
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
-        li {
-            margin-bottom: 10px;
-        }
-        a {
-            text-decoration: none;
-            color: #333;
-        }
-        a:hover {
-            color: #555;
-        }
-        #sidebar {
-            height: 100%; /* Estender até o final da janela de visualização */
-            position: fixed; /* Fixar a barra lateral */
-        }
-    </style>
+    <link rel="stylesheet" href="css_inicio.css"> <!-- Incluindo o arquivo CSS -->
 </head>
 <body>
-    <div id="sidebar">
-        <ul>
-            <li><a href="#">Início</a></li>
-            <li><a href="#">Turmas</a></li>
-            <li><a href="#">Disciplinas</a></li>
-            <li><a href="#">Cadastrar Notas</a></li>
-            <li><a href="#">Meu Perfil</a></li>
-            <li><a href="logout.php">Sair</a></li>
-        </ul>
+    <div class="sidebar">
+        <img src="imgs/logo.png" alt="Logo">
+        <button onclick="location.href='inicio.php'">Início</button>
+        <button onclick="location.href='turmas.php'">Turmas</button>
+        <button onclick="location.href='disciplinas.php'">Disciplinas</button>
+        <button onclick="location.href='cadastrar_notas.php'">Cadastrar Notas</button>
+        <button onclick="location.href='meu_perfil.php'">Meu Perfil</button>
+        <button onclick="location.href='logout.php'">Sair</button>
+
     </div>
     <div id="content">
         <h1>Bem-vindo, <?php echo htmlspecialchars($nome); ?>!</h1>

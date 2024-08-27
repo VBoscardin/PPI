@@ -1,43 +1,59 @@
 <?php
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+session_start();
+
+// Configurações do banco de dados
+$servername = "localhost";
+$db_username = "root";
+$db_password = "";
+$dbname = "bd_ppi";
+
+// Criar conexão
+$conn = new mysqli($servername, $db_username, $db_password, $dbname);
+
+// Verificar conexão
+if ($conn->connect_error) {
+    die("Conexão falhou: " . $conn->connect_error);
+}
+
+if (isset($_POST['submit'])) {
     $email = $_POST['email'];
 
-    // Conectar ao banco de dados
-    $conn = new mysqli("localhost", "root", "", "bd_ppi");
-
-    if ($conn->connect_error) {
-        die("Conexão falhou: " . $conn->connect_error);
-    }
-
-    // Verificar se o email existe
+    // Verificar se o e-mail existe no banco de dados
     $stmt = $conn->prepare("SELECT id FROM usuarios WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $stmt->store_result();
 
     if ($stmt->num_rows > 0) {
-        // Gerar um token de recuperação
+        // Gerar um token único para redefinição de senha
         $token = bin2hex(random_bytes(50));
-        $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
+        $expires = date("U") + 1800; // Token válido por 30 minutos
 
-        // Armazenar o token no banco de dados
+        // Armazenar o token e a data de expiração no banco de dados
+        $stmt->close();
         $stmt = $conn->prepare("UPDATE usuarios SET reset_token = ?, reset_expires = ? WHERE email = ?");
-        $stmt->bind_param("sss", $token, $expires, $email);
+        $stmt->bind_param("sis", $token, $expires, $email);
         $stmt->execute();
 
-        // Enviar o email com o link de recuperação
-        $resetLink = "http://seusite.com/resetar_senha.php?token=" . $token;
-        $mensagem = "Clique no link para redefinir sua senha: " . $resetLink;
-        mail($email, "Recuperação de Senha", $mensagem);
+        // Enviar e-mail com o link de redefinição de senha
+        $reset_link = "http://seusite.com/redefinir_senha.php?token=" . $token . "&email=" . $email;
+        $subject = "Redefinição de Senha";
+        $message = "Clique no link a seguir para redefinir sua senha: " . $reset_link;
+        $headers = "From: no-reply@seusite.com";
 
-        echo "Um email foi enviado com instruções para redefinir sua senha.";
+        if (mail($email, $subject, $message, $headers)) {
+            $success = "Um e-mail com instruções de redefinição de senha foi enviado.";
+        } else {
+            $error = "Houve um erro ao enviar o e-mail.";
+        }
     } else {
-        echo "Email não encontrado.";
+        $error = "E-mail não encontrado.";
     }
 
     $stmt->close();
-    $conn->close();
 }
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -49,10 +65,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <h2>Recuperar Senha</h2>
+    <?php if (isset($error)) { ?>
+        <p><?php echo htmlspecialchars($error); ?></p>
+    <?php } elseif (isset($success)) { ?>
+        <p><?php echo htmlspecialchars($success); ?></p>
+    <?php } ?>
     <form method="POST" action="">
-        <label for="email">Digite seu e-mail:</label><br>
+        <label for="email">E-mail:</label><br>
         <input type="email" id="email" name="email" required><br><br>
-        <input type="submit" value="Enviar">
+        <input type="submit" name="submit" value="Enviar">
     </form>
 </body>
 </html>

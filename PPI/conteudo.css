@@ -10,7 +10,6 @@
 }
 
 
-
 .cabecalho {
     background-color: var(--cor-primaria);
     color: var(--cor-secundaria);
@@ -28,6 +27,10 @@
     margin-top: 0;
     }
 
+    .cabecalho h1 {
+        position: absolute;
+    }
+
     .cabecalho img {
         margin-left: 1%;
         height: 100px;
@@ -41,33 +44,35 @@
         flex-direction: column;
         width: 600px;
         height: 300px;
-        padding-top: 25px;
+        margin-top: 5%;
         border-radius: 30px;
-        gap: 20px;
+        align-items: flex-start;
+        gap: 15px;
         font-family: "Roboto", sans-serif;
-        box-sizing: border-box;
-        justify-content: flex-start;
-        margin-top: 10%;
+    }
+
+    .login p {
+        margin-left: 30px;
+        font-size: 35px;
+        margin-top: 20px;
     }
 
     .login form {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        width: 100%;
+        font-size: 30px;
+        text-align: end;
+        
+
     }    
 
-    .login h1 {
-        margin-left: 20px;
-        font-weight: 1;
-    }
-
     .login form input[type = "submit"] {
-        width: 120px;
-        height: 40px;
+        width: 100px;
+        height: 45px;
         font-size: 25px;
         font-weight: bold;
         letter-spacing: 3px;
+        left: 50%;
+        transform: translateX(-50%);
+        position: absolute;
         background-color: var(--cor-secundaria);
         border: none;
     }
@@ -82,17 +87,4 @@
     height: 40px;
     transform: translateY(25%);
     margin-left: 0 auto;
-}
-
-.login form div {
-    width: 80%;
-    position: relative;
-    text-align: right;
-    font-size: 25px;
-}
-
-.digit {
-    width: 60%;
-    height: 30px;
-    font-size: 25px;
 }

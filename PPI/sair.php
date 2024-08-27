@@ -12,6 +12,7 @@ if (isset($_SESSION['user_id'])) {
     header('Location: f_login.php');
     exit();
 } else {
+    
     // Se não estiver logado, redirecionar para a página de login
     header('Location: f_login.php');
     exit();
