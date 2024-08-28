@@ -41,16 +41,40 @@ $stmt->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css_inicio.css"> <!-- Incluindo o arquivo CSS -->
+    <link rel="stylesheet" href="css_formulario.css"> <!-- Incluindo o arquivo CSS -->
     <title>Página do Administrador</title>
 </head>
+<script>
+    function toggleOptions() {
+        var options = document.getElementById('cadastrar-opcoes');
+        if (options.style.display === 'none' || options.style.display === '') {
+            options.style.display = 'block';
+        } else {
+            options.style.display = 'none';
+        }
+    }
+</script>
 <body>
     <div class="sidebar">
         <div class="logo-container">
             <img src="imgs/logo_turmas.png" alt="Logo">
         </div>
         <button onclick="location.href='inicio.php'">Início</button>
-        <button onclick="location.href='cadastrar.php'">Cadastrar</button>
+
+        <!-- Label para "Cadastrar" estilizado como um botão -->
+        <button class="cadastrar-button" onclick="toggleOptions()">Cadastrar</button>
+
+        
+        <div id="cadastrar-opcoes">
+            <button onclick="location.href='cadastrar_adm.php'">Cadastrar Administrador</button>
+            <button onclick="location.href='cadastrar_curso.php'">Cadastrar Curso</button>
+            <button onclick="location.href='cadastrar_disciplina.php'">Cadastrar Disciplina</button>
+            <button onclick="location.href='cadastrar_docente.php'">Cadastrar Docente</button>
+            <button onclick="location.href='cadastrar_setor.php'">Cadastrar Setor</button>
+            <button onclick="location.href='cadastrar_turma.php'">Cadastrar Turma</button>
+            <button onclick="location.href='f_pagina_adm.php'">Voltar para Início</button>
+        </div>
+
         <button onclick="location.href='gerar_boletim.php'">Gerar Boletim</button>
         <button onclick="location.href='gerar_slide.php'">Gerar Slide Pré Conselho</button>
         <button onclick="location.href='listar.php'">Listar</button>

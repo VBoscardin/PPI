@@ -76,21 +76,60 @@ $mysqli->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastrar Curso</title>
+    <link rel="stylesheet" href="css_formulario.css"> <!-- Incluindo o arquivo CSS -->
 </head>
-<body>
-    <h1>Cadastrar Curso</h1>
+<script>
+function toggleOptions() {
+    var options = document.getElementById('cadastrar-opcoes');
+    if (options.style.display === 'none' || options.style.display === '') {
+        options.style.display = 'block';
+    } else {
+        options.style.display = 'none';
+    }
+}
+</script>
 
-    <form action="cadastrar_curso.php" method="post">
-        <label for="nome">Nome do Curso:</label>
-        <input type="text" id="nome" name="nome" required>
+<body>
+    <div class="sidebar">
+            <div class="logo-container">
+                <img src="imgs/logo_turmas.png" alt="Logo">
+            </div>
+            <button onclick="location.href='inicio.php'">Início</button>
+
+            <!-- Label para "Cadastrar" estilizado como um botão -->
+            <button class="cadastrar-button" onclick="toggleOptions()">Cadastrar</button>
+
+            
+            <div id="cadastrar-opcoes">
+                <button onclick="location.href='cadastrar_adm.php'">Cadastrar Administrador</button>
+                <button onclick="location.href='cadastrar_curso.php'">Cadastrar Curso</button>
+                <button onclick="location.href='cadastrar_disciplina.php'">Cadastrar Disciplina</button>
+                <button onclick="location.href='cadastrar_docente.php'">Cadastrar Docente</button>
+                <button onclick="location.href='cadastrar_setor.php'">Cadastrar Setor</button>
+                <button onclick="location.href='cadastrar_turma.php'">Cadastrar Turma</button>
+                <button onclick="location.href='f_pagina_adm.php'">Voltar para Início</button>
+            </div>
+
+            <button onclick="location.href='gerar_boletim.php'">Gerar Boletim</button>
+            <button onclick="location.href='gerar_slide.php'">Gerar Slide Pré Conselho</button>
+            <button onclick="location.href='listar.php'">Listar</button>
+            <button onclick="location.href='meu_perfil.php'">Meu Perfil</button>
+            <button onclick="location.href='sair.php'">Sair</button>
+    </div>
+    <div id="content">
+        <h1>Cadastrar Curso</h1>
+
+        <form action="cadastrar_curso.php" method="post">
+            <label for="nome">Nome do Curso:</label>
+            <input type="text" id="nome" name="nome" required>
+            
+            <label for="coordenador">Coordenador:</label>
+            <input type="text" id="coordenador" name="coordenador" required>
+            
+            <input type="submit" name="cadastrar_curso" value="Cadastrar Curso">
+        </form>
         
-        <label for="coordenador">Coordenador:</label>
-        <input type="text" id="coordenador" name="coordenador" required>
-        
-        <input type="submit" name="cadastrar_curso" value="Cadastrar Curso">
-    </form>
-    <p>
-        <a href="f_pagina_adm.php">Voltar para Início</a>
-    </p>
+    </div>
 </body>
 </html>
+

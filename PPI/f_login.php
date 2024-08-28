@@ -67,24 +67,33 @@ $conn->close();
 ?>
 
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <link rel="stylesheet" href="style.css">
+    
+
 </head>
 <body>
-    <h2>Login</h2>
-    <?php if (isset($error)) { ?>
+    <div class = "cabecalho"><h1>SIGNE - SISTEMA GERENCIADOR <br> DE NOTAS ESCOLARES</h1></div>
+    <?php if(isset($error)) { ?>
         <p><?php echo htmlspecialchars($error); ?></p>
     <?php } ?>
+    <div class = "login">
+        <h1>Entrar no Sistema</h1>
     <form method="POST" action="">
-        <label for="email">E-mail:</label><br>
-        <input type="email" id="email" name="email" required><br>
-        <label for="password">Senha:</label><br>
-        <input type="password" id="password" name="password" required><br><br>
-        <p><a href="recuperar_senha.php">Esqueceu a senha?</a></p>
-        <input type="submit" name="login" value="Login">
+        <div>
+        <label for="email">Usuário:</label>
+        <input type="email" id="email" name="email" class="digit" required>
+        </div>
+        <div>
+        <label for="password">Senha:</label>
+        <input type="password" id="password" name="password" class="digit" required>
+        </div>
+        <input type="submit" name="login" value="Entrar">
     </form>
+    </div>
 </body>
 </html>

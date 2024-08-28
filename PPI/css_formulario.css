@@ -1,3 +1,67 @@
+/* Estilos gerais do formulário */
+form {
+    background-color: var(--cor-secundaria); /* Branco */
+    border-radius: 10px; /* Bordas arredondadas */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); /* Sombra para dar destaque */
+    padding: 20px; /* Espaçamento interno */
+    max-width: 600px; /* Largura máxima do formulário */
+    margin: 50px auto; /* Centraliza o formulário horizontalmente e adiciona margem superior */
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espaçamento entre os elementos do formulário */
+}
+
+/* Estilos para labels */
+form label {
+    font-size: 16px; /* Tamanho da fonte do label */
+    color: black; /* Cor do texto */
+    display: block; /* Garante que o label ocupe a largura total */
+    margin-bottom: 5px; /* Espaço abaixo do label */
+}
+
+/* Estilos para inputs de texto */
+form input[type="text"],
+form input[type="email"],
+form input[type="password"] {
+    padding: 10px;
+    border: 1px solid #ccc; /* Borda cinza clara */
+    border-radius: 5px; /* Bordas arredondadas */
+    font-size: 16px; /* Tamanho da fonte */
+    width: 100%; /* Largura total do campo de texto */
+    box-sizing: border-box; /* Inclui o padding e a borda na largura total */
+}
+
+/* Estilos para o botão de submit */
+form input[type="submit"] {
+    background-color: var(--cor-primaria); /* Verde */
+    color: var(--cor-secundaria); /* Branco */
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 5px; /* Bordas arredondadas */
+    cursor: pointer;
+    width: 100%; /* Largura total do botão */
+    font-weight: bold; /* Texto em negrito */
+    box-sizing: border-box; /* Inclui padding e borda na largura total */
+}
+
+/* Estilo para o botão de submit ao passar o mouse */
+form input[type="submit"]:hover {
+    background-color: darkgreen; /* Verde escuro */
+}
+
+/* Estilo para o link dentro do formulário */
+form p a {
+    color: var(--cor-primaria); /* Cor do link */
+    text-decoration: none; /* Remove o sublinhado */
+    font-size: 16px; /* Tamanho da fonte */
+}
+
+form p a:hover {
+    text-decoration: underline; /* Sublinhado ao passar o mouse */
+}
+
+
 :root {
     --cor-primaria: green; /* Verde */
     --cor-secundaria: white; /* Branco */
@@ -10,7 +74,7 @@ body {
 }
 
 .sidebar {
-    width: 250px; /* Largura da barra lateral */
+    width: 250px; /* Largura fixa da barra lateral */
     background-color: var(--cor-primaria); /* Verde */
     color: var(--cor-secundaria); /* Branco */
     display: flex;
@@ -20,8 +84,10 @@ body {
     position: fixed;
     height: 100vh;
     overflow-y: auto; /* Adiciona rolagem vertical se necessário */
-    transition: width 0.3s; /* Adiciona uma transição suave para a largura */
+    transition: width 0.3s; /* Transição suave para a largura, se aplicável */
+    box-sizing: border-box; /* Inclui padding e borda na largura total */
 }
+
 
 .logo-container {
     display: flex;
@@ -48,7 +114,7 @@ body {
     font-family: 'Forum', sans-serif;
     padding: 10px 15px; /* Ajuste o padding para reduzir a altura dos botões */
     font-size: 16px; /* Ajuste o tamanho da fonte conforme necessário */
-    border-radius: 5px;
+    border-radius: 5px; /* Bordas arredondadas */
     cursor: pointer;
     margin: 8px 0; /* Ajuste o margin para mais espaçamento entre os botões */
     width: 200px; /* Ajuste a largura dos botões conforme necessário */
@@ -65,7 +131,7 @@ body {
     font-family: 'Forum', sans-serif;
     padding: 10px 15px; /* Ajuste o padding para reduzir a altura */
     font-size: 16px; /* Ajuste o tamanho da fonte conforme necessário */
-    border-radius: 5px;
+    border-radius: 5px; /* Bordas arredondadas */
     cursor: pointer;
     margin: 8px 0; /* Ajuste o margin para mais espaçamento entre os botões */
     width: 200px; /* Largura igual aos outros botões */
@@ -90,10 +156,11 @@ body {
     display: none; /* Inicialmente oculto */
     background-color: var(--cor-primaria); /* Mesma cor da barra lateral */
     padding: 10px;
-    border-radius: 2px;
+    border-radius: 5px; /* Bordas arredondadas do contêiner de opções */
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     margin-top: 8px; /* Espaçamento acima das opções */
     width: 100%; /* Largura igual ao label acima */
+    box-sizing: border-box; /* Inclui padding e borda na largura total */
 }
 
 #cadastrar-opcoes button {
@@ -102,22 +169,25 @@ body {
     color: black; /* Preto - Cor do texto dos botões */
     border: none;
     font-family: 'Forum', sans-serif;
-    padding: 8px 12px; /* Menor padding para botões menores */
-    font-size: 14px; /* Menor tamanho da fonte */
-    border-radius: 5px;
+    padding: 8px 12px; /* Ajusta o padding para diminuir o tamanho */
+    font-size: 14px; /* Tamanho da fonte ajustado */
+    border-radius: 5px; /* Bordas arredondadas, igual aos outros botões */
     cursor: pointer;
-    margin-bottom: 6px; /* Menor espaço entre os botões */
-    width: 100%; /* Largura dos botões igual à largura do contêiner */
-    text-align: left; /* Alinha o texto à esquerda dentro do botão */
+    margin-bottom: 8px; /* Espaço entre os botões */
+    width: calc(100% - 20px); /* Largura ajustada para considerar o padding do contêiner */
+    text-align: center; /* Centraliza o texto dentro do botão */
     display: flex;
     align-items: center; /* Alinha verticalmente o texto dentro do botão */
     justify-content: center; /* Centraliza horizontalmente o texto */
+    box-sizing: border-box; /* Inclui padding e borda na largura total */
 }
 
 #cadastrar-opcoes button:hover {
     background-color: black; /* Muda a cor de fundo para preto ao passar o mouse */
     color: var(--cor-secundaria); /* Muda a cor do texto para branco ao passar o mouse */
 }
+
+
 /* Adicionando um estilo específico para o botão "Cadastrar" */
 .sidebar .cadastrar-button {
     background-color: var(--cor-secundaria); /* Branco */
@@ -126,7 +196,7 @@ body {
     font-family: 'Forum', sans-serif;
     padding: 10px 15px; /* Ajuste o padding para igualar aos outros botões */
     font-size: 16px; /* Ajuste o tamanho da fonte conforme necessário */
-    border-radius: 5px;
+    border-radius: 5px; /* Bordas arredondadas */
     cursor: pointer;
     margin: 8px 0; /* Ajuste o margin para mais espaçamento entre os botões */
     width: 200px; /* Largura igual aos outros botões */
@@ -138,5 +208,5 @@ body {
 
 .sidebar .cadastrar-button:hover {
     background-color: black; /* Muda a cor de fundo para preto ao passar o mouse */
-    color: var(--cor-secundaria); /* Muda a cor do texto para branco ao passar o mouse */
+    color: var(--cor-secundaria); 
 }

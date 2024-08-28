@@ -69,24 +69,61 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastrar Administrador</title>
+    <link rel="stylesheet" href="css_formulario.css"> <!-- Incluindo o arquivo CSS -->
 </head>
+<script>
+function toggleOptions() {
+    var options = document.getElementById('cadastrar-opcoes');
+    if (options.style.display === 'none' || options.style.display === '') {
+        options.style.display = 'block';
+    } else {
+        options.style.display = 'none';
+    }
+}
+</script>
+
 <body>
-    <h1>Cadastrar Administrador</h1>
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="imgs/logo_turmas.png" alt="Logo">
+        </div>
+        <button onclick="location.href='inicio.php'">Início</button>
 
-    <form action="cadastrar_adm.php" method="post">
-        <label for="username">Nome de Usuário:</label>
-        <input type="text" id="username" name="username" required><br>
+        <!-- Label para "Cadastrar" estilizado como um botão -->
+        <button class="cadastrar-button" onclick="toggleOptions()">Cadastrar</button>
 
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required><br>
+        <div id="cadastrar-opcoes">
+            <button onclick="location.href='cadastrar_adm.php'">Cadastrar Administrador</button>
+            <button onclick="location.href='cadastrar_curso.php'">Cadastrar Curso</button>
+            <button onclick="location.href='cadastrar_disciplina.php'">Cadastrar Disciplina</button>
+            <button onclick="location.href='cadastrar_docente.php'">Cadastrar Docente</button>
+            <button onclick="location.href='cadastrar_setor.php'">Cadastrar Setor</button>
+            <button onclick="location.href='cadastrar_turma.php'">Cadastrar Turma</button>
+            <button onclick="location.href='f_pagina_adm.php'">Voltar para Início</button>
+        </div>
 
-        <label for="password">Senha:</label>
-        <input type="password" id="password" name="password" required><br>
+        <button onclick="location.href='gerar_boletim.php'">Gerar Boletim</button>
+        <button onclick="location.href='gerar_slide.php'">Gerar Slide Pré Conselho</button>
+        <button onclick="location.href='listar.php'">Listar</button>
+        <button onclick="location.href='meu_perfil.php'">Meu Perfil</button>
+        <button onclick="location.href='sair.php'">Sair</button>
+    </div>
+    <div id="content">
+        <h1>Cadastrar Administrador</h1>
 
-        <input type="submit" name="cadastrar_adm" value="Cadastrar Administrador">
-    </form>
-    <p>
-        <a href="f_pagina_adm.php">Voltar para Início</a>
-    </p>
+        <form action="cadastrar_adm.php" method="post">
+            <label for="username">Nome de Usuário:</label>
+            <input type="text" id="username" name="username" required><br>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required><br>
+
+            <label for="password">Senha:</label>
+            <input type="password" id="password" name="password" required><br>
+
+            <input type="submit" name="cadastrar_adm" value="Cadastrar Administrador">
+        </form>
+    </div>
 </body>
 </html>
+
