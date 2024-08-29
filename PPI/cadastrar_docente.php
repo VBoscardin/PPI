@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) 
                     $docente_id = $stmt_docente->insert_id;
 
                     // Inserir o usuário na tabela usuarios
-                    $username = $email; // Ou qualquer outro nome de usuário que você deseje usar
+                    $username = $nome; // Alterado para usar o nome
                     $tipo = 'docente';
 
                     $stmt_usuario = $mysqli->prepare('INSERT INTO usuarios (username, email, password_hash, tipo) VALUES (?, ?, ?, ?)');

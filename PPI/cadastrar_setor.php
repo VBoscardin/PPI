@@ -15,7 +15,7 @@ if ($_SESSION['user_type'] !== 'administrador') {
     exit();
 }
 
-// Conectar ao banco de dados, se necessário
+// Conectar ao banco de dados
 $servername = "localhost";
 $db_username = "root";
 $db_password = "";
@@ -28,58 +28,61 @@ if ($conn->connect_error) {
     die("Conexão falhou: " . $conn->connect_error);
 }
 
-// Código da página para administradores aqui
-$stmt = $conn->prepare("SELECT username FROM usuarios WHERE email = ?");
-$stmt->bind_param("s", $_SESSION['email']);
-$stmt->execute();
-$stmt->bind_result($nome);
-$stmt->fetch();
-$stmt->close();
-?>
-<?php
-$host = 'localhost';
-$db = 'bd_ppi';
-$user = 'root'; // Seu usuário do banco de dados
-$pass = ''; // Sua senha do banco de dados
-
-// Conectar ao banco de dados
-$mysqli = new mysqli($host, $user, $pass, $db);
-
-// Verificar conexão
-if ($mysqli->connect_error) {
-    die('Conexão falhou: ' . $mysqli->connect_error);
-}
-
 // Função para cadastrar setor
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_setor'])) {
     $local = $_POST['local'];
     $nome = $_POST['nome'];
     $cpf = $_POST['cpf'];
     $senha = $_POST['senha'];
+    $email = $_POST['email']; // Adicionando o e-mail
 
     // Verificar se os campos não estão vazios
-    if (!empty($local) && !empty($nome) && !empty($cpf) && !empty($senha)) {
+    if (!empty($local) && !empty($nome) && !empty($cpf) && !empty($senha) && !empty($email)) {
         // Hash da senha
         $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
 
-        // Preparar a consulta para evitar SQL Injection
-        $stmt = $mysqli->prepare('INSERT INTO setores (local, nome, cpf, senha) VALUES (?, ?, ?, ?)');
-        $stmt->bind_param('ssss', $local, $nome, $cpf, $senha_hash);
+        // Iniciar uma transação
+        $conn->begin_transaction();
+        
+        try {
+            // Inserir na tabela 'usuarios'
+            $stmt_usuario = $conn->prepare('INSERT INTO usuarios (username, email, password_hash, tipo) VALUES (?, ?, ?, ?)');
+            $stmt_usuario->bind_param('ssss', $nome, $email, $senha_hash, $tipo);
+            
+            $tipo = 'setor'; // Definindo o tipo de usuário como 'setor'
 
-        if ($stmt->execute()) {
-            echo 'Setor cadastrado com sucesso!';
-        } else {
-            echo 'Erro ao cadastrar setor: ' . $stmt->error;
+            if (!$stmt_usuario->execute()) {
+                throw new Exception('Erro ao cadastrar usuário: ' . $stmt_usuario->error);
+            }
+
+            // Inserir na tabela 'setores'
+            $stmt_setor = $conn->prepare('INSERT INTO setores (local, nome, cpf, senha, email) VALUES (?, ?, ?, ?, ?)');
+            $stmt_setor->bind_param('sssss', $local, $nome, $cpf, $senha_hash, $email);
+
+            if (!$stmt_setor->execute()) {
+                throw new Exception('Erro ao cadastrar setor: ' . $stmt_setor->error);
+            }
+
+            // Confirmar a transação
+            $conn->commit();
+            echo 'Setor e usuário cadastrados com sucesso!';
+        } catch (Exception $e) {
+            // Reverter a transação em caso de erro
+            $conn->rollback();
+            echo 'Erro: ' . $e->getMessage();
         }
 
-        $stmt->close();
+        $stmt_setor->close();
+        $stmt_usuario->close();
     } else {
         echo 'Todos os campos são obrigatórios!';
     }
 }
 
-$mysqli->close();
+$conn->close();
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -101,6 +104,9 @@ $mysqli->close();
         <label for="cpf">CPF:</label>
         <input type="text" id="cpf" name="cpf" required>
         
+        <label for="email">E-mail:</label>
+        <input type="email" id="email" name="email" required>
+        
         <label for="senha">Senha:</label>
         <input type="password" id="senha" name="senha" required>
         
@@ -111,3 +117,4 @@ $mysqli->close();
     </p>
 </body>
 </html>
+

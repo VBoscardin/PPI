@@ -61,7 +61,6 @@ form p a:hover {
     text-decoration: underline; /* Sublinhado ao passar o mouse */
 }
 
-
 :root {
     --cor-primaria: green; /* Verde */
     --cor-secundaria: white; /* Branco */
@@ -87,7 +86,6 @@ body {
     transition: width 0.3s; /* Transição suave para a largura, se aplicável */
     box-sizing: border-box; /* Inclui padding e borda na largura total */
 }
-
 
 .logo-container {
     display: flex;
@@ -118,23 +116,6 @@ body {
     cursor: pointer;
     margin: 8px 0; /* Ajuste o margin para mais espaçamento entre os botões */
     width: 200px; /* Ajuste a largura dos botões conforme necessário */
-    text-align: left; /* Alinha o texto à esquerda dentro do botão */
-    display: flex;
-    align-items: center; /* Alinha verticalmente o texto dentro do botão */
-    justify-content: center; /* Centraliza horizontalmente o texto */
-}
-
-.sidebar-button {
-    background-color: var(--cor-secundaria); /* Branco */
-    color: black; /* Preto - Cor do texto do botão */
-    border: none;
-    font-family: 'Forum', sans-serif;
-    padding: 10px 15px; /* Ajuste o padding para reduzir a altura */
-    font-size: 16px; /* Ajuste o tamanho da fonte conforme necessário */
-    border-radius: 5px; /* Bordas arredondadas */
-    cursor: pointer;
-    margin: 8px 0; /* Ajuste o margin para mais espaçamento entre os botões */
-    width: 200px; /* Largura igual aos outros botões */
     text-align: left; /* Alinha o texto à esquerda dentro do botão */
     display: flex;
     align-items: center; /* Alinha verticalmente o texto dentro do botão */
@@ -186,7 +167,6 @@ body {
     background-color: black; /* Muda a cor de fundo para preto ao passar o mouse */
     color: var(--cor-secundaria); /* Muda a cor do texto para branco ao passar o mouse */
 }
-
 
 /* Adicionando um estilo específico para o botão "Cadastrar" */
 .sidebar .cadastrar-button {

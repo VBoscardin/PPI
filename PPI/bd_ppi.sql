@@ -74,3 +74,20 @@ CREATE TABLE `turmas_disciplinas` (
   FOREIGN KEY (`turma_numero`, `turma_ano`, `turma_ano_ingresso`) REFERENCES `turmas` (`numero`, `ano`, `ano_ingresso`),
   FOREIGN KEY (`disciplina_id`) REFERENCES `disciplinas` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+ALTER TABLE setores
+ADD COLUMN email VARCHAR(100) NOT NULL;
+
+CREATE TABLE discentes (
+    numero_matricula INT(11) NOT NULL AUTO_INCREMENT,
+    nome VARCHAR(100) NOT NULL,
+    cidade VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    genero ENUM('Masculino', 'Feminino', 'Outro') NOT NULL,
+    data_nascimento DATE NOT NULL,
+    observacoes TEXT DEFAULT NULL,
+    PRIMARY KEY (numero_matricula)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+ALTER TABLE discentes
+ADD COLUMN foto VARCHAR(
