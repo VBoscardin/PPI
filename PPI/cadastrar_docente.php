@@ -3,52 +3,36 @@ session_start();
 
 // Verificar se o usuário está autenticado
 if (!isset($_SESSION['email']) || !isset($_SESSION['user_type'])) {
-    // Redirecionar para a página de login se o usuário não estiver autenticado
     header("Location: f_login.php");
     exit();
 }
 
 // Verificar se o usuário é um administrador
 if ($_SESSION['user_type'] !== 'administrador') {
-    // Redirecionar para uma página de acesso negado ou qualquer outra página
     header("Location: f_login.php");
     exit();
 }
 
-// Conectar ao banco de dados, se necessário
+// Conectar ao banco de dados
 $servername = "localhost";
 $db_username = "root";
 $db_password = "";
 $dbname = "bd_ppi";
 
-$conn = new mysqli($servername, $db_username, $db_password, $dbname);
-
-// Verificar conexão
-if ($conn->connect_error) {
-    die("Conexão falhou: " . $conn->connect_error);
-}
-
-// Código da página para administradores aqui
-$stmt = $conn->prepare("SELECT username FROM usuarios WHERE email = ?");
-$stmt->bind_param("s", $_SESSION['email']);
-$stmt->execute();
-$stmt->bind_result($nome);
-$stmt->fetch();
-$stmt->close();
-?>
-<?php
-$host = 'localhost';
-$db = 'bd_ppi';
-$user = 'root'; // Seu usuário do banco de dados
-$pass = ''; // Sua senha do banco de dados
-
-// Conectar ao banco de dados
-$mysqli = new mysqli($host, $user, $pass, $db);
+$mysqli = new mysqli($servername, $db_username, $db_password, $dbname);
 
 // Verificar conexão
 if ($mysqli->connect_error) {
     die('Conexão falhou: ' . $mysqli->connect_error);
 }
+
+// Código da página para administradores aqui
+$stmt = $mysqli->prepare("SELECT username FROM usuarios WHERE email = ?");
+$stmt->bind_param("s", $_SESSION['email']);
+$stmt->execute();
+$stmt->bind_result($nome);
+$stmt->fetch();
+$stmt->close();
 
 // Função para cadastrar docente
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) {
@@ -62,6 +46,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) 
     if (!empty($nome) && !empty($email) && !empty($cpf) && !empty($senha)) {
         // Hash da senha
         $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
+
+        // Caminho para upload da foto de perfil
+        $upload_dir = 'uploads/';
+        $foto_perfil_path = '';
+
+        if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+            $foto_perfil_name = basename($_FILES['photo']['name']);
+            $foto_perfil_path = $upload_dir . $foto_perfil_name;
+            
+            if ($_FILES['photo']['size'] > 5000000) {
+                echo 'Erro: O arquivo é muito grande!';
+            } else {
+                if (!move_uploaded_file($_FILES['photo']['tmp_name'], $foto_perfil_path)) {
+                    echo 'Erro ao fazer upload da foto!';
+                    $foto_perfil_path = '';
+                }
+            }
+        }
 
         // Verificar se o email já está registrado na tabela docentes
         $stmt_docentes_check = $mysqli->prepare('SELECT id FROM docentes WHERE email = ?');
@@ -88,12 +90,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) 
                 if ($stmt_docente->execute()) {
                     $docente_id = $stmt_docente->insert_id;
 
-                    // Inserir o usuário na tabela usuarios
+                    // Inserir o usuário na tabela usuarios com a foto de perfil
                     $username = $nome; // Alterado para usar o nome
                     $tipo = 'docente';
 
-                    $stmt_usuario = $mysqli->prepare('INSERT INTO usuarios (username, email, password_hash, tipo) VALUES (?, ?, ?, ?)');
-                    $stmt_usuario->bind_param('ssss', $username, $email, $senha_hash, $tipo);
+                    $stmt_usuario = $mysqli->prepare('INSERT INTO usuarios (username, email, password_hash, tipo, foto_perfil) VALUES (?, ?, ?, ?, ?)');
+                    $stmt_usuario->bind_param('sssss', $username, $email, $senha_hash, $tipo, $foto_perfil_path);
 
                     if ($stmt_usuario->execute()) {
                         echo 'Docente cadastrado com sucesso!';
@@ -163,7 +165,7 @@ $mysqli->close();
 <body>
     <h1>Cadastrar Docente</h1>
 
-    <form action="cadastrar_docente.php" method="post">
+    <form action="cadastrar_docente.php" method="post" enctype="multipart/form-data">
         <label for="nome">Nome:</label>
         <input type="text" id="nome" name="nome" required>
         
@@ -176,6 +178,9 @@ $mysqli->close();
         <label for="senha">Senha:</label>
         <input type="password" id="senha" name="senha" required>
         
+        <label for="photo">Foto de Perfil:</label>
+        <input type="file" id="photo" name="photo" accept="image/*"><br>
+
         <fieldset>
             <legend>Disciplinas:</legend>
             <?php foreach ($disciplinas as $disciplina): ?>

@@ -90,4 +90,8 @@ CREATE TABLE discentes (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ALTER TABLE discentes
-ADD COLUMN foto VARCHAR(
+ADD COLUMN foto VARCHAR(255);
+
+ALTER TABLE usuarios 
+ADD COLUMN foto_perfil VARCHAR(255) DEFAULT NULL;
+
