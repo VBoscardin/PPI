@@ -23,11 +23,13 @@ if ($conn->connect_error) {
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_adm'])) {
-    $username = $_POST['username'];
-    $email = $_POST['email'];
-    $password = $_POST['password'];
-    
-    if (!empty($username) && !empty($email) && !empty($password)) {
+    $username = trim($_POST['username']);
+    $email = trim($_POST['email']);
+    $password = trim($_POST['password']);
+    $photo = $_FILES['photo'];
+
+    // Verificação de todos os campos obrigatórios
+    if (!empty($username) && !empty($email) && !empty($password) && !empty($photo['name'])) {
         $stmt = $conn->prepare('SELECT COUNT(*) FROM usuarios WHERE email = ?');
         $stmt->bind_param('s', $email);
         $stmt->execute();
@@ -43,30 +45,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_adm'])) {
             $upload_dir = 'uploads/';
             $foto_perfil_path = '';
 
-            if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
-                $foto_perfil_name = basename($_FILES['photo']['name']);
+            if ($photo['error'] === UPLOAD_ERR_OK) {
+                $foto_perfil_name = basename($photo['name']);
                 $foto_perfil_path = $upload_dir . $foto_perfil_name;
                 
-                if ($_FILES['photo']['size'] > 5000000) {
+                if ($photo['size'] > 5000000) {
                     $message = 'Erro: O arquivo é muito grande!';
                 } else {
-                    if (!move_uploaded_file($_FILES['photo']['tmp_name'], $foto_perfil_path)) {
+                    if (!move_uploaded_file($photo['tmp_name'], $foto_perfil_path)) {
                         $message = 'Erro ao fazer upload da foto!';
                         $foto_perfil_path = '';
                     }
                 }
-            }
-
-            $stmt = $conn->prepare('INSERT INTO usuarios (username, email, password_hash, tipo, foto_perfil) VALUES (?, ?, ?, "administrador", ?)');
-            $stmt->bind_param('ssss', $username, $email, $password_hash, $foto_perfil_path);
-
-            if ($stmt->execute()) {
-                $message = 'Administrador cadastrado com sucesso!';
             } else {
-                $message = 'Erro ao cadastrar administrador: ' . $stmt->error;
+                $message = 'Erro: Nenhum arquivo foi enviado ou houve um erro no envio!';
             }
 
-            $stmt->close();
+            if (empty($message)) {
+                $stmt = $conn->prepare('INSERT INTO usuarios (username, email, password_hash, tipo, foto_perfil) VALUES (?, ?, ?, "administrador", ?)');
+                $stmt->bind_param('ssss', $username, $email, $password_hash, $foto_perfil_path);
+
+                if ($stmt->execute()) {
+                    $message = 'Administrador cadastrado com sucesso!';
+                } else {
+                    $message = 'Erro ao cadastrar administrador: ' . $stmt->error;
+                }
+
+                $stmt->close();
+            }
         }
     } else {
         $message = 'Todos os campos são obrigatórios!';
@@ -124,7 +130,7 @@ $conn->close();
             <input type="password" id="password" name="password" required><br>
 
             <label for="photo">Foto de Perfil:</label>
-            <input type="file" id="photo" name="photo" accept="image/*"><br>
+            <input type="file" id="photo" name="photo" accept="image/*" required><br>
 
             <input type="submit" name="cadastrar_adm" value="Cadastrar Administrador">
         </form>

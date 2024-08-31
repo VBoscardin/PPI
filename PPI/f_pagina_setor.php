@@ -28,11 +28,11 @@ if ($conn->connect_error) {
     die("Conexão falhou: " . $conn->connect_error);
 }
 
-// Consultar o nome do setor
-$stmt = $conn->prepare("SELECT username FROM usuarios WHERE email = ?");
+// Consultar o nome do setor e a foto de perfil
+$stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
 $stmt->bind_param("s", $_SESSION['email']);
 $stmt->execute();
-$stmt->bind_result($nome);
+$stmt->bind_result($nome, $foto_perfil);
 $stmt->fetch();
 $stmt->close();
 
@@ -95,6 +95,12 @@ $conn->close();
             margin-left: 270px;
             padding: 20px;
         }
+        .profile-img {
+            width: 150px; /* Tamanho da foto de perfil */
+            height: 150px; /* Tamanho da foto de perfil */
+            border-radius: 50%; /* Faz a foto ser circular */
+            object-fit: cover; /* Cobre a área da foto de perfil */
+        }
     </style>
 </head>
 <body>
@@ -113,10 +119,20 @@ $conn->close();
             <i class="fas fa-sign-out-alt"></i> Sair
         </button>
     </div>
-
     <div id="content">
         <h1>Bem-vindo, <?php echo htmlspecialchars($nome); ?>!</h1>
         <p>Esta é a página inicial do setor.</p>
+        
+        <!-- Exibir a foto do perfil -->
+        <div class="profile-details">
+            <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
+                <!-- Exibir a foto do perfil se ela existir e o arquivo estiver no diretório -->
+                <img class="profile-img" src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Setor">
+            <?php else: ?>
+                <!-- Foto padrão se a foto do perfil não existir -->
+                <img class="profile-img" src="imgs/setor-photo.png" alt="Foto do Setor">
+            <?php endif; ?>
+        </div>
     </div>
 </body>
 </html>

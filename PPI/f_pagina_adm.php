@@ -40,69 +40,92 @@ $conn->close();
     <title>Página do Administrador</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Forum:wght@700&display=swap" rel="stylesheet"> <!-- Importar a fonte Forum -->
+    <link href="https://fonts.googleapis.com/css2?family=Forum:wght@700&display=swap" rel="stylesheet">
     <style>
-        /* Estilos do corpo */
         body {
             background-color: #f8f9fa; /* Cor de fundo clara */
+            margin: 0; /* Remove a margem padrão do body */
+            padding: 0; /* Remove o padding padrão do body */
+            overflow-x: hidden; /* Evita rolagem horizontal */
         }
-        
+
         /* Barra lateral */
         .sidebar {
             width: 250px;
             padding: 20px;
-            background-color: green; /* Cor escura para a barra lateral */
-            height: 100vh;
+            background-color: #003d00; /* Verde escuro */
+            height: 100vh; /* Altura fixa para a barra lateral */
             position: fixed;
             color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             overflow-y: auto; /* Adiciona rolagem vertical se necessário */
+            top: 0;
+            left: 0;
+            z-index: 1000; /* Garante que a barra lateral esteja acima de outros elementos */
         }
 
         .sidebar .separator {
-            width: 100%;
-            height: 2px;
-            background-color: white;
+            border-bottom: 1px solid white; /* Linha separadora */
+            margin-bottom: 10px; /* Espaço abaixo da linha */
         }
 
         .sidebar .signe-text {
             font-family: 'Forum', sans-serif; /* Fonte Forum */
-            font-size: 45px;
-            font-weight: bold;
+            font-size: 3rem; /* Aumenta o tamanho do SIGNE */
+            color: white; /* Cor do texto SIGNE */
             text-align: center;
-            margin: 0; /* Remove margens para ajuste da linha */
+            margin-bottom: 10px; /* Espaço abaixo do SIGNE */
         }
 
-        .sidebar .btn-container {
-            width: 100%;
-        }
-
+        /* Estilo dos botões na barra lateral */
         .sidebar button {
             width: 100%;
             margin-bottom: 10px;
             border: none;
-            background-color: white; /* Fundo branco para os botões */
-            color: black; /* Texto preto para os botões */
+            background-color: white; /* Cor de fundo dos botões */
+            color: black; /* Cor do texto dos botões */
             text-align: left; /* Alinha o texto à esquerda */
             display: flex;
             align-items: center; /* Alinha ícones e texto verticalmente */
+            padding: 10px; /* Espaço interno do botão */
+            border-radius: 4px; /* Bordas arredondadas para os botões */
         }
 
         .sidebar button i {
             margin-right: 10px; /* Espaço entre o ícone e o texto */
         }
 
+        /* Estilo dos botões ao passar o mouse */
         .sidebar button:hover {
             background-color: black; /* Cor de fundo ao passar o mouse */
-            color: white; /* Texto branco ao passar o mouse */
+            color: white; /* Cor do texto ao passar o mouse */
+        }
+
+        /* Estilo dos botões no menu expansível de cadastro */
+        .expandable-menu button {
+            width: 100%;
+            margin-bottom: 5px;
+            border: none;
+            background-color: white; /* Cor de fundo dos botões */
+            color: black; /* Cor do texto dos botões */
+            text-align: left; /* Alinha o texto à esquerda */
+            display: flex;
+            align-items: center; /* Alinha ícones e texto verticalmente */
+            padding: 6px; /* Espaço interno do botão */
+            border-radius: 4px; /* Bordas arredondadas para os botões */
+        }
+
+        /* Estilo dos botões no menu expansível de cadastro ao passar o mouse */
+        .expandable-menu button:hover {
+            background-color: black; /* Cor de fundo ao passar o mouse */
+            color: white; /* Cor do texto ao passar o mouse */
         }
 
         /* Conteúdo principal */
         .main-content {
             margin-left: 250px; /* Espaço para a sidebar */
             padding: 20px;
+            height: 100vh; /* Altura fixa para o conteúdo principal */
+            overflow-y: auto; /* Adiciona rolagem vertical ao conteúdo principal */
         }
 
         /* Container do cabeçalho */
@@ -117,7 +140,7 @@ $conn->close();
         }
 
         .header-container .logo {
-            max-width: 100px; /* Tamanho da logo */
+            max-width: 120px; /* Tamanho da logo na área de conteúdo */
             height: auto;
         }
 
@@ -136,101 +159,93 @@ $conn->close();
         }
 
         .profile-info img {
-            width: 80px; /* Tamanho da foto do perfil */
-            height: 80px;
-            border-radius: 50%; /* Faz a imagem ser circular */
-            margin-right: 20px; /* Espaço entre a foto e o nome */
+            width: 60px; /* Tamanho da foto do perfil */
+            height: 60px; /* Tamanho da foto do perfil */
+            object-fit: cover; /* Faz a foto ter formato quadrado */
+            border-radius: 4px; /* Bordas arredondadas para a foto */
+            margin-right: 10px; /* Espaço entre a foto e o nome */
         }
 
-        .profile-info .profile-details {
+        .profile-details {
             font-size: 1.2rem; /* Tamanho da fonte do nome */
             font-family: 'Forum', sans-serif; /* Fonte Forum */
             font-weight: bold; /* Fonte em negrito */
         }
 
-        /* Menu expansível de cadastro */
-        #cadastrar-opcoes {
-            display: none;
-            position: absolute; /* Posiciona o menu acima dos outros elementos */
-            margin-top: 10px; /* Espaçamento adicional abaixo do botão */
-            left: 0;
-            width: 100%;
-            background-color: white; /* Fundo branco para os botões internos */
-            padding: 10px 0;
-            z-index: 1000; /* Garante que o menu esteja acima de outros elementos */
-        }
-
-        #cadastrar-opcoes button {
-            width: 100%;
-            margin-bottom: 5px;
+        /* Menu expansível */
+        .expandable-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            margin-top: 20px; /* Espaço acima do menu expansível */
         }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <div class="separator mb-3"></div> <!-- Linha acima do SIGNE com espaçamento abaixo -->
+        <div class="separator mb-3"></div>
         <div class="signe-text">SIGNE</div>
-        <div class="separator mt-3 mb-3"></div> <!-- Linha abaixo do SIGNE com espaçamento acima e abaixo -->
-        <div class="btn-container"> <!-- Contêiner para os botões -->
-            <button class="btn btn-primary" onclick="location.href='f_pagina_adm.php'">
-                <i class="fas fa-home"></i> Início
-            </button>
-            <button class="btn btn-primary" onclick="toggleOptions()">
+        <div class="separator mt-3 mb-3"></div>
+        <button onclick="location.href='f_pagina_adm.php'">
+            <i class="fas fa-home"></i> Início
+        </button>
+        <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
             <i id="toggle-icon" class="fas fa-plus"></i> Cadastrar
-            </button>
-            <div id="cadastrar-opcoes">
-                <button class="btn btn-secondary">
+        </button>
+        <!-- Menu expansível com Bootstrap -->
+        <div id="expandable-menu" class="collapse expandable-container">
+            <div class="expandable-menu">
+                <button onclick="location.href='cadastrar_adm.php'">
                     <i class="fas fa-plus"></i> Cadastrar Administrador
                 </button>
-                <button class="btn btn-secondary">
+                <button onclick="location.href='cadastrar_curso.php'">
                     <i class="fas fa-plus"></i> Cadastrar Curso
                 </button>
-                <button class="btn btn-secondary">
+                <button onclick="location.href='cadastrar_disciplina.php'">
                     <i class="fas fa-plus"></i> Cadastrar Disciplina
                 </button>
-                <button class="btn btn-secondary">
+                <button onclick="location.href='cadastrar_docente.php'">
                     <i class="fas fa-plus"></i> Cadastrar Docente
                 </button>
-                <button class="btn btn-secondary">
+                <button onclick="location.href='cadastrar_setor.php'">
                     <i class="fas fa-plus"></i> Cadastrar Setor
                 </button>
-                <button class="btn btn-secondary">
+                <button onclick="location.href='cadastrar_turma.php'">
                     <i class="fas fa-plus"></i> Cadastrar Turma
                 </button>
             </div>
-            <button class="btn btn-primary" onclick="location.href='gerar_boletim.php'">
-                <i class="fas fa-file-alt"></i> Gerar Boletim
-            </button>
-            <button class="btn btn-primary" onclick="location.href='gerar_slide.php'">
-                <i class="fas fa-sliders-h"></i> Gerar Slide Pré Conselho
-            </button>
-            <button class="btn btn-primary" onclick="location.href='listar.php'">
-                <i class="fas fa-list"></i> Listar
-            </button>
-            <button class="btn btn-primary" onclick="location.href='meu_perfil.php'">
-                <i class="fas fa-user"></i> Meu Perfil
-            </button>
-            <button class="btn btn-danger" onclick="location.href='sair.php'">
-                <i class="fas fa-sign-out-alt"></i> Sair
-            </button>
         </div>
+        <button onclick="location.href='gerar_boletim.php'">
+            <i class="fas fa-file-alt"></i> Gerar Boletim
+        </button>
+        <button onclick="location.href='gerar_slide.php'">
+            <i class="fas fa-sliders-h"></i> Gerar Slide Pré Conselho
+        </button>
+        <button onclick="location.href='listar.php'">
+            <i class="fas fa-list"></i> Listar
+        </button>
+        <button onclick="location.href='meu_perfil.php'">
+            <i class="fas fa-user"></i> Meu Perfil
+        </button>
+        <button class="btn btn-danger" onclick="location.href='sair.php'">
+            <i class="fas fa-sign-out-alt"></i> Sair
+        </button>
     </div>
 
     <div class="main-content">
         <div class="container">
-            <div class="header-container d-flex align-items-center">
+            <div class="header-container">
                 <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
-                <div class="title">Página do Administrador</div>
+                <div class="title ms-3">Página do Administrador</div>
                 <div class="ms-auto d-flex align-items-center">
-                    <div class="profile-info">
+                    <div class="profile-info d-flex align-items-center">
                         <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
-                            <!-- Exibir a foto do perfil se ela existir e o arquivo estiver no diretório -->
                             <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador">
                         <?php else: ?>
-                            <!-- Foto padrão se a foto do perfil não existir -->
                             <img src="imgs/admin-photo.png" alt="Foto do Administrador">
                         <?php endif; ?>
-                        <div class="profile-details">
+                        <div class="profile-details ms-2">
                             <span><?php echo htmlspecialchars($nome); ?></span>
                         </div>
                     </div>
@@ -239,54 +254,6 @@ $conn->close();
         </div>
     </div>
 
-    <script>
-        function toggleOptions() {
-            var options = document.getElementById('cadastrar-opcoes');
-            var icon = document.getElementById('toggle-icon');
-            if (options.style.display === 'none' || options.style.display === '') {
-                options.style.display = 'block';
-                icon.classList.remove('fa-plus');
-                icon.classList.add('fa-minus');
-            } else {
-                options.style.display = 'none';
-                icon.classList.remove('fa-minus');
-                icon.classList.add('fa-plus');
-            }
-        }
-
-        // Adiciona eventos de clique aos botões do menu de cadastro
-        document.addEventListener('DOMContentLoaded', function() {
-            var cadastrarAdmBtn = document.querySelector('#cadastrar-opcoes button:nth-child(1)');
-            cadastrarAdmBtn.addEventListener('click', function() {
-                window.location.href = 'cadastrar_adm.php';
-            });
-
-            var cadastrarCursoBtn = document.querySelector('#cadastrar-opcoes button:nth-child(2)');
-            cadastrarCursoBtn.addEventListener('click', function() {
-                window.location.href = 'cadastrar_curso.php';
-            });
-
-            var cadastrarDisciplinaBtn = document.querySelector('#cadastrar-opcoes button:nth-child(3)');
-            cadastrarDisciplinaBtn.addEventListener('click', function() {
-                window.location.href = 'cadastrar_disciplina.php';
-            });
-
-            var cadastrarDocenteBtn = document.querySelector('#cadastrar-opcoes button:nth-child(4)');
-            cadastrarDocenteBtn.addEventListener('click', function() {
-                window.location.href = 'cadastrar_docente.php';
-            });
-
-            var cadastrarSetorBtn = document.querySelector('#cadastrar-opcoes button:nth-child(5)');
-            cadastrarSetorBtn.addEventListener('click', function() {
-                window.location.href = 'cadastrar_setor.php';
-            });
-
-            var cadastrarTurmaBtn = document.querySelector('#cadastrar-opcoes button:nth-child(6)');
-            cadastrarTurmaBtn.addEventListener('click', function() {
-                window.location.href = 'cadastrar_turma.php';
-            });
-        });
-
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

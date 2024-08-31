@@ -32,48 +32,83 @@ if ($conn->connect_error) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_setor'])) {
     $local = $_POST['local'];
     $nome = $_POST['nome'];
+    $email = $_POST['email'];
     $cpf = $_POST['cpf'];
     $senha = $_POST['senha'];
-    $email = $_POST['email']; // Adicionando o e-mail
 
     // Verificar se os campos não estão vazios
-    if (!empty($local) && !empty($nome) && !empty($cpf) && !empty($senha) && !empty($email)) {
+    if (!empty($local) && !empty($nome) && !empty($email) && !empty($cpf) && !empty($senha)) {
         // Hash da senha
         $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
 
-        // Iniciar uma transação
-        $conn->begin_transaction();
-        
-        try {
-            // Inserir na tabela 'usuarios'
-            $stmt_usuario = $conn->prepare('INSERT INTO usuarios (username, email, password_hash, tipo) VALUES (?, ?, ?, ?)');
-            $stmt_usuario->bind_param('ssss', $nome, $email, $senha_hash, $tipo);
+        // Caminho para upload da foto de perfil
+        $upload_dir = 'uploads/';
+        $foto_perfil_path = '';
+
+        if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+            $foto_perfil_name = basename($_FILES['photo']['name']);
+            $foto_perfil_path = $upload_dir . $foto_perfil_name;
             
-            $tipo = 'setor'; // Definindo o tipo de usuário como 'setor'
-
-            if (!$stmt_usuario->execute()) {
-                throw new Exception('Erro ao cadastrar usuário: ' . $stmt_usuario->error);
+            if ($_FILES['photo']['size'] > 5000000) {
+                echo 'Erro: O arquivo é muito grande!';
+            } else {
+                if (!move_uploaded_file($_FILES['photo']['tmp_name'], $foto_perfil_path)) {
+                    echo 'Erro ao fazer upload da foto!';
+                    $foto_perfil_path = '';
+                }
             }
-
-            // Inserir na tabela 'setores'
-            $stmt_setor = $conn->prepare('INSERT INTO setores (local, nome, cpf, senha, email) VALUES (?, ?, ?, ?, ?)');
-            $stmt_setor->bind_param('sssss', $local, $nome, $cpf, $senha_hash, $email);
-
-            if (!$stmt_setor->execute()) {
-                throw new Exception('Erro ao cadastrar setor: ' . $stmt_setor->error);
-            }
-
-            // Confirmar a transação
-            $conn->commit();
-            echo 'Setor e usuário cadastrados com sucesso!';
-        } catch (Exception $e) {
-            // Reverter a transação em caso de erro
-            $conn->rollback();
-            echo 'Erro: ' . $e->getMessage();
         }
 
-        $stmt_setor->close();
-        $stmt_usuario->close();
+        // Verificar se o email já está registrado na tabela setores
+        $stmt_setores_check = $conn->prepare('SELECT id FROM setores WHERE email = ?');
+        $stmt_setores_check->bind_param('s', $email);
+        $stmt_setores_check->execute();
+        $stmt_setores_check->store_result();
+
+        if ($stmt_setores_check->num_rows > 0) {
+            echo 'O email já está registrado como Setor!';
+        } else {
+            // Verificar se o email já está registrado na tabela usuarios
+            $stmt_usuarios_check = $conn->prepare('SELECT id FROM usuarios WHERE email = ?');
+            $stmt_usuarios_check->bind_param('s', $email);
+            $stmt_usuarios_check->execute();
+            $stmt_usuarios_check->store_result();
+
+            if ($stmt_usuarios_check->num_rows > 0) {
+                echo 'O email já está registrado como Usuário!';
+            } else {
+                // Inserir o setor na tabela setores
+                $stmt_setor = $conn->prepare('INSERT INTO setores (local, nome, email, cpf, senha) VALUES (?, ?, ?, ?, ?)');
+                $stmt_setor->bind_param('sssss', $local, $nome, $email, $cpf, $senha_hash);
+
+                if ($stmt_setor->execute()) {
+                    $setor_id = $stmt_setor->insert_id;
+
+                    // Inserir o usuário na tabela usuarios com a foto de perfil
+                    $username = $nome;
+                    $tipo = 'setor';
+
+                    $stmt_usuario = $conn->prepare('INSERT INTO usuarios (username, email, password_hash, tipo, foto_perfil) VALUES (?, ?, ?, ?, ?)');
+                    $stmt_usuario->bind_param('sssss', $username, $email, $senha_hash, $tipo, $foto_perfil_path);
+
+                    if ($stmt_usuario->execute()) {
+                        echo 'Setor cadastrado com sucesso!';
+                    } else {
+                        echo 'Erro ao cadastrar usuário: ' . $stmt_usuario->error;
+                    }
+
+                    $stmt_usuario->close();
+                } else {
+                    echo 'Erro ao cadastrar setor: ' . $stmt_setor->error;
+                }
+
+                $stmt_setor->close();
+            }
+
+            $stmt_usuarios_check->close();
+        }
+
+        $stmt_setores_check->close();
     } else {
         echo 'Todos os campos são obrigatórios!';
     }
@@ -81,8 +116,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_setor'])) {
 
 $conn->close();
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -94,7 +127,7 @@ $conn->close();
 <body>
     <h1>Cadastrar Setor</h1>
 
-    <form action="cadastrar_setor.php" method="post">
+    <form action="cadastrar_setor.php" method="post" enctype="multipart/form-data">
         <label for="local">Local:</label>
         <input type="text" id="local" name="local" required>
         
@@ -109,6 +142,9 @@ $conn->close();
         
         <label for="senha">Senha:</label>
         <input type="password" id="senha" name="senha" required>
+
+        <label for="photo">Foto de Perfil:</label>
+        <input type="file" id="photo" name="photo" accept="image/*" required><br>
         
         <input type="submit" name="cadastrar_setor" value="Cadastrar Setor">
     </form>
@@ -117,4 +153,3 @@ $conn->close();
     </p>
 </body>
 </html>
-

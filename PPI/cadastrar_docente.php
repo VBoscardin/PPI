@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) 
     $email = $_POST['email'];
     $cpf = $_POST['cpf'];
     $senha = $_POST['senha'];
-    $disciplinas = $_POST['disciplinas']; // Array de IDs de disciplinas
+    $disciplinas = isset($_POST['disciplinas']) ? $_POST['disciplinas'] : []; // Verificação de existência
 
     // Verificar se os campos não estão vazios
     if (!empty($nome) && !empty($email) && !empty($cpf) && !empty($senha)) {
@@ -162,10 +162,22 @@ $mysqli->close();
         }
     </style>
 </head>
+<script>
+    function validateForm() {
+        var checkboxes = document.querySelectorAll('input[name="disciplinas[]"]');
+        var checkedOne = Array.prototype.slice.call(checkboxes).some(x => x.checked);
+
+        if (!checkedOne) {
+            alert("Por favor, selecione pelo menos uma disciplina.");
+            return false; // Impede o envio do formulário
+        }
+        return true; // Permite o envio do formulário
+    }
+</script>
 <body>
     <h1>Cadastrar Docente</h1>
 
-    <form action="cadastrar_docente.php" method="post" enctype="multipart/form-data">
+    <form action="cadastrar_docente.php" method="post" enctype="multipart/form-data" onsubmit="return validateForm();">
         <label for="nome">Nome:</label>
         <input type="text" id="nome" name="nome" required>
         
@@ -179,14 +191,14 @@ $mysqli->close();
         <input type="password" id="senha" name="senha" required>
         
         <label for="photo">Foto de Perfil:</label>
-        <input type="file" id="photo" name="photo" accept="image/*"><br>
+        <input type="file" id="photo" name="photo" accept="image/*" required><br>
 
         <fieldset>
             <legend>Disciplinas:</legend>
             <?php foreach ($disciplinas as $disciplina): ?>
                 <div class="checkbox-group">
-                    <input type="checkbox" id="disciplina_<?php echo htmlspecialchars($disciplina['id']); ?>" name="disciplinas[]" value="<?php echo htmlspecialchars($disciplina['id']); ?>">
-                    <label for="disciplina_<?php echo htmlspecialchars($disciplina['id']); ?>">
+                    <input type="checkbox" id="disciplina_<?php echo htmlspecialchars($disciplina['id']); ?>" name="disciplinas[]" value="<?php echo htmlspecialchars($disciplina['id']); ?>" >
+                    <label for="disciplina_<?php echo htmlspecialchars($disciplina['id']); ?>" >
                         <?php echo htmlspecialchars($disciplina['nome']); ?>
                     </label>
                 </div>
