@@ -1,64 +1,87 @@
-/* Estilos do corpo */
 body {
     background-color: #f8f9fa; /* Cor de fundo clara */
+    margin: 0; /* Remove a margem padrão do body */
+    padding: 0; /* Remove o padding padrão do body */
+    overflow-x: hidden; /* Evita rolagem horizontal */
 }
 
 /* Barra lateral */
 .sidebar {
     width: 250px;
     padding: 20px;
-    background-color: green; /* Cor escura para a barra lateral */
-    height: 100vh;
+    background-color: #003d00; /* Verde escuro */
+    height: 100vh; /* Altura fixa para a barra lateral */
     position: fixed;
     color: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     overflow-y: auto; /* Adiciona rolagem vertical se necessário */
+    top: 0;
+    left: 0;
+    z-index: 1000; /* Garante que a barra lateral esteja acima de outros elementos */
 }
 
 .sidebar .separator {
-    width: 100%;
-    height: 2px;
-    background-color: white;
+    border-bottom: 1px solid white; /* Linha separadora */
+    margin-bottom: 10px; /* Espaço abaixo da linha */
 }
 
 .sidebar .signe-text {
-    font-family: 'Forum', sans-serif; /* Fonte Forum */
-    font-size: 45px;
-    font-weight: bold;
+    font-family: 'Forum'; /* Fonte Forum */
+    font-size: 3rem; /* Aumenta o tamanho do SIGNE */
+    color: white; /* Cor do texto SIGNE */
     text-align: center;
-    margin: 0; /* Remove margens para ajuste da linha */
+    margin-bottom: 10px; /* Espaço abaixo do SIGNE */
 }
 
-.sidebar .btn-container {
-    width: 100%;
-}
-
+/* Estilo dos botões na barra lateral */
 .sidebar button {
     width: 100%;
     margin-bottom: 10px;
     border: none;
-    background-color: white; /* Fundo branco para os botões */
-    color: black; /* Texto preto para os botões */
+    background-color: white; /* Cor de fundo dos botões */
+    color: black; /* Cor do texto dos botões */
     text-align: left; /* Alinha o texto à esquerda */
     display: flex;
     align-items: center; /* Alinha ícones e texto verticalmente */
+    padding: 10px; /* Espaço interno do botão */
+    border-radius: 4px; /* Bordas arredondadas para os botões */
 }
 
 .sidebar button i {
     margin-right: 10px; /* Espaço entre o ícone e o texto */
 }
 
+/* Estilo dos botões ao passar o mouse */
 .sidebar button:hover {
     background-color: black; /* Cor de fundo ao passar o mouse */
-    color: white; /* Texto branco ao passar o mouse */
+    color: white; /* Cor do texto ao passar o mouse */
+}
+
+/* Estilo dos botões no menu expansível de cadastro */
+.expandable-menu button {
+    width: 100%;
+    margin-bottom: 5px;
+    border: none;
+    background-color: white; /* Cor de fundo dos botões */
+    color: black; /* Cor do texto dos botões */
+    text-align: left; /* Alinha o texto à esquerda */
+    display: flex;
+    align-items: center; /* Alinha ícones e texto verticalmente */
+    padding: 6px; /* Espaço interno do botão */
+    border-radius: 4px; /* Bordas arredondadas para os botões */
+}
+
+/* Estilo dos botões no menu expansível de cadastro ao passar o mouse */
+.expandable-menu button:hover {
+    background-color: black; /* Cor de fundo ao passar o mouse */
+    color: white; /* Cor do texto ao passar o mouse */
 }
 
 /* Conteúdo principal */
 .main-content {
     margin-left: 250px; /* Espaço para a sidebar */
     padding: 20px;
+    height: 100vh; /* Altura fixa para o conteúdo principal */
+    overflow-y: auto; /* Adiciona rolagem vertical ao conteúdo principal */
 }
 
 /* Container do cabeçalho */
@@ -73,7 +96,7 @@ body {
 }
 
 .header-container .logo {
-    max-width: 100px; /* Tamanho da logo */
+    max-width: 120px; /* Tamanho da logo na área de conteúdo */
     height: auto;
 }
 
@@ -92,31 +115,56 @@ body {
 }
 
 .profile-info img {
-    width: 80px; /* Tamanho da foto do perfil */
-    height: 80px;
-    border-radius: 50%; /* Faz a imagem ser circular */
-    margin-right: 20px; /* Espaço entre a foto e o nome */
+    width: 60px; /* Tamanho da foto do perfil */
+    height: 60px; /* Tamanho da foto do perfil */
+    object-fit: cover; /* Faz a foto ter formato quadrado */
+    border-radius: 4px; /* Bordas arredondadas para a foto */
+    margin-right: 10px; /* Espaço entre a foto e o nome */
 }
 
-.profile-info .profile-details {
+.profile-details {
     font-size: 1.2rem; /* Tamanho da fonte do nome */
-    font-family: 'Forum', sans-serif; /* Fonte Forum */
+    font-family: 'Forum'; /* Fonte Forum */
     font-weight: bold; /* Fonte em negrito */
 }
 
-/* Menu expansível de cadastro */
-#cadastrar-opcoes {
-    display: none;
-    position: absolute; /* Posiciona o menu acima dos outros elementos */
-    margin-top: 10px; /* Espaçamento adicional abaixo do botão */
-    left: 0;
-    width: 100%;
-    background-color: white; /* Fundo branco para os botões internos */
-    padding: 10px 0;
-    z-index: 1000; /* Garante que o menu esteja acima de outros elementos */
+/* Menu expansível */
+.expandable-container {
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    margin-top: 20px; /* Espaço acima do menu expansível */
+}
+.shadow-container {
+    border-radius: 8px; /* Bordas arredondadas */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Sombra leve */
+    padding: 20px; /* Espaço interno */
+}
+/* Estilo dos botões do formulário igual ao estilo dos botões da sidebar */
+.btn-light {
+    width: 20%; /* Garante que o botão ocupe toda a largura disponível */
+    margin-bottom: 10px; /* Espaço abaixo do botão */
+    border-radius: 4px; /* Bordas arredondadas para o botão */
+    color: white; /* Cor do texto do botão */
+    background-color: #003d00; /* Cor de fundo do botão */
+    display: flex;
+    align-items: center; /* Alinha ícones e texto verticalmente */
+    padding: 10px; /* Espaço interno do botão */
+    border: none; /* Remove a borda padrão */
 }
 
-#cadastrar-opcoes button {
-    width: 100%;
-    margin-bottom: 5px;
+.btn-light:hover {
+    background-color: green; /* Cor de fundo ao passar o mouse */
+    color: white; /* Cor do texto ao passar o mouse */
+}
+.title-text {
+    font-family: 'Forum'; /* Fonte Forum */
+    font-size: 3rem; /* Aumenta o tamanho do SIGNE */
+    color: white; /* Cor do texto SIGNE */
+    text-align: center;
+    margin-bottom: 10px; /* Espaço abaixo do SIGNE */
+}
+.title {
+    font-family: 'Forum', sans-serif; /* Ajusta a fonte para "Forum" */
+    font-size: 1.1rem; /* Ajusta o tamanho da fonte conforme necessário */
 }

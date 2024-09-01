@@ -78,9 +78,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_adm'])) {
         $message = 'Todos os campos são obrigatórios!';
     }
 }
+// Obter o nome e a foto do perfil do administrador
+$stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
+$stmt->bind_param("s", $_SESSION['email']);
+$stmt->execute();
+$stmt->bind_result($nome, $foto_perfil);
+$stmt->fetch();
+$stmt->close();
 
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -90,61 +98,113 @@ $conn->close();
     <title>Cadastrar Administrador</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
     <div class="sidebar">
-        <div class="logo-container">
-            <img src="imgs/logo_turmas.png" alt="Logo">
+        <div class="separator mb-3"></div>
+        <div class="signe-text">SIGNE</div>
+        <div class="separator mt-3 mb-3"></div>
+        <button onclick="location.href='f_pagina_adm.php'">
+            <i class="fas fa-home"></i> Início
+        </button>
+        <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
+            <i id="toggle-icon" class="fas fa-plus"></i> Cadastrar
+        </button>
+        <!-- Menu expansível com Bootstrap -->
+        <div id="expandable-menu" class="collapse expandable-container">
+            <div class="expandable-menu">
+                <button onclick="location.href='cadastrar_adm.php'">
+                    <i class="fas fa-plus"></i> Cadastrar Administrador
+                </button>
+                <button onclick="location.href='cadastrar_curso.php'">
+                    <i class="fas fa-plus"></i> Cadastrar Curso
+                </button>
+                <button onclick="location.href='cadastrar_disciplina.php'">
+                    <i class="fas fa-plus"></i> Cadastrar Disciplina
+                </button>
+                <button onclick="location.href='cadastrar_docente.php'">
+                    <i class="fas fa-plus"></i> Cadastrar Docente
+                </button>
+                <button onclick="location.href='cadastrar_setor.php'">
+                    <i class="fas fa-plus"></i> Cadastrar Setor
+                </button>
+                <button onclick="location.href='cadastrar_turma.php'">
+                    <i class="fas fa-plus"></i> Cadastrar Turma
+                </button>
+            </div>
         </div>
-        <button onclick="location.href='inicio.php'">Início</button>
-        <button class="cadastrar-button" onclick="toggleOptions()">Cadastrar</button>
-        <div id="cadastrar-opcoes">
-            <button onclick="location.href='cadastrar_adm.php'">Cadastrar Administrador</button>
-            <button onclick="location.href='cadastrar_curso.php'">Cadastrar Curso</button>
-            <button onclick="location.href='cadastrar_disciplina.php'">Cadastrar Disciplina</button>
-            <button onclick="location.href='cadastrar_docente.php'">Cadastrar Docente</button>
-            <button onclick="location.href='cadastrar_setor.php'">Cadastrar Setor</button>
-            <button onclick="location.href='cadastrar_turma.php'">Cadastrar Turma</button>
-            <button onclick="location.href='f_pagina_adm.php'">Voltar para Início</button>
-        </div>
-        <button onclick="location.href='gerar_boletim.php'">Gerar Boletim</button>
-        <button onclick="location.href='gerar_slide.php'">Gerar Slide Pré Conselho</button>
-        <button onclick="location.href='listar.php'">Listar</button>
-        <button onclick="location.href='meu_perfil.php'">Meu Perfil</button>
-        <button onclick="location.href='sair.php'">Sair</button>
+        <button onclick="location.href='gerar_boletim.php'">
+            <i class="fas fa-file-alt"></i> Gerar Boletim
+        </button>
+        <button onclick="location.href='gerar_slide.php'">
+            <i class="fas fa-sliders-h"></i> Gerar Slide Pré Conselho
+        </button>
+        <button onclick="location.href='listar.php'">
+            <i class="fas fa-list"></i> Listar
+        </button>
+        <button onclick="location.href='meu_perfil.php'">
+            <i class="fas fa-user"></i> Meu Perfil
+        </button>
+        <button class="btn btn-danger" onclick="location.href='sair.php'">
+            <i class="fas fa-sign-out-alt"></i> Sair
+        </button>
     </div>
 
-    <div id="content">
-        <h1>Cadastrar Administrador</h1>
-        <?php if ($message): ?>
-            <p><?php echo htmlspecialchars($message); ?></p>
-        <?php endif; ?>
-        <form action="cadastrar_adm.php" method="post" enctype="multipart/form-data">
-            <label for="username">Nome de Usuário:</label>
-            <input type="text" id="username" name="username" required><br>
+    <div class="main-content">
+        <div class="container">
+            <div class="header-container">
+                <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
+                <div class="title ms-3">Cadastrar Administrador</div>
+                <div class="ms-auto d-flex align-items-center">
+                    <div class="profile-info d-flex align-items-center">
+                        <div class="profile-details me-2">
+                            <span><?php echo htmlspecialchars($nome); ?></span>
+                        </div>
+                        <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
+                            <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador">
+                        <?php else: ?>
+                            <img src="imgs/admin-photo.png" alt="Foto do Administrador">
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required><br>
+        <!-- Container do Formulário -->
+        <div class="container mt-4">
+            <div class="card shadow-container">
+                <div class="card-body">
+                    <form action="cadastrar_adm.php" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Nome de Usuário:</label>
+                            <input type="text" id="username" name="username" class="form-control" required>
+                        </div>
 
-            <label for="password">Senha:</label>
-            <input type="password" id="password" name="password" required><br>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email:</label>
+                            <input type="email" id="email" name="email" class="form-control" required>
+                        </div>
 
-            <label for="photo">Foto de Perfil:</label>
-            <input type="file" id="photo" name="photo" accept="image/*" required><br>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Senha:</label>
+                            <input type="password" id="password" name="password" class="form-control" required>
+                        </div>
 
-            <input type="submit" name="cadastrar_adm" value="Cadastrar Administrador">
-        </form>
+                        <div class="mb-3">
+                            <label for="photo" class="form-label">Foto de Perfil:</label>
+                            <input type="file" id="photo" name="photo" class="form-control" accept="image/*" required>
+                        </div>
+
+                        <button type="submit" name="cadastrar_adm" class="btn btn-light">
+                            Cadastrar Administrador
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script>
-        function toggleOptions() {
-            var options = document.getElementById('cadastrar-opcoes');
-            if (options.style.display === 'none' || options.style.display === '') {
-                options.style.display = 'block';
-            } else {
-                options.style.display = 'none';
-            }
-        }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

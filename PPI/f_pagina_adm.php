@@ -41,146 +41,7 @@ $conn->close();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Forum:wght@700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa; /* Cor de fundo clara */
-            margin: 0; /* Remove a margem padrão do body */
-            padding: 0; /* Remove o padding padrão do body */
-            overflow-x: hidden; /* Evita rolagem horizontal */
-        }
-
-        /* Barra lateral */
-        .sidebar {
-            width: 250px;
-            padding: 20px;
-            background-color: #003d00; /* Verde escuro */
-            height: 100vh; /* Altura fixa para a barra lateral */
-            position: fixed;
-            color: white;
-            overflow-y: auto; /* Adiciona rolagem vertical se necessário */
-            top: 0;
-            left: 0;
-            z-index: 1000; /* Garante que a barra lateral esteja acima de outros elementos */
-        }
-
-        .sidebar .separator {
-            border-bottom: 1px solid white; /* Linha separadora */
-            margin-bottom: 10px; /* Espaço abaixo da linha */
-        }
-
-        .sidebar .signe-text {
-            font-family: 'Forum', sans-serif; /* Fonte Forum */
-            font-size: 3rem; /* Aumenta o tamanho do SIGNE */
-            color: white; /* Cor do texto SIGNE */
-            text-align: center;
-            margin-bottom: 10px; /* Espaço abaixo do SIGNE */
-        }
-
-        /* Estilo dos botões na barra lateral */
-        .sidebar button {
-            width: 100%;
-            margin-bottom: 10px;
-            border: none;
-            background-color: white; /* Cor de fundo dos botões */
-            color: black; /* Cor do texto dos botões */
-            text-align: left; /* Alinha o texto à esquerda */
-            display: flex;
-            align-items: center; /* Alinha ícones e texto verticalmente */
-            padding: 10px; /* Espaço interno do botão */
-            border-radius: 4px; /* Bordas arredondadas para os botões */
-        }
-
-        .sidebar button i {
-            margin-right: 10px; /* Espaço entre o ícone e o texto */
-        }
-
-        /* Estilo dos botões ao passar o mouse */
-        .sidebar button:hover {
-            background-color: black; /* Cor de fundo ao passar o mouse */
-            color: white; /* Cor do texto ao passar o mouse */
-        }
-
-        /* Estilo dos botões no menu expansível de cadastro */
-        .expandable-menu button {
-            width: 100%;
-            margin-bottom: 5px;
-            border: none;
-            background-color: white; /* Cor de fundo dos botões */
-            color: black; /* Cor do texto dos botões */
-            text-align: left; /* Alinha o texto à esquerda */
-            display: flex;
-            align-items: center; /* Alinha ícones e texto verticalmente */
-            padding: 6px; /* Espaço interno do botão */
-            border-radius: 4px; /* Bordas arredondadas para os botões */
-        }
-
-        /* Estilo dos botões no menu expansível de cadastro ao passar o mouse */
-        .expandable-menu button:hover {
-            background-color: black; /* Cor de fundo ao passar o mouse */
-            color: white; /* Cor do texto ao passar o mouse */
-        }
-
-        /* Conteúdo principal */
-        .main-content {
-            margin-left: 250px; /* Espaço para a sidebar */
-            padding: 20px;
-            height: 100vh; /* Altura fixa para o conteúdo principal */
-            overflow-y: auto; /* Adiciona rolagem vertical ao conteúdo principal */
-        }
-
-        /* Container do cabeçalho */
-        .header-container {
-            background-color: white;
-            border-radius: 8px; /* Bordas arredondadas */
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Sombra leve */
-            padding: 20px;
-            margin-bottom: 20px; /* Espaço abaixo do container */
-            display: flex;
-            align-items: center;
-        }
-
-        .header-container .logo {
-            max-width: 120px; /* Tamanho da logo na área de conteúdo */
-            height: auto;
-        }
-
-        .header-container .title {
-            font-size: 2rem; /* Tamanho do título */
-            font-weight: bold;
-            margin-bottom: 0; /* Remove a margem inferior do título */
-            margin-left: 20px; /* Espaço entre logo e título */
-        }
-
-        /* Informações do perfil */
-        .profile-info {
-            display: flex;
-            align-items: center;
-            margin-left: 20px; /* Distância adicional entre a foto e o nome */
-        }
-
-        .profile-info img {
-            width: 60px; /* Tamanho da foto do perfil */
-            height: 60px; /* Tamanho da foto do perfil */
-            object-fit: cover; /* Faz a foto ter formato quadrado */
-            border-radius: 4px; /* Bordas arredondadas para a foto */
-            margin-right: 10px; /* Espaço entre a foto e o nome */
-        }
-
-        .profile-details {
-            font-size: 1.2rem; /* Tamanho da fonte do nome */
-            font-family: 'Forum', sans-serif; /* Fonte Forum */
-            font-weight: bold; /* Fonte em negrito */
-        }
-
-        /* Menu expansível */
-        .expandable-container {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            padding: 10px;
-            margin-top: 20px; /* Espaço acima do menu expansível */
-        }
-    </style>
+    <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
     <div class="sidebar">
@@ -240,14 +101,14 @@ $conn->close();
                 <div class="title ms-3">Página do Administrador</div>
                 <div class="ms-auto d-flex align-items-center">
                     <div class="profile-info d-flex align-items-center">
+                        <div class="profile-details me-2">
+                            <span><?php echo htmlspecialchars($nome); ?></span>
+                        </div>
                         <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
                             <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador">
                         <?php else: ?>
                             <img src="imgs/admin-photo.png" alt="Foto do Administrador">
                         <?php endif; ?>
-                        <div class="profile-details ms-2">
-                            <span><?php echo htmlspecialchars($nome); ?></span>
-                        </div>
                     </div>
                 </div>
             </div>
