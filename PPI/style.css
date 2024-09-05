@@ -142,7 +142,7 @@ body {
 }
 /* Estilo dos botões do formulário igual ao estilo dos botões da sidebar */
 .btn-light {
-    width: 20%; /* Garante que o botão ocupe toda a largura disponível */
+    width: 15%; /* Garante que o botão ocupe toda a largura disponível */
     margin-bottom: 10px; /* Espaço abaixo do botão */
     border-radius: 4px; /* Bordas arredondadas para o botão */
     color: white; /* Cor do texto do botão */

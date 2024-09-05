@@ -13,26 +13,32 @@ if ($_SESSION['user_type'] !== 'administrador') {
     exit();
 }
 
-// Conectar ao banco de dados
-$servername = "localhost";
-$db_username = "root";
-$db_password = "";
-$dbname = "bd_ppi";
-
-$mysqli = new mysqli($servername, $db_username, $db_password, $dbname);
+include 'config.php'; // Inclua o arquivo de configuração
 
 // Verificar conexão
+if ($conn->connect_error) {
+    die('Conexão falhou: ' . $conn->connect_error);
+}
+
+// Obter o nome e a foto do perfil do administrador
+$stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
+$stmt->bind_param("s", $_SESSION['email']);
+$stmt->execute();
+$stmt->bind_result($nome, $foto_perfil);
+$stmt->fetch();
+$stmt->close();
+
+// Conectar ao banco de dados
+$host = 'localhost';
+$db = 'bd_ppi';
+$user = 'root'; // Seu usuário do banco de dados
+$pass = ''; // Sua senha do banco de dados
+
+$mysqli = new mysqli($host, $user, $pass, $db);
+
 if ($mysqli->connect_error) {
     die('Conexão falhou: ' . $mysqli->connect_error);
 }
-
-// Código da página para administradores aqui
-$stmt = $mysqli->prepare("SELECT username FROM usuarios WHERE email = ?");
-$stmt->bind_param("s", $_SESSION['email']);
-$stmt->execute();
-$stmt->bind_result($nome);
-$stmt->fetch();
-$stmt->close();
 
 // Função para cadastrar docente
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) {
@@ -40,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) 
     $email = $_POST['email'];
     $cpf = $_POST['cpf'];
     $senha = $_POST['senha'];
-    $disciplinas = isset($_POST['disciplinas']) ? $_POST['disciplinas'] : []; // Verificação de existência
+    $disciplinas = isset($_POST['disciplinas']) ? $_POST['disciplinas'] : [];
 
     // Verificar se os campos não estão vazios
     if (!empty($nome) && !empty($email) && !empty($cpf) && !empty($senha)) {
@@ -56,10 +62,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) 
             $foto_perfil_path = $upload_dir . $foto_perfil_name;
             
             if ($_FILES['photo']['size'] > 5000000) {
-                echo 'Erro: O arquivo é muito grande!';
+                $_SESSION['mensagem_erro'] = 'Erro: O arquivo é muito grande!';
             } else {
                 if (!move_uploaded_file($_FILES['photo']['tmp_name'], $foto_perfil_path)) {
-                    echo 'Erro ao fazer upload da foto!';
+                    $_SESSION['mensagem_erro'] = 'Erro ao fazer upload da foto!';
                     $foto_perfil_path = '';
                 }
             }
@@ -72,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) 
         $stmt_docentes_check->store_result();
 
         if ($stmt_docentes_check->num_rows > 0) {
-            echo 'O email já está registrado como docente!';
+            $_SESSION['mensagem_erro'] = 'O email já está registrado como docente!';
         } else {
             // Verificar se o email já está registrado na tabela usuarios
             $stmt_usuarios_check = $mysqli->prepare('SELECT id FROM usuarios WHERE email = ?');
@@ -81,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) 
             $stmt_usuarios_check->store_result();
 
             if ($stmt_usuarios_check->num_rows > 0) {
-                echo 'O email já está registrado como usuário!';
+                $_SESSION['mensagem_erro'] = 'O email já está registrado como usuário!';
             } else {
                 // Inserir o docente na tabela docentes
                 $stmt_docente = $mysqli->prepare('INSERT INTO docentes (nome, email, cpf, senha) VALUES (?, ?, ?, ?)');
@@ -91,21 +97,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) 
                     $docente_id = $stmt_docente->insert_id;
 
                     // Inserir o usuário na tabela usuarios com a foto de perfil
-                    $username = $nome; // Alterado para usar o nome
+                    $username = $nome;
                     $tipo = 'docente';
 
                     $stmt_usuario = $mysqli->prepare('INSERT INTO usuarios (username, email, password_hash, tipo, foto_perfil) VALUES (?, ?, ?, ?, ?)');
                     $stmt_usuario->bind_param('sssss', $username, $email, $senha_hash, $tipo, $foto_perfil_path);
 
                     if ($stmt_usuario->execute()) {
-                        echo 'Docente cadastrado com sucesso!';
+                        $_SESSION['mensagem_sucesso'] = 'Docente cadastrado com sucesso!';
                     } else {
-                        echo 'Erro ao cadastrar usuário: ' . $stmt_usuario->error;
+                        $_SESSION['mensagem_erro'] = 'Erro ao cadastrar usuário: ' . $stmt_usuario->error;
                     }
 
                     $stmt_usuario->close();
                 } else {
-                    echo 'Erro ao cadastrar docente: ' . $stmt_docente->error;
+                    $_SESSION['mensagem_erro'] = 'Erro ao cadastrar docente: ' . $stmt_docente->error;
                 }
 
                 // Associar disciplinas ao docente
@@ -126,12 +132,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) 
 
         $stmt_docentes_check->close();
     } else {
-        echo 'Todos os campos são obrigatórios!';
+        $_SESSION['mensagem_erro'] = 'Todos os campos são obrigatórios!';
     }
+
+    header("Location: cadastrar_docente.php"); // Redirecionar para evitar reenvio do formulário
+    exit();
 }
 
 // Obter lista de disciplinas para checkboxes
-$disciplinas_result = $mysqli->query('SELECT id, nome FROM disciplinas');
+$query = 'SELECT disciplinas.id, disciplinas.nome AS disciplina_nome, cursos.nome AS curso_nome
+          FROM disciplinas
+          JOIN cursos ON disciplinas.curso_id = cursos.id';
+$disciplinas_result = $mysqli->query($query);
 $disciplinas = [];
 if ($disciplinas_result) {
     while ($row = $disciplinas_result->fetch_assoc()) {
@@ -148,67 +160,154 @@ $mysqli->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastrar Docente</title>
-    <style>
-        .checkbox-group {
-            margin-bottom: 10px;
-        }
-        input[type="checkbox"] {
-            margin-right: 10px;
-        }
-        fieldset {
-            border: 1px solid #ccc;
-            padding: 10px;
-            border-radius: 5px;
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet" type="text/css">
 </head>
-<script>
-    function validateForm() {
-        var checkboxes = document.querySelectorAll('input[name="disciplinas[]"]');
-        var checkedOne = Array.prototype.slice.call(checkboxes).some(x => x.checked);
-
-        if (!checkedOne) {
-            alert("Por favor, selecione pelo menos uma disciplina.");
-            return false; // Impede o envio do formulário
-        }
-        return true; // Permite o envio do formulário
-    }
-</script>
 <body>
-    <h1>Cadastrar Docente</h1>
+    
+    <div class="sidebar">
+        <div class="separator mb-3"></div>
+        <div class="signe-text">SIGNE</div>
+        <div class="separator mt-3 mb-3"></div>
 
-    <form action="cadastrar_docente.php" method="post" enctype="multipart/form-data" onsubmit="return validateForm();">
-        <label for="nome">Nome:</label>
-        <input type="text" id="nome" name="nome" required>
-        
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
-        
-        <label for="cpf">CPF:</label>
-        <input type="text" id="cpf" name="cpf" required>
-        
-        <label for="senha">Senha:</label>
-        <input type="password" id="senha" name="senha" required>
-        
-        <label for="photo">Foto de Perfil:</label>
-        <input type="file" id="photo" name="photo" accept="image/*" required><br>
+        <button onclick="location.href='f_pagina_adm.php'">
+            <i class="fas fa-home"></i> Início
+        </button>
 
-        <fieldset>
-            <legend>Disciplinas:</legend>
-            <?php foreach ($disciplinas as $disciplina): ?>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="disciplina_<?php echo htmlspecialchars($disciplina['id']); ?>" name="disciplinas[]" value="<?php echo htmlspecialchars($disciplina['id']); ?>" >
-                    <label for="disciplina_<?php echo htmlspecialchars($disciplina['id']); ?>" >
-                        <?php echo htmlspecialchars($disciplina['nome']); ?>
-                    </label>
+        <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
+            <i id="toggle-icon" class="fas fa-plus"></i> Cadastrar
+        </button>
+
+        <div id="expandable-menu" class="collapse expandable-container">
+            <div class="expandable-menu">
+                <button onclick="location.href='cadastrar_adm.php'">
+                    <i class="fas fa-plus"></i> Cadastrar Administrador
+                </button>
+                <button onclick="location.href='cadastrar_curso.php'">
+                    <i class="fas fa-plus"></i> Cadastrar Curso
+                </button>
+                <button onclick="location.href='cadastrar_disciplina.php'">
+                    <i class="fas fa-plus"></i> Cadastrar Disciplina
+                </button>
+                <button onclick="location.href='cadastrar_docente.php'">
+                    <i class="fas fa-plus"></i> Cadastrar Docente
+                </button>
+                <button onclick="location.href='cadastrar_setor.php'">
+                    <i class="fas fa-plus"></i> Cadastrar Setor
+                </button>
+                <button onclick="location.href='cadastrar_turma.php'">
+                    <i class="fas fa-plus"></i> Cadastrar Turma
+                </button>
+            </div>
+        </div>
+
+        <button onclick="location.href='gerar_boletim.php'">
+            <i class="fas fa-file-alt"></i> Gerar Boletim
+        </button>
+        <button onclick="location.href='gerar_slide.php'">
+            <i class="fas fa-sliders-h"></i> Gerar Slide Pré Conselho
+        </button>
+        <button onclick="location.href='listar.php'">
+            <i class="fas fa-list"></i> Listar
+        </button>
+        <button onclick="location.href='meu_perfil.php'">
+            <i class="fas fa-user"></i> Meu Perfil
+        </button>
+        <button class="btn btn-danger" onclick="location.href='sair.php'">
+            <i class="fas fa-sign-out-alt"></i> Sair
+        </button>
+    </div>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="header-container">
+                <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
+                <div class="title ms-3">Cadastrar Docente</div>
+                <div class="ms-auto d-flex align-items-center">
+                    <div class="profile-info d-flex align-items-center">
+                        <div class="profile-details me-2">
+                            <span><?php echo htmlspecialchars($nome); ?></span>
+                        </div>
+                        <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
+                            <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador" class="profile-photo">
+                        <?php else: ?>
+                            <img src="imgs/admin-photo.png" alt="Foto do Administrador" class="profile-photo">
+                        <?php endif; ?>
+                    </div>
                 </div>
-            <?php endforeach; ?>
-        </fieldset>
-        
-        <input type="submit" name="cadastrar_docente" value="Cadastrar Docente">
-    </form>
-    <p>
-        <a href="f_pagina_adm.php">Voltar para Início</a>
-    </p>
+            </div>
+        </div>
+
+        <div class="container mt-4">
+            <div class="card shadow-container">
+                <div class="card-body">
+                    <form action="cadastrar_docente.php" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="nome" class="form-label">Nome:</label>
+                            <input type="text" id="nome" name="nome" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email:</label>
+                            <input type="email" id="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cpf" class="form-label">CPF:</label>
+                            <input type="text" id="cpf" name="cpf" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="senha" class="form-label">Senha:</label>
+                            <input type="password" id="senha" name="senha" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="photo" class="form-label">Foto de Perfil:</label>
+                            <input type="file" id="photo" name="photo" class="form-control">
+                        </div>
+                        
+                        <fieldset>
+                            <legend>Disciplinas Associadas</legend>
+                            <?php foreach ($disciplinas as $disciplina): ?>
+                                <div class="form-check checkbox-group">
+                                    <input type="checkbox" id="disciplina-<?php echo $disciplina['id']; ?>" name="disciplinas[]" value="<?php echo $disciplina['id']; ?>" class="form-check-input">
+                                    <label for="disciplina-<?php echo $disciplina['id']; ?>" class="form-check-label">
+                                        <?php echo htmlspecialchars($disciplina['disciplina_nome']); ?> (<?php echo htmlspecialchars($disciplina['curso_nome']); ?>)
+                                    </label>
+                                </div>
+                            <?php endforeach; ?>
+                        </fieldset>
+
+                        <button type="submit" name="cadastrar_docente" class="btn btn-light">Cadastrar Docente</button>
+                            <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
+                            <div id="mensagem-sucesso" class="alert alert-success">
+                                <?php echo $_SESSION['mensagem_sucesso']; ?>
+                            </div>
+                            <?php unset($_SESSION['mensagem_sucesso']); ?>
+                            <?php elseif (isset($_SESSION['mensagem_erro'])): ?>
+                            <div id="mensagem-erro" class="alert alert-danger">
+                                <?php echo $_SESSION['mensagem_erro']; ?>
+                            </div>
+                            <?php unset($_SESSION['mensagem_erro']); ?>
+                            <?php endif; ?>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Remover a mensagem de sucesso ou erro após 5 segundos
+        setTimeout(function() {
+            var mensagemSucesso = document.getElementById('mensagem-sucesso');
+            var mensagemErro = document.getElementById('mensagem-erro');
+            if (mensagemSucesso) {
+                mensagemSucesso.style.display = 'none';
+            }
+            if (mensagemErro) {
+                mensagemErro.style.display = 'none';
+            }
+        }, 5000); // 5 segundos
+    </script>
 </body>
 </html>

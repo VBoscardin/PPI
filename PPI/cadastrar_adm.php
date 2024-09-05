@@ -7,20 +7,31 @@ if (!isset($_SESSION['email']) || $_SESSION['user_type'] !== 'administrador') {
     exit();
 }
 
-// Conectar ao banco de dados
-$servername = "localhost";
-$db_username = "root";
-$db_password = "";
-$dbname = "bd_ppi";
-
-$conn = new mysqli($servername, $db_username, $db_password, $dbname);
+include 'config.php';
 
 // Verificar conexão
 if ($conn->connect_error) {
     die("Conexão falhou: " . $conn->connect_error);
 }
 
-$message = '';
+// Obter o nome e a foto do perfil do administrador
+$stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
+$stmt->bind_param("s", $_SESSION['email']);
+$stmt->execute();
+$stmt->bind_result($nome, $foto_perfil);
+$stmt->fetch();
+$stmt->close();
+
+$host = 'localhost';
+$db = 'bd_ppi';
+$user = 'root'; // Seu usuário do banco de dados
+$pass = ''; // Sua senha do banco de dados
+
+$mysqli = new mysqli($host, $user, $pass, $db);
+
+if ($mysqli->connect_error) {
+    die('Conexão falhou: ' . $mysqli->connect_error);
+}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_adm'])) {
     $username = trim($_POST['username']);
@@ -30,7 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_adm'])) {
 
     // Verificação de todos os campos obrigatórios
     if (!empty($username) && !empty($email) && !empty($password) && !empty($photo['name'])) {
-        $stmt = $conn->prepare('SELECT COUNT(*) FROM usuarios WHERE email = ?');
+        // Verificar se o email já está cadastrado
+        $stmt = $mysqli->prepare('SELECT COUNT(*) FROM usuarios WHERE email = ?');
         $stmt->bind_param('s', $email);
         $stmt->execute();
         $stmt->bind_result($email_existente);
@@ -38,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_adm'])) {
         $stmt->close();
 
         if ($email_existente > 0) {
-            $message = 'Erro: Este email já está cadastrado!';
+            $_SESSION['mensagem_erro'] = 'Erro ao cadastrar administrador: Este email já está cadastrado!';
         } else {
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
@@ -48,46 +60,46 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_adm'])) {
             if ($photo['error'] === UPLOAD_ERR_OK) {
                 $foto_perfil_name = basename($photo['name']);
                 $foto_perfil_path = $upload_dir . $foto_perfil_name;
-                
+
                 if ($photo['size'] > 5000000) {
-                    $message = 'Erro: O arquivo é muito grande!';
+                    $_SESSION['mensagem_erro'] = 'Erro ao cadastrar administrador: O arquivo é muito grande!';
                 } else {
                     if (!move_uploaded_file($photo['tmp_name'], $foto_perfil_path)) {
-                        $message = 'Erro ao fazer upload da foto!';
+                        $_SESSION['mensagem_erro'] = 'Erro ao cadastrar administrador: Falha ao fazer upload da foto!';
                         $foto_perfil_path = '';
                     }
                 }
             } else {
-                $message = 'Erro: Nenhum arquivo foi enviado ou houve um erro no envio!';
+                $_SESSION['mensagem_erro'] = 'Erro ao cadastrar administrador: Nenhum arquivo enviado ou erro no envio!';
             }
 
-            if (empty($message)) {
-                $stmt = $conn->prepare('INSERT INTO usuarios (username, email, password_hash, tipo, foto_perfil) VALUES (?, ?, ?, "administrador", ?)');
+            if (!isset($_SESSION['mensagem_erro'])) {
+                // Inserir o novo administrador no banco de dados
+                $stmt = $mysqli->prepare('INSERT INTO usuarios (username, email, password_hash, tipo, foto_perfil) VALUES (?, ?, ?, "administrador", ?)');
                 $stmt->bind_param('ssss', $username, $email, $password_hash, $foto_perfil_path);
 
                 if ($stmt->execute()) {
-                    $message = 'Administrador cadastrado com sucesso!';
+                    $_SESSION['mensagem_sucesso'] = 'Administrador cadastrado com sucesso!';
                 } else {
-                    $message = 'Erro ao cadastrar administrador: ' . $stmt->error;
+                    $_SESSION['mensagem_erro'] = 'Erro ao cadastrar administrador: ' . $stmt->error;
                 }
 
                 $stmt->close();
             }
         }
     } else {
-        $message = 'Todos os campos são obrigatórios!';
+        $_SESSION['mensagem_erro'] = 'Todos os campos são obrigatórios!';
     }
-}
-// Obter o nome e a foto do perfil do administrador
-$stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
-$stmt->bind_param("s", $_SESSION['email']);
-$stmt->execute();
-$stmt->bind_result($nome, $foto_perfil);
-$stmt->fetch();
-$stmt->close();
 
-$conn->close();
+    header("Location: cadastrar_adm.php"); // Redirecionar para evitar reenvio do formulário
+    exit();
+}
+
+$mysqli->close();
 ?>
+
+
+
 
 
 <!DOCTYPE html>
@@ -199,6 +211,21 @@ $conn->close();
                         <button type="submit" name="cadastrar_adm" class="btn btn-light">
                             Cadastrar Administrador
                         </button>
+                        <!-- Exibir mensagem de sucesso ou erro -->
+                            <!-- Exibir mensagem de sucesso ou erro -->
+                            <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
+                                <div id="mensagem-sucesso" class="alert alert-success mt-3">
+                                    <?php echo $_SESSION['mensagem_sucesso']; ?>
+                                </div>
+                                <?php unset($_SESSION['mensagem_sucesso']); ?>
+                            <?php elseif (isset($_SESSION['mensagem_erro'])): ?>
+                                <div id="mensagem-erro" class="alert alert-danger mt-3">
+                                    <?php echo $_SESSION['mensagem_erro']; ?>
+                                </div>
+                                <?php unset($_SESSION['mensagem_erro']); ?>
+                            <?php endif; ?>
+
+
                     </form>
                 </div>
             </div>
@@ -206,5 +233,18 @@ $conn->close();
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Remover a mensagem de sucesso ou erro após 5 segundos
+        setTimeout(function() {
+            var mensagemSucesso = document.getElementById('mensagem-sucesso');
+            var mensagemErro = document.getElementById('mensagem-erro');
+            if (mensagemSucesso) {
+                mensagemSucesso.style.display = 'none';
+            }
+            if (mensagemErro) {
+                mensagemErro.style.display = 'none';
+            }
+        }, 5000); // 5 segundos
+    </script>
 </body>
 </html>

@@ -8,13 +8,7 @@ if (!isset($_SESSION['email']) || $_SESSION['user_type'] !== 'administrador') {
     exit();
 }
 
-// Conectar ao banco de dados
-$servername = "localhost";
-$db_username = "root";
-$db_password = "";
-$dbname = "bd_ppi";
-
-$conn = new mysqli($servername, $db_username, $db_password, $dbname);
+include 'config.php';
 
 // Verificar conexão
 if ($conn->connect_error) {
