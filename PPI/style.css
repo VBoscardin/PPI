@@ -1,8 +1,16 @@
+html, body {
+    height: 100%; /* Garante que o HTML e o body ocupem a altura total da viewport */
+    margin: 0; /* Remove margens padrão */
+}
+
 body {
-    background-color: #f8f9fa; /* Cor de fundo clara */
-    margin: 0; /* Remove a margem padrão do body */
-    padding: 0; /* Remove o padding padrão do body */
     overflow-x: hidden; /* Evita rolagem horizontal */
+    overflow-y: scroll; /* Permite rolagem vertical */
+}
+
+.container-wrapper {
+    display: flex; /* Usado para colocar a sidebar e o conteúdo principal lado a lado */
+    min-height: 100vh; /* Garante que o contêiner ocupe a altura mínima da viewport */
 }
 
 /* Barra lateral */
@@ -10,21 +18,19 @@ body {
     width: 250px;
     padding: 20px;
     background-color: #003d00; /* Verde escuro */
-    height: 100vh; /* Altura fixa para a barra lateral */
-    position: fixed;
     color: white;
-    overflow-y: auto; /* Adiciona rolagem vertical se necessário */
+    position: absolute; /* Fixa a barra lateral em relação à viewport */
     top: 0;
-    left: 0;
+    bottom: 0; /* Garante que a sidebar se estenda até o fundo da viewport */
+    height: 100vh; /* Altura total da viewport */
     z-index: 1000; /* Garante que a barra lateral esteja acima de outros elementos */
 }
-
-.sidebar .separator {
+/* Separador e texto SIGNE */
+.separator {
     border-bottom: 1px solid white; /* Linha separadora */
-    margin-bottom: 10px; /* Espaço abaixo da linha */
 }
 
-.sidebar .signe-text {
+.signe-text {
     font-family: 'Forum'; /* Fonte Forum */
     font-size: 3rem; /* Aumenta o tamanho do SIGNE */
     color: white; /* Cor do texto SIGNE */
@@ -44,8 +50,10 @@ body {
     align-items: center; /* Alinha ícones e texto verticalmente */
     padding: 10px; /* Espaço interno do botão */
     border-radius: 4px; /* Bordas arredondadas para os botões */
+    
 }
 
+/* Espaço entre o ícone e o texto dos botões */
 .sidebar button i {
     margin-right: 10px; /* Espaço entre o ícone e o texto */
 }
@@ -80,10 +88,9 @@ body {
 .main-content {
     margin-left: 250px; /* Espaço para a sidebar */
     padding: 20px;
-    height: 100vh; /* Altura fixa para o conteúdo principal */
-    overflow-y: auto; /* Adiciona rolagem vertical ao conteúdo principal */
+    box-sizing: border-box; /* Inclui padding e border no cálculo da largura e altura */
+    flex: 1; /* Faz o conteúdo principal ocupar o espaço restante da tela */
 }
-
 /* Container do cabeçalho */
 .header-container {
     background-color: white;
@@ -93,6 +100,7 @@ body {
     margin-bottom: 20px; /* Espaço abaixo do container */
     display: flex;
     align-items: center;
+    
 }
 
 .header-container .logo {
@@ -135,14 +143,17 @@ body {
     padding: 10px;
     margin-top: 20px; /* Espaço acima do menu expansível */
 }
+
+/* Container com sombra */
 .shadow-container {
     border-radius: 8px; /* Bordas arredondadas */
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Sombra leve */
     padding: 20px; /* Espaço interno */
 }
+
 /* Estilo dos botões do formulário igual ao estilo dos botões da sidebar */
 .btn-light {
-    width: 15%; /* Garante que o botão ocupe toda a largura disponível */
+    width: relative; /* Garante que o botão ocupe toda a largura disponível */
     margin-bottom: 10px; /* Espaço abaixo do botão */
     border-radius: 4px; /* Bordas arredondadas para o botão */
     color: white; /* Cor do texto do botão */
@@ -153,18 +164,23 @@ body {
     border: none; /* Remove a borda padrão */
 }
 
+/* Estilo do botão ao passar o mouse */
 .btn-light:hover {
     background-color: green; /* Cor de fundo ao passar o mouse */
     color: white; /* Cor do texto ao passar o mouse */
 }
+
+/* Ajuste do título */
+.title {
+    font-family: 'Forum'; /* Ajusta a fonte para "Forum" */
+    font-size: 1.1rem; /* Ajusta o tamanho da fonte conforme necessário */
+}
+
+/* Estilo do texto de título */
 .title-text {
     font-family: 'Forum'; /* Fonte Forum */
     font-size: 3rem; /* Aumenta o tamanho do SIGNE */
     color: white; /* Cor do texto SIGNE */
     text-align: center;
     margin-bottom: 10px; /* Espaço abaixo do SIGNE */
-}
-.title {
-    font-family: 'Forum', sans-serif; /* Ajusta a fonte para "Forum" */
-    font-size: 1.1rem; /* Ajusta o tamanho da fonte conforme necessário */
 }

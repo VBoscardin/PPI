@@ -1,14 +1,7 @@
 <?php
 session_start();
 
-// Configurações do banco de dados
-$servername = "localhost";
-$db_username = "root";
-$db_password = "";
-$dbname = "bd_ppi";
-
-// Criar conexão
-$conn = new mysqli($servername, $db_username, $db_password, $dbname);
+include 'config.php';
 
 // Verificar conexão
 if ($conn->connect_error) {
