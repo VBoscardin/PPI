@@ -113,120 +113,123 @@ $mysqli->close();
     <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-    <div class="sidebar">
-        <div class="separator mb-3"></div>
-        <div class="signe-text">SIGNE</div>
-        <div class="separator mt-3 mb-3"></div>
-        <button onclick="location.href='f_pagina_adm.php'">
-            <i class="fas fa-home"></i> Início
-        </button>
-        <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
-            <i id="toggle-icon" class="fas fa-plus"></i> Cadastrar
-        </button>
-        <!-- Menu expansível com Bootstrap -->
-        <div id="expandable-menu" class="collapse expandable-container">
-            <div class="expandable-menu">
-                <button onclick="location.href='cadastrar_adm.php'">
-                    <i class="fas fa-plus"></i> Cadastrar Administrador
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Barra lateral -->
+            <div class="col-md-3 sidebar">
+                <div class="separator mb-3"></div>
+                <div class="signe-text">SIGNE</div>
+                <div class="separator mt-3 mb-3"></div>
+                <button onclick="location.href='f_pagina_adm.php'">
+                    <i class="fas fa-home"></i> Início
                 </button>
-                <button onclick="location.href='cadastrar_curso.php'">
-                    <i class="fas fa-plus"></i> Cadastrar Curso
+                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
+                    <i id="toggle-icon" class="fas fa-plus"></i> Cadastrar
                 </button>
-                <button onclick="location.href='cadastrar_disciplina.php'">
-                    <i class="fas fa-plus"></i> Cadastrar Disciplina
-                </button>
-                <button onclick="location.href='cadastrar_docente.php'">
-                    <i class="fas fa-plus"></i> Cadastrar Docente
-                </button>
-                <button onclick="location.href='cadastrar_setor.php'">
-                    <i class="fas fa-plus"></i> Cadastrar Setor
-                </button>
-                <button onclick="location.href='cadastrar_turma.php'">
-                    <i class="fas fa-plus"></i> Cadastrar Turma
-                </button>
-            </div>
-        </div>
-        <button onclick="location.href='gerar_boletim.php'">
-            <i class="fas fa-file-alt"></i> Gerar Boletim
-        </button>
-        <button onclick="location.href='gerar_slide.php'">
-            <i class="fas fa-sliders-h"></i> Gerar Slide Pré Conselho
-        </button>
-        <button onclick="location.href='listar.php'">
-            <i class="fas fa-list"></i> Listar
-        </button>
-        <button onclick="location.href='meu_perfil.php'">
-            <i class="fas fa-user"></i> Meu Perfil
-        </button>
-        <button class="btn btn-danger" onclick="location.href='sair.php'">
-            <i class="fas fa-sign-out-alt"></i> Sair
-        </button>
-    </div>
-
-    <div class="main-content">
-        <div class="container">
-            <div class="header-container">
-                <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
-                <div class="title ms-3">Cadastrar Administrador</div>
-                <div class="ms-auto d-flex align-items-center">
-                    <div class="profile-info d-flex align-items-center">
-                        <div class="profile-details me-2">
-                            <span><?php echo htmlspecialchars($nome); ?></span>
-                        </div>
-                        <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
-                            <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador">
-                        <?php else: ?>
-                            <img src="imgs/admin-photo.png" alt="Foto do Administrador">
-                        <?php endif; ?>
+                <!-- Menu expansível com Bootstrap -->
+                <div id="expandable-menu" class="collapse expandable-container">
+                    <div class="expandable-menu">
+                        <button onclick="location.href='cadastrar_adm.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Administrador
+                        </button>
+                        <button onclick="location.href='cadastrar_curso.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Curso
+                        </button>
+                        <button onclick="location.href='cadastrar_disciplina.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Disciplina
+                        </button>
+                        <button onclick="location.href='cadastrar_docente.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Docente
+                        </button>
+                        <button onclick="location.href='cadastrar_setor.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Setor
+                        </button>
+                        <button onclick="location.href='cadastrar_turma.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Turma
+                        </button>
                     </div>
                 </div>
+                <button onclick="location.href='gerar_boletim.php'">
+                    <i class="fas fa-file-alt"></i> Gerar Boletim
+                </button>
+                <button onclick="location.href='gerar_slide.php'">
+                    <i class="fas fa-sliders-h"></i> Gerar Slide Pré Conselho
+                </button>
+                <button onclick="location.href='listar.php'">
+                    <i class="fas fa-list"></i> Listar
+                </button>
+                <button onclick="location.href='meu_perfil.php'">
+                    <i class="fas fa-user"></i> Meu Perfil
+                </button>
+                <button class="btn btn-danger" onclick="location.href='sair.php'">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
             </div>
-        </div>
 
-        <!-- Container do Formulário -->
-        <div class="container mt-4">
-            <div class="card shadow-container">
-                <div class="card-body">
-                    <form action="cadastrar_adm.php" method="post" enctype="multipart/form-data">
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Nome de Usuário:</label>
-                            <input type="text" id="username" name="username" class="form-control" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email:</label>
-                            <input type="email" id="email" name="email" class="form-control" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Senha:</label>
-                            <input type="password" id="password" name="password" class="form-control" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="photo" class="form-label">Foto de Perfil:</label>
-                            <input type="file" id="photo" name="photo" class="form-control" accept="image/*" required>
-                        </div>
-
-                        <button type="submit" name="cadastrar_adm" class="btn btn-light">
-                            Cadastrar Administrador
-                        </button>
-                        <!-- Exibir mensagem de sucesso ou erro -->
-                            <!-- Exibir mensagem de sucesso ou erro -->
-                            <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
-                                <div id="mensagem-sucesso" class="alert alert-success mt-3">
-                                    <?php echo $_SESSION['mensagem_sucesso']; ?>
+            <!-- Conteúdo principal -->
+            <div class="col-md-9 main-content">
+                <div class="container">
+                    <div class="header-container">
+                        <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
+                        <div class="title ms-3">Cadastrar Administrador</div>
+                        <div class="ms-auto d-flex align-items-center">
+                            <div class="profile-info d-flex align-items-center">
+                                <div class="profile-details me-2">
+                                    <span><?php echo htmlspecialchars($nome); ?></span>
                                 </div>
-                                <?php unset($_SESSION['mensagem_sucesso']); ?>
-                            <?php elseif (isset($_SESSION['mensagem_erro'])): ?>
-                                <div id="mensagem-erro" class="alert alert-danger mt-3">
-                                    <?php echo $_SESSION['mensagem_erro']; ?>
+                                <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
+                                    <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador">
+                                <?php else: ?>
+                                    <img src="imgs/admin-photo.png" alt="Foto do Administrador">
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Container do Formulário -->
+                <div class="container mt-4">
+                    <div class="card shadow-container">
+                        <div class="card-body">
+                            <form action="cadastrar_adm.php" method="post" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Nome de Usuário:</label>
+                                    <input type="text" id="username" name="username" class="form-control" required>
                                 </div>
-                                <?php unset($_SESSION['mensagem_erro']); ?>
-                            <?php endif; ?>
 
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email:</label>
+                                    <input type="email" id="email" name="email" class="form-control" required>
+                                </div>
 
-                    </form>
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Senha:</label>
+                                    <input type="password" id="password" name="password" class="form-control" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="photo" class="form-label">Foto de Perfil:</label>
+                                    <input type="file" id="photo" name="photo" class="form-control" accept="image/*" required>
+                                </div>
+
+                                <button type="submit" name="cadastrar_adm" class="btn btn-light">
+                                    Cadastrar Administrador
+                                </button>
+                                <!-- Exibir mensagem de sucesso ou erro -->
+                                <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
+                                    <div id="mensagem-sucesso" class="alert alert-success mt-3">
+                                        <?php echo $_SESSION['mensagem_sucesso']; ?>
+                                    </div>
+                                    <?php unset($_SESSION['mensagem_sucesso']); ?>
+                                <?php elseif (isset($_SESSION['mensagem_erro'])): ?>
+                                    <div id="mensagem-erro" class="alert alert-danger mt-3">
+                                        <?php echo $_SESSION['mensagem_erro']; ?>
+                                    </div>
+                                    <?php unset($_SESSION['mensagem_erro']); ?>
+                                <?php endif; ?>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

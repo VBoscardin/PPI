@@ -1,179 +1,159 @@
 html, body {
-    height: 100%; /* Garante que o HTML e o body ocupem a altura total da viewport */
-    margin: 0; /* Remove margens padrão */
+    height: 100%;
+    margin: 0;
 }
 
 body {
-    overflow-x: hidden; /* Evita rolagem horizontal */
-    overflow-y: scroll; /* Permite rolagem vertical */
+    overflow-x: hidden;
+    overflow-y: scroll;
 }
 
-.container-wrapper {
-    display: flex; /* Usado para colocar a sidebar e o conteúdo principal lado a lado */
-    min-height: 100vh; /* Garante que o contêiner ocupe a altura mínima da viewport */
-}
-
-/* Barra lateral */
 .sidebar {
-    width: 250px;
-    padding: 20px;
-    background-color: #003d00; /* Verde escuro */
+    background-color: #003d00;
     color: white;
-    position: absolute; /* Fixa a barra lateral em relação à viewport */
-    top: 0;
-    bottom: 0; /* Garante que a sidebar se estenda até o fundo da viewport */
-    height: 100vh; /* Altura total da viewport */
-    z-index: 1000; /* Garante que a barra lateral esteja acima de outros elementos */
+    padding: 20px;
+    width: 250px;
+    min-height: 100vh;
 }
-/* Separador e texto SIGNE */
+
 .separator {
-    border-bottom: 1px solid white; /* Linha separadora */
+    border-bottom: 1px solid white;
 }
 
 .signe-text {
-    font-family: 'Forum'; /* Fonte Forum */
-    font-size: 3rem; /* Aumenta o tamanho do SIGNE */
-    color: white; /* Cor do texto SIGNE */
+    font-family: 'Forum';
+    font-size: 3rem;
+    color: white;
     text-align: center;
-    margin-bottom: 10px; /* Espaço abaixo do SIGNE */
+    margin-bottom: 10px;
 }
 
-/* Estilo dos botões na barra lateral */
 .sidebar button {
     width: 100%;
     margin-bottom: 10px;
     border: none;
-    background-color: white; /* Cor de fundo dos botões */
-    color: black; /* Cor do texto dos botões */
-    text-align: left; /* Alinha o texto à esquerda */
+    background-color: white;
+    color: black;
+    text-align: left;
     display: flex;
-    align-items: center; /* Alinha ícones e texto verticalmente */
-    padding: 10px; /* Espaço interno do botão */
-    border-radius: 4px; /* Bordas arredondadas para os botões */
-    
+    align-items: center;
+    padding: 10px;
+    border-radius: 4px;
 }
 
-/* Espaço entre o ícone e o texto dos botões */
 .sidebar button i {
-    margin-right: 10px; /* Espaço entre o ícone e o texto */
+    margin-right: 10px;
 }
 
-/* Estilo dos botões ao passar o mouse */
 .sidebar button:hover {
-    background-color: black; /* Cor de fundo ao passar o mouse */
-    color: white; /* Cor do texto ao passar o mouse */
+    background-color: black;
+    color: white;
 }
 
-/* Estilo dos botões no menu expansível de cadastro */
 .expandable-menu button {
     width: 100%;
     margin-bottom: 5px;
     border: none;
-    background-color: white; /* Cor de fundo dos botões */
-    color: black; /* Cor do texto dos botões */
-    text-align: left; /* Alinha o texto à esquerda */
-    display: flex;
-    align-items: center; /* Alinha ícones e texto verticalmente */
-    padding: 6px; /* Espaço interno do botão */
-    border-radius: 4px; /* Bordas arredondadas para os botões */
-}
-
-/* Estilo dos botões no menu expansível de cadastro ao passar o mouse */
-.expandable-menu button:hover {
-    background-color: black; /* Cor de fundo ao passar o mouse */
-    color: white; /* Cor do texto ao passar o mouse */
-}
-
-/* Conteúdo principal */
-.main-content {
-    margin-left: 250px; /* Espaço para a sidebar */
-    padding: 20px;
-    box-sizing: border-box; /* Inclui padding e border no cálculo da largura e altura */
-    flex: 1; /* Faz o conteúdo principal ocupar o espaço restante da tela */
-}
-/* Container do cabeçalho */
-.header-container {
     background-color: white;
-    border-radius: 8px; /* Bordas arredondadas */
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Sombra leve */
-    padding: 20px;
-    margin-bottom: 20px; /* Espaço abaixo do container */
+    color: black;
+    text-align: left;
     display: flex;
     align-items: center;
-    
+    padding: 6px;
+    border-radius: 4px;
 }
 
-.header-container .logo {
-    max-width: 120px; /* Tamanho da logo na área de conteúdo */
-    height: auto;
+.expandable-menu button:hover {
+    background-color: black;
+    color: white;
 }
 
-.header-container .title {
-    font-size: 2rem; /* Tamanho do título */
+.main-content {
+    padding: 20px;
+    padding-left: 15vh;
+    padding-right: 0px;
+    box-sizing: border-box;
+}
+
+.header-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    height: 20vh;
+}
+
+.logo {
+    max-width: 120px;
+    height: 15vh;
+}
+
+.title {
+    font-size: 2rem;
     font-weight: bold;
-    margin-bottom: 0; /* Remove a margem inferior do título */
-    margin-left: 20px; /* Espaço entre logo e título */
+    margin-bottom: 0;
+    margin-left: 20px;
 }
 
-/* Informações do perfil */
 .profile-info {
     display: flex;
     align-items: center;
-    margin-left: 20px; /* Distância adicional entre a foto e o nome */
+    margin-left: 20px;
 }
 
 .profile-info img {
-    width: 60px; /* Tamanho da foto do perfil */
-    height: 60px; /* Tamanho da foto do perfil */
-    object-fit: cover; /* Faz a foto ter formato quadrado */
-    border-radius: 4px; /* Bordas arredondadas para a foto */
-    margin-right: 10px; /* Espaço entre a foto e o nome */
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 10px;
 }
 
 .profile-details {
-    font-size: 1.2rem; /* Tamanho da fonte do nome */
-    font-family: 'Forum'; /* Fonte Forum */
-    font-weight: bold; /* Fonte em negrito */
+    font-size: 1.2rem;
+    font-family: 'Forum';
+    font-weight: bold;
 }
 
-/* Menu expansível */
 .expandable-container {
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     padding: 10px;
-    margin-top: 20px; /* Espaço acima do menu expansível */
+    margin-top: 20px;
 }
 
-/* Container com sombra */
 .shadow-container {
-    border-radius: 8px; /* Bordas arredondadas */
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Sombra leve */
-    padding: 20px; /* Espaço interno */
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
 }
 
-/* Estilo dos botões do formulário igual ao estilo dos botões da sidebar */
 .btn-light {
-    width: relative; /* Garante que o botão ocupe toda a largura disponível */
-    margin-bottom: 10px; /* Espaço abaixo do botão */
-    border-radius: 4px; /* Bordas arredondadas para o botão */
-    color: white; /* Cor do texto do botão */
-    background-color: #003d00; /* Cor de fundo do botão */
+    width: 100%;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    color: white;
+    width: auto;
+    background-color: #003d00;
     display: flex;
-    align-items: center; /* Alinha ícones e texto verticalmente */
-    padding: 10px; /* Espaço interno do botão */
-    border: none; /* Remove a borda padrão */
+    align-items: center;
+    padding: 10px;
+    border: none;
 }
 
-/* Estilo do botão ao passar o mouse */
 .btn-light:hover {
-    background-color: green; /* Cor de fundo ao passar o mouse */
-    color: white; /* Cor do texto ao passar o mouse */
+    background-color: green;
+    color: white;
 }
+
 
 /* Ajuste do título */
 .title {
     font-family: 'Forum'; /* Ajusta a fonte para "Forum" */
-    font-size: 1.1rem; /* Ajusta o tamanho da fonte conforme necessário */
+    font-size: 1.5rem; /* Ajusta o tamanho da fonte conforme necessário */
 }
 
 /* Estilo do texto de título */

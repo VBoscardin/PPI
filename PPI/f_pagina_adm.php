@@ -39,73 +39,76 @@ $conn->close();
     <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-    <div class="page-wrapper">
-        <div class="sidebar">
-            <div class="separator mb-3"></div>
-            <div class="signe-text">SIGNE</div>
-            <div class="separator mt-3 mb-3"></div>
-            <button onclick="location.href='f_pagina_adm.php'">
-                <i class="fas fa-home"></i> Início
-            </button>
-            <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
-                <i id="toggle-icon" class="fas fa-plus"></i> Cadastrar
-            </button>
-            <!-- Menu expansível com Bootstrap -->
-            <div id="expandable-menu" class="collapse expandable-container">
-                <div class="expandable-menu">
-                    <button onclick="location.href='cadastrar_adm.php'">
-                        <i class="fas fa-plus"></i> Cadastrar Administrador
-                    </button>
-                    <button onclick="location.href='cadastrar_curso.php'">
-                        <i class="fas fa-plus"></i> Cadastrar Curso
-                    </button>
-                    <button onclick="location.href='cadastrar_disciplina.php'">
-                        <i class="fas fa-plus"></i> Cadastrar Disciplina
-                    </button>
-                    <button onclick="location.href='cadastrar_docente.php'">
-                        <i class="fas fa-plus"></i> Cadastrar Docente
-                    </button>
-                    <button onclick="location.href='cadastrar_setor.php'">
-                        <i class="fas fa-plus"></i> Cadastrar Setor
-                    </button>
-                    <button onclick="location.href='cadastrar_turma.php'">
-                        <i class="fas fa-plus"></i> Cadastrar Turma
-                    </button>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Barra lateral -->
+            <div class="col-md-3 sidebar">
+                <div class="separator mb-3"></div>
+                <div class="signe-text">SIGNE</div>
+                <div class="separator mt-3 mb-3"></div>
+                <button onclick="location.href='f_pagina_adm.php'">
+                    <i class="fas fa-home"></i> Início
+                </button>
+                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
+                    <i id="toggle-icon" class="fas fa-plus"></i> Cadastrar
+                </button>
+                <!-- Menu expansível com Bootstrap -->
+                <div id="expandable-menu" class="collapse expandable-container">
+                    <div class="expandable-menu">
+                        <button onclick="location.href='cadastrar_adm.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Administrador
+                        </button>
+                        <button onclick="location.href='cadastrar_curso.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Curso
+                        </button>
+                        <button onclick="location.href='cadastrar_disciplina.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Disciplina
+                        </button>
+                        <button onclick="location.href='cadastrar_docente.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Docente
+                        </button>
+                        <button onclick="location.href='cadastrar_setor.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Setor
+                        </button>
+                        <button onclick="location.href='cadastrar_turma.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Turma
+                        </button>
+                    </div>
                 </div>
+                <button onclick="location.href='gerar_boletim.php'">
+                    <i class="fas fa-file-alt"></i> Gerar Boletim
+                </button>
+                <button onclick="location.href='gerar_slide.php'">
+                    <i class="fas fa-sliders-h"></i> Gerar Slide Pré Conselho
+                </button>
+                <button onclick="location.href='listar.php'">
+                    <i class="fas fa-list"></i> Listar
+                </button>
+                <button onclick="location.href='meu_perfil.php'">
+                    <i class="fas fa-user"></i> Meu Perfil
+                </button>
+                <button class="btn btn-danger" onclick="location.href='sair.php'">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
             </div>
-            <button onclick="location.href='gerar_boletim.php'">
-                <i class="fas fa-file-alt"></i> Gerar Boletim
-            </button>
-            <button onclick="location.href='gerar_slide.php'">
-                <i class="fas fa-sliders-h"></i> Gerar Slide Pré Conselho
-            </button>
-            <button onclick="location.href='listar.php'">
-                <i class="fas fa-list"></i> Listar
-            </button>
-            <button onclick="location.href='meu_perfil.php'">
-                <i class="fas fa-user"></i> Meu Perfil
-            </button>
-            <button class="btn btn-danger" onclick="location.href='sair.php'">
-                <i class="fas fa-sign-out-alt"></i> Sair
-            </button>
-        </div>
 
-        <div class="main-content">
-            <div class="container">
-                <div class="header-container">
-                    <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
-                    <div class="title ms-3">Página do Administrador</div>
-
-                    <div class="ms-auto d-flex align-items-center">
-                        <div class="profile-info d-flex align-items-center">
-                            <div class="profile-details me-2">
-                                <span><?php echo htmlspecialchars($nome); ?></span>
+            <!-- Conteúdo principal -->
+            <div class="col-md-9 main-content">
+                <div class="container">
+                    <div class="header-container">
+                        <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
+                        <div class="title ms-3">Página do Administrador</div>
+                        <div class="ms-auto d-flex align-items-center">
+                            <div class="profile-info d-flex align-items-center">
+                                <div class="profile-details me-2">
+                                    <span><?php echo htmlspecialchars($nome); ?></span>
+                                </div>
+                                <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
+                                    <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador">
+                                <?php else: ?>
+                                    <img src="imgs/admin-photo.png" alt="Foto do Administrador">
+                                <?php endif; ?>
                             </div>
-                            <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
-                                <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador">
-                            <?php else: ?>
-                                <img src="imgs/admin-photo.png" alt="Foto do Administrador">
-                            <?php endif; ?>
                         </div>
                     </div>
                 </div>

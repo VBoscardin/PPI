@@ -8,7 +8,7 @@ if (!isset($_SESSION['email']) || !isset($_SESSION['user_type'])) {
     exit();
 }
 
-// Verificar se o usuário é um administrador
+// Verificar se o usuário é um setor
 if ($_SESSION['user_type'] !== 'setor') {
     // Redirecionar para uma página de acesso negado ou qualquer outra página
     header("Location: f_login.php");
@@ -23,6 +23,15 @@ if ($conn->connect_error) {
 }
 
 $success_message = ''; // Variável para a mensagem de sucesso
+$nome = ''; // Inicializar a variável $nome
+
+// Consultar o nome do setor e a foto de perfil
+$stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
+$stmt->bind_param("s", $_SESSION['email']);
+$stmt->execute();
+$stmt->bind_result($nome, $foto_perfil);
+$stmt->fetch();
+$stmt->close();
 
 // Função para cadastrar discente
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['foto'])) {
@@ -87,131 +96,119 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastrar Discentes</title>
+    <title>Cadastrar Discente</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa; /* Cor de fundo clara */
-        }
-        .sidebar {
-            width: 250px;
-            padding: 20px;
-            background-color: #343a40; /* Cor escura para a barra lateral */
-            height: 100vh;
-            position: fixed;
-            color: white;
-        }
-        .sidebar button {
-            width: 100%;
-            margin-bottom: 10px;
-            border: none;
-            color: white;
-            text-align: left; /* Alinha o texto à esquerda */
-            display: flex;
-            align-items: center; /* Alinha ícones e texto verticalmente */
-        }
-        .sidebar button i {
-            margin-right: 10px; /* Espaço entre o ícone e o texto */
-        }
-        .sidebar button:hover {
-            background-color: #495057; /* Cor de fundo ao passar o mouse */
-        }
-        .sidebar .logo-container {
-            text-align: center; /* Centraliza a imagem */
-            margin-bottom: 20px; /* Espaço abaixo do logo */
-        }
-        .sidebar .logo-container img {
-            max-width: 200px; /* Define um tamanho máximo para a imagem */
-            height: auto; /* Mantém a proporção da imagem */
-        }
-        #content {
-            margin-left: 270px;
-            padding: 20px;
-        }
-        .form-container {
-            background-color: white; /* Fundo branco para o formulário */
-            padding: 20px;
-            border-radius: 8px; /* Bordas arredondadas */
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Sombra leve */
-        }
-        .alert {
-            margin-bottom: 20px; /* Espaço abaixo da mensagem */
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Forum:wght@700&display=swap" rel="stylesheet">
+    <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-    <div class="sidebar">
-        <div class="logo-container">
-            <img src="imgs/logo_turmas.png" alt="Logo">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Barra lateral -->
+            <div class="col-md-3 sidebar">
+                <div class="separator mb-3"></div>
+                <div class="signe-text">SIGNE</div>
+                <div class="separator mt-3 mb-3"></div>
+                <button onclick="location.href='f_pagina_setor.php'">
+                    <i class="fas fa-home"></i> Início
+                </button>
+                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
+                    <i id="toggle-icon" class="fas fa-plus"></i> Cadastrar
+                </button>
+                <!-- Menu expansível com Bootstrap -->
+                <div id="expandable-menu" class="collapse expandable-container">
+                    <div class="expandable-menu">
+                        <button onclick="location.href='cadastrar_discentes.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Discente
+                        </button>
+                    </div>
+                </div>
+                <button onclick="location.href='meu_perfil.php'">
+                    <i class="fas fa-user"></i> Meu Perfil
+                </button>
+                <button class="btn btn-danger" onclick="location.href='sair.php'">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </div>
+
+            <!-- Conteúdo principal -->
+            <div class="col-md-9 main-content">
+                <div class="container">
+                    <div class="header-container">
+                        <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
+                        <div class="title ms-3">Cadastrar Discente</div>
+                        <div class="ms-auto d-flex align-items-center">
+                            <div class="profile-info d-flex align-items-center">
+                                <div class="profile-details me-2">
+                                    <span><?php echo htmlspecialchars($nome); ?></span>
+                                </div>
+                                <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
+                                    <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador">
+                                <?php else: ?>
+                                    <img src="imgs/setor-photo.png" alt="Foto do Setor">
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="container mt-4">
+                    <div class="card shadow-container">
+                        <div class="card-body">
+                            <form action="cadastrar_discentes.php" method="post" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="numero_matricula" class="form-label">Número da Matrícula:</label>
+                                    <input type="text" id="numero_matricula" name="numero_matricula" class="form-control" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="nome" class="form-label">Nome:</label>
+                                    <input type="text" id="nome" name="nome" class="form-control" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="cidade" class="form-label">Cidade:</label>
+                                    <input type="text" id="cidade" name="cidade" class="form-control" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">E-mail:</label>
+                                    <input type="email" id="email" name="email" class="form-control" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="genero" class="form-label">Gênero:</label>
+                                    <select id="genero" name="genero" class="form-select" required>
+                                        <option value="Masculino">Masculino</option>
+                                        <option value="Feminino">Feminino</option>
+                                        <option value="Outro">Outro</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="data_nascimento" class="form-label">Data de Nascimento:</label>
+                                    <input type="date" id="data_nascimento" name="data_nascimento" class="form-control" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="observacoes" class="form-label">Observações:</label>
+                                    <textarea id="observacoes" name="observacoes" class="form-control"></textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="foto" class="form-label">Foto:</label>
+                                    <input type="file" id="foto" name="foto" class="form-control" accept="image/*">
+                                </div>
+
+                                <button type="submit" class="btn btn-light">Cadastrar Discentes</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <button class="btn btn-primary" onclick="location.href='f_pagina_setor.php'">
-            <i class="fas fa-home"></i> Início
-        </button>
-        <button class="btn btn-primary" onclick="location.href='cadastrar_discentes.php'">
-            <i class="fas fa-user-plus"></i> Cadastrar Discentes
-        </button>
-        <button class="btn btn-danger" onclick="location.href='sair.php'">
-            <i class="fas fa-sign-out-alt"></i> Sair
-        </button>
     </div>
 
-    <div id="content">
-        <h1>Cadastrar Discentes</h1>
-        <div class="form-container">
-            <?php if (!empty($success_message)): ?>
-                <div class="alert alert-success" role="alert">
-                    <?php echo htmlspecialchars($success_message); ?>
-                </div>
-            <?php endif; ?>
-            <form action="cadastrar_discentes.php" method="post" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label for="numero_matricula" class="form-label">Número da Matrícula:</label>
-                    <input type="text" id="numero_matricula" name="numero_matricula" class="form-control" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="nome" class="form-label">Nome:</label>
-                    <input type="text" id="nome" name="nome" class="form-control" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="cidade" class="form-label">Cidade:</label>
-                    <input type="text" id="cidade" name="cidade" class="form-control" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="email" class="form-label">E-mail:</label>
-                    <input type="email" id="email" name="email" class="form-control" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="genero" class="form-label">Gênero:</label>
-                    <select id="genero" name="genero" class="form-select" required>
-                        <option value="Masculino">Masculino</option>
-                        <option value="Feminino">Feminino</option>
-                        <option value="Outro">Outro</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label for="data_nascimento" class="form-label">Data de Nascimento:</label>
-                    <input type="date" id="data_nascimento" name="data_nascimento" class="form-control" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="observacoes" class="form-label">Observações:</label>
-                    <textarea id="observacoes" name="observacoes" class="form-control"></textarea>
-                </div>
-
-                <div class="mb-3">
-                    <label for="foto" class="form-label">Foto:</label>
-                    <input type="file" id="foto" name="foto" class="form-control" accept="image/*">
-                </div>
-
-                <button type="submit" class="btn btn-primary">Cadastrar Discentes</button>
-            </form>
-        </div>
-    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

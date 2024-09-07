@@ -41,92 +41,63 @@ $conn->close();
     <title>Página do Setor</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Forum&display=swap" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa; /* Cor de fundo clara */
-        }
-        .sidebar {
-            width: 250px;
-            padding: 20px;
-            background-color: #343a40; /* Cor escura para a barra lateral */
-            height: 100vh;
-            position: fixed;
-            color: white;
-        }
-        .sidebar button {
-            width: 100%;
-            margin-bottom: 10px;
-            border: none;
-            color: white;
-            text-align: left; /* Alinha o texto à esquerda */
-            display: flex;
-            align-items: center; /* Alinha ícones e texto verticalmente */
-        }
-        .sidebar button i {
-            margin-right: 10px; /* Espaço entre o ícone e o texto */
-        }
-        .sidebar button:hover {
-            background-color: #495057; /* Cor de fundo ao passar o mouse */
-        }
-        .logo-container {
-            display: flex;
-            align-items: center; /* Alinha a logo e a sigla verticalmente */
-            margin-bottom: 20px; /* Espaço abaixo do logo */
-        }
-        .logo-container img {
-            max-width: 75px; /* Define um tamanho máximo menor para a imagem */
-            height: auto; /* Mantém a proporção da imagem */
-            margin-right: 10px; /* Espaço entre a imagem e a sigla */
-        }
-        .logo-container .sigla {
-            font-size: 35px; /* Tamanho da fonte da sigla */
-            font-weight: bold; /* Deixa a sigla em negrito */
-            color: white; /* Cor da sigla para combinar com o texto da sidebar */
-            font-family: 'Forum', sans-serif; /* Aplica a fonte Forum */
-        }
-        #content {
-            margin-left: 270px;
-            padding: 20px;
-        }
-        .profile-img {
-            width: 150px; /* Tamanho da foto de perfil */
-            height: 150px; /* Tamanho da foto de perfil */
-            border-radius: 50%; /* Faz a foto ser circular */
-            object-fit: cover; /* Cobre a área da foto de perfil */
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Forum:wght@700&display=swap" rel="stylesheet">
+    <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-    <div class="sidebar">
-        <div class="logo-container">
-            <img src="imgs/logo_if.png" alt="Logo">
-            <span class="sigla">SIGNE</span>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Barra lateral -->
+            <div class="col-md-3 sidebar">
+                <div class="separator mb-3"></div>
+                <div class="signe-text">SIGNE</div>
+                <div class="separator mt-3 mb-3"></div>
+                <button onclick="location.href='f_pagina_setor.php'">
+                    <i class="fas fa-home"></i> Início
+                </button>
+                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
+                    <i id="toggle-icon" class="fas fa-plus"></i> Cadastrar
+                </button>
+                <!-- Menu expansível com Bootstrap -->
+                <div id="expandable-menu" class="collapse expandable-container">
+                    <div class="expandable-menu">
+                        <button onclick="location.href='cadastrar_discentes.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Discente
+                        </button>
+                    </div>
+                </div>
+                <button onclick="location.href='meu_perfil.php'">
+                    <i class="fas fa-user"></i> Meu Perfil
+                </button>
+                <button class="btn btn-danger" onclick="location.href='sair.php'">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </div>
+
+            <!-- Conteúdo principal -->
+            <div class="col-md-9 main-content">
+                <div class="container">
+                    <div class="header-container">
+                        <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
+                        <div class="title ms-3">Página do Setor</div>
+                        <div class="ms-auto d-flex align-items-center">
+                            <div class="profile-info d-flex align-items-center">
+                                <div class="profile-details me-2">
+                                    <span><?php echo htmlspecialchars($nome); ?></span>
+                                </div>
+                                <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
+                                    <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador">
+                                <?php else: ?>
+                                    <img src="imgs/setor-photo.png" alt="Foto do Setor">
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <button class="btn btn-primary" onclick="location.href='f_pagina_setor.php'">
-            <i class="fas fa-home"></i> Início
-        </button>
-        <button class="btn btn-primary" onclick="location.href='cadastrar_discentes.php'">
-            <i class="fas fa-user-plus"></i> Cadastrar Discentes
-        </button>
-        <button class="btn btn-danger" onclick="location.href='sair.php'">
-            <i class="fas fa-sign-out-alt"></i> Sair
-        </button>
     </div>
-    <div id="content">
-        <h1>Bem-vindo, <?php echo htmlspecialchars($nome); ?>!</h1>
-        <p>Esta é a página inicial do setor.</p>
-        
-        <!-- Exibir a foto do perfil -->
-        <div class="profile-details">
-            <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
-                <!-- Exibir a foto do perfil se ela existir e o arquivo estiver no diretório -->
-                <img class="profile-img" src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Setor">
-            <?php else: ?>
-                <!-- Foto padrão se a foto do perfil não existir -->
-                <img class="profile-img" src="imgs/setor-photo.png" alt="Foto do Setor">
-            <?php endif; ?>
-        </div>
-    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
