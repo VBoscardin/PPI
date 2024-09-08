@@ -209,36 +209,44 @@ $mysqli->close();
                 </div>
 
                 <div class="container mt-4">
-                    <div class="card shadow-container">
+                    <div class="card shadow">
                         <div class="card-body">
                             <form action="cadastrar_setor.php" method="post" enctype="multipart/form-data">
-                                <div class="mb-3">
-                                    <label for="local" class="form-label">Local:</label>
-                                    <input type="text" id="local" name="local" class="form-control" required>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="local" class="form-label">Local:</label>
+                                        <input type="text" id="local" name="local" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="nome" class="form-label">Nome:</label>
+                                        <input type="text" id="nome" name="nome" class="form-control" required>
+                                    </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="nome" class="form-label">Nome:</label>
-                                    <input type="text" id="nome" name="nome" class="form-control" required>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="cpf" class="form-label">CPF:</label>
+                                        <input type="text" id="cpf" name="cpf" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">E-mail:</label>
+                                        <input type="email" id="email" name="email" class="form-control" required>
+                                    </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="cpf" class="form-label">CPF:</label>
-                                    <input type="text" id="cpf" name="cpf" class="form-control" required>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="senha" class="form-label">Senha:</label>
+                                        <input type="password" id="senha" name="senha" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="photo" class="form-label">Foto de Perfil:</label>
+                                        <input type="file" id="photo" name="photo" accept="image/*" class="form-control" required>
+                                    </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">E-mail:</label>
-                                    <input type="email" id="email" name="email" class="form-control" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="senha" class="form-label">Senha:</label>
-                                    <input type="password" id="senha" name="senha" class="form-control" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="photo" class="form-label">Foto de Perfil:</label>
-                                    <input type="file" id="photo" name="photo" accept="image/*" class="form-control" required>
-                                </div>
-                                <button type="submit" name="cadastrar_setor" class="btn btn-light">
-                                    Cadastrar Setor
-                                </button>
+                                                        
+                                <button type="submit" name="cadastrar_setor" class="btn btn-light">Cadastrar Setor</button>
+
                                 <!-- Exibir mensagem de sucesso ou erro -->
                                 <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
                                     <div id="mensagem-sucesso" class="alert alert-success mt-3">

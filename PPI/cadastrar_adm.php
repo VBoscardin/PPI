@@ -189,32 +189,33 @@ $mysqli->close();
 
                 <!-- Container do Formulário -->
                 <div class="container mt-4">
-                    <div class="card shadow-container">
+                    <div class="card shadow">
                         <div class="card-body">
                             <form action="cadastrar_adm.php" method="post" enctype="multipart/form-data">
-                                <div class="mb-3">
-                                    <label for="username" class="form-label">Nome de Usuário:</label>
-                                    <input type="text" id="username" name="username" class="form-control" required>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="username" class="form-label">Nome de Usuário:</label>
+                                        <input type="text" id="username" name="username" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">Email:</label>
+                                        <input type="email" id="email" name="email" class="form-control" required>
+                                    </div>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Email:</label>
-                                    <input type="email" id="email" name="email" class="form-control" required>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="password" class="form-label">Senha:</label>
+                                        <input type="password" id="password" name="password" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="photo" class="form-label">Foto de Perfil:</label>
+                                        <input type="file" id="photo" name="photo" class="form-control" accept="image/*" required>
+                                    </div>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">Senha:</label>
-                                    <input type="password" id="password" name="password" class="form-control" required>
-                                </div>
+                                <button type="submit" name="cadastrar_adm" class="btn btn-light">Cadastrar Administrador</button>
 
-                                <div class="mb-3">
-                                    <label for="photo" class="form-label">Foto de Perfil:</label>
-                                    <input type="file" id="photo" name="photo" class="form-control" accept="image/*" required>
-                                </div>
-
-                                <button type="submit" name="cadastrar_adm" class="btn btn-light">
-                                    Cadastrar Administrador
-                                </button>
                                 <!-- Exibir mensagem de sucesso ou erro -->
                                 <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
                                     <div id="mensagem-sucesso" class="alert alert-success mt-3">

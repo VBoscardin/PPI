@@ -243,44 +243,57 @@ $mysqli->close();
                 </div>
 
                 <div class="container mt-4">
-                    <div class="card shadow-container">
+                    <div class="card shadow">
                         <div class="card-body">
                             <form action="cadastrar_docente.php" method="post" enctype="multipart/form-data">
-                                <div class="mb-3">
-                                    <label for="nome" class="form-label">Nome:</label>
-                                    <input type="text" id="nome" name="nome" class="form-control" required>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="nome" class="form-label">Nome:</label>
+                                        <input type="text" id="nome" name="nome" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">Email:</label>
+                                        <input type="email" id="email" name="email" class="form-control" required>
+                                    </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Email:</label>
-                                    <input type="email" id="email" name="email" class="form-control" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="cpf" class="form-label">CPF:</label>
-                                    <input type="text" id="cpf" name="cpf" class="form-control" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="senha" class="form-label">Senha:</label>
-                                    <input type="password" id="senha" name="senha" class="form-control" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="photo" class="form-label">Foto de Perfil:</label>
-                                    <input type="file" id="photo" name="photo" class="form-control">
-                                </div>
-                                
-                                <fieldset>
-                                    <legend>Disciplinas Associadas</legend>
-                                    <?php foreach ($disciplinas as $disciplina): ?>
-                                        <div class="form-check checkbox-group">
-                                            <input type="checkbox" id="disciplina-<?php echo $disciplina['id']; ?>" name="disciplinas[]" value="<?php echo $disciplina['id']; ?>" class="form-check-input">
-                                            <label for="disciplina-<?php echo $disciplina['id']; ?>" class="form-check-label">
-                                                <?php echo htmlspecialchars($disciplina['disciplina_nome']); ?> (<?php echo htmlspecialchars($disciplina['curso_nome']); ?>)
-                                            </label>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </fieldset>
 
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="cpf" class="form-label">CPF:</label>
+                                        <input type="text" id="cpf" name="cpf" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="senha" class="form-label">Senha:</label>
+                                        <input type="password" id="senha" name="senha" class="form-control" required>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                        <label for="photo" class="form-label">Foto de Perfil:</label>
+                                        <input type="file" id="photo" name="photo" class="form-control">
+                                    </div>
+                                </div>
+                                <hr>                       
+                                <fieldset class="mb-3">
+                                    <legend>Disciplinas Associadas</legend>
+                                    <div class="row">
+                                        <?php foreach ($disciplinas as $disciplina): ?>
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input type="checkbox" id="disciplina-<?php echo $disciplina['id']; ?>" name="disciplinas[]" value="<?php echo $disciplina['id']; ?>" class="form-check-input">
+                                                    <label for="disciplina-<?php echo $disciplina['id']; ?>" class="form-check-label">
+                                                        <?php echo htmlspecialchars($disciplina['disciplina_nome']); ?> (<?php echo htmlspecialchars($disciplina['curso_nome']); ?>)
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </fieldset>
+                                <hr>                   
                                 <button type="submit" name="cadastrar_docente" class="btn btn-light">Cadastrar Docente</button>
-                                
+
+                                <!-- Exibir mensagem de sucesso ou erro -->
                                 <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
                                     <div id="mensagem-sucesso" class="alert alert-success mt-3">
                                         <?php echo $_SESSION['mensagem_sucesso']; ?>

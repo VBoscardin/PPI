@@ -87,8 +87,8 @@ body {
 }
 
 .logo {
-    max-width: 120px;
-    height: 15vh;
+    max-width: relative;
+    height: relative;
 }
 
 .title {
@@ -163,4 +163,12 @@ body {
     color: white; /* Cor do texto SIGNE */
     text-align: center;
     margin-bottom: 10px; /* Espaço abaixo do SIGNE */
+}
+/* Estilo do texto dos títulos dos checkboxes */
+.form-label {
+    font-weight: bold; /* Adiciona negrito */
+}
+/* Estilo apenas para os títulos dos checkboxes */
+.checkbox-title {
+    font-weight: bold; /* Adiciona negrito */
 }

@@ -90,7 +90,20 @@ CREATE TABLE discentes (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ALTER TABLE discentes
-ADD COLUMN foto VARCHAR(255);
+ADD COLUMN uf VARCHAR(2) NOT NULL,
+ADD COLUMN cpf VARCHAR(14) NOT NULL,
+ADD COLUMN reprovacoes INT(11) DEFAULT 0,
+ADD COLUMN acompanhamento ENUM('Sim', 'Não') NOT NULL,
+ADD COLUMN apoio_psicologico ENUM('Sim', 'Não') NOT NULL,
+ADD COLUMN auxilio_permanencia ENUM('Sim', 'Não') NOT NULL,
+ADD COLUMN cotista ENUM('Sim', 'Não') NOT NULL,
+ADD COLUMN estagio ENUM('Sim', 'Não') NOT NULL,
+ADD COLUMN acompanhamento_saude ENUM('Sim', 'Não') NOT NULL,
+ADD COLUMN projeto_pesquisa ENUM('Sim', 'Não') NOT NULL,
+ADD COLUMN projeto_extensao ENUM('Sim', 'Não') NOT NULL,
+ADD COLUMN projeto_ensino ENUM('Sim', 'Não') NOT NULL,
+ADD COLUMN foto VARCHAR(255) DEFAULT NULL;
+
 
 ALTER TABLE usuarios 
 ADD COLUMN foto_perfil VARCHAR(255) DEFAULT NULL;

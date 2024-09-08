@@ -3,14 +3,12 @@ session_start();
 
 // Verificar se o usuário está autenticado
 if (!isset($_SESSION['email']) || !isset($_SESSION['user_type'])) {
-    // Redirecionar para a página de login se o usuário não estiver autenticado
     header("Location: f_login.php");
     exit();
 }
 
 // Verificar se o usuário é um setor
 if ($_SESSION['user_type'] !== 'setor') {
-    // Redirecionar para uma página de acesso negado ou qualquer outra página
     header("Location: f_login.php");
     exit();
 }
@@ -23,49 +21,66 @@ if ($conn->connect_error) {
 }
 
 $success_message = ''; // Variável para a mensagem de sucesso
-$nome = ''; // Inicializar a variável $nome
+$error_message = ''; // Variável para mensagem de erro
+$setor_nome = ''; // Inicializar a variável $setor_nome
+$setor_foto = ''; // Inicializar a variável $setor_foto
 
 // Consultar o nome do setor e a foto de perfil
 $stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
 $stmt->bind_param("s", $_SESSION['email']);
 $stmt->execute();
-$stmt->bind_result($nome, $foto_perfil);
+$stmt->bind_result($setor_nome, $setor_foto);
 $stmt->fetch();
 $stmt->close();
 
 // Função para cadastrar discente
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['foto'])) {
-    $numero_matricula = $_POST['numero_matricula'];
-    $nome = $_POST['nome'];
-    $cidade = $_POST['cidade'];
-    $email = $_POST['email'];
-    $genero = $_POST['genero'];
-    $data_nascimento = $_POST['data_nascimento'];
-    $observacoes = $_POST['observacoes'];
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $numero_matricula = isset($_POST['numero_matricula']) ? $_POST['numero_matricula'] : '';
+    $nome = isset($_POST['nome']) ? $_POST['nome'] : '';
+    $cidade = isset($_POST['cidade']) ? $_POST['cidade'] : '';
+    $uf = isset($_POST['uf']) ? $_POST['uf'] : '';
+    $email = isset($_POST['email']) ? $_POST['email'] : '';
+    $cpf = isset($_POST['cpf']) ? $_POST['cpf'] : '';
+    $genero = isset($_POST['genero']) ? $_POST['genero'] : '';
+    $data_nascimento = isset($_POST['data_nascimento']) ? $_POST['data_nascimento'] : '';
+    $observacoes = isset($_POST['observacoes']) ? $_POST['observacoes'] : '';
+    $reprovacoes = isset($_POST['reprovacoes']) ? $_POST['reprovacoes'] : 0;
+    $acompanhamento = isset($_POST['acompanhamento']) ? $_POST['acompanhamento'] : '';
+    $apoio_psicologico = isset($_POST['apoio_psicologico']) ? $_POST['apoio_psicologico'] : '';
+    $auxilio_permanencia = isset($_POST['auxilio_permanencia']) ? $_POST['auxilio_permanencia'] : '';
+    $cotista = isset($_POST['cotista']) ? $_POST['cotista'] : '';
+    $estagio = isset($_POST['estagio']) ? $_POST['estagio'] : '';
+    $acompanhamento_saude = isset($_POST['acompanhamento_saude']) ? $_POST['acompanhamento_saude'] : '';
+    $projeto_pesquisa = isset($_POST['projeto_pesquisa']) ? $_POST['projeto_pesquisa'] : '';
+    $projeto_extensao = isset($_POST['projeto_extensao']) ? $_POST['projeto_extensao'] : '';
+    $projeto_ensino = isset($_POST['projeto_ensino']) ? $_POST['projeto_ensino'] : '';
+
+    // Inicializar foto_path
+    $foto_path = null;
 
     // Verificar se o campo foto está preenchido
-    if (!empty($_FILES['foto']['name'])) {
+    if (isset($_FILES['foto']) && !empty($_FILES['foto']['name'])) {
         $foto = $_FILES['foto']['name'];
         $foto_temp = $_FILES['foto']['tmp_name'];
         $foto_path = 'uploads/' . basename($foto);
 
         // Mover o arquivo para o diretório de uploads
         if (!move_uploaded_file($foto_temp, $foto_path)) {
-            die("Erro ao fazer upload da foto.");
+            $error_message = 'Erro ao fazer upload da foto.';
         }
-    } else {
-        $foto_path = null; // Se não houver foto, define como nulo
     }
 
-    // Verificar se os campos não estão vazios
-    if (!empty($numero_matricula) && !empty($nome) && !empty($cidade) && !empty($email) && !empty($genero) && !empty($data_nascimento)) {
+    // Validação de campos obrigatórios
+    if (empty($numero_matricula) || empty($nome) || empty($cidade) || empty($uf) || empty($email) || empty($cpf) || empty($genero) || empty($data_nascimento) || empty($acompanhamento) || empty($apoio_psicologico) || empty($auxilio_permanencia) || empty($cotista) || empty($estagio) || empty($acompanhamento_saude) || empty($projeto_pesquisa) || empty($projeto_extensao) || empty($projeto_ensino)) {
+        $error_message = 'Por favor, preencha todos os campos obrigatórios.';
+    } else {
         // Iniciar uma transação
         $conn->begin_transaction();
         
         try {
             // Inserir na tabela 'discentes'
-            $stmt = $conn->prepare('INSERT INTO discentes (numero_matricula, nome, cidade, email, genero, data_nascimento, observacoes, foto) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-            $stmt->bind_param('isssssss', $numero_matricula, $nome, $cidade, $email, $genero, $data_nascimento, $observacoes, $foto_path);
+            $stmt = $conn->prepare('INSERT INTO discentes (numero_matricula, nome, cidade, uf, email, cpf, genero, data_nascimento, observacoes, reprovacoes, acompanhamento, apoio_psicologico, auxilio_permanencia, cotista, estagio, acompanhamento_saude, projeto_pesquisa, projeto_extensao, projeto_ensino, foto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+            $stmt->bind_param('isssssssssssssssssss', $numero_matricula, $nome, $cidade, $uf, $email, $cpf, $genero, $data_nascimento, $observacoes, $reprovacoes, $acompanhamento, $apoio_psicologico, $auxilio_permanencia, $cotista, $estagio, $acompanhamento_saude, $projeto_pesquisa, $projeto_extensao, $projeto_ensino, $foto_path);
 
             if (!$stmt->execute()) {
                 throw new Exception('Erro ao cadastrar discente: ' . $stmt->error);
@@ -77,19 +92,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['foto'])) {
         } catch (Exception $e) {
             // Reverter a transação em caso de erro
             $conn->rollback();
-            $success_message = 'Erro: ' . $e->getMessage();
+            $error_message = 'Erro: ' . $e->getMessage();
         }
 
         // Fechar a declaração
         $stmt->close();
-    } else {
-        $success_message = 'Por favor, preencha todos os campos obrigatórios.';
+    }
+
+    // Exibir a mensagem
+    if ($success_message) {
+        echo '<div class="alert alert-success mt-3">' . htmlspecialchars($success_message) . '</div>';
+    }
+    if ($error_message) {
+        echo '<div class="alert alert-danger mt-3">' . htmlspecialchars($error_message) . '</div>';
     }
 }
 
 // Fechar a conexão
 $conn->close();
 ?>
+
+
+
 
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -110,24 +134,23 @@ $conn->close();
                 <div class="separator mb-3"></div>
                 <div class="signe-text">SIGNE</div>
                 <div class="separator mt-3 mb-3"></div>
-                <button onclick="location.href='f_pagina_setor.php'">
+                <button onclick="location.href='f_pagina_setor.php'" class="btn btn-primary btn-block mb-2">
                     <i class="fas fa-home"></i> Início
                 </button>
-                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
+                <button class="btn btn-light btn-block mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
                     <i id="toggle-icon" class="fas fa-plus"></i> Cadastrar
                 </button>
-                <!-- Menu expansível com Bootstrap -->
                 <div id="expandable-menu" class="collapse expandable-container">
                     <div class="expandable-menu">
-                        <button onclick="location.href='cadastrar_discentes.php'">
+                        <button onclick="location.href='cadastrar_discentes.php'" class="btn btn-light btn-block">
                             <i class="fas fa-plus"></i> Cadastrar Discente
                         </button>
                     </div>
                 </div>
-                <button onclick="location.href='meu_perfil.php'">
+                <button onclick="location.href='meu_perfil.php'" class="btn btn-light btn-block mb-2">
                     <i class="fas fa-user"></i> Meu Perfil
                 </button>
-                <button class="btn btn-danger" onclick="location.href='sair.php'">
+                <button class="btn btn-danger btn-block" onclick="location.href='sair.php'">
                     <i class="fas fa-sign-out-alt"></i> Sair
                 </button>
             </div>
@@ -135,76 +158,232 @@ $conn->close();
             <!-- Conteúdo principal -->
             <div class="col-md-9 main-content">
                 <div class="container">
-                    <div class="header-container">
+                    <div class="header-container d-flex align-items-center mb-4">
                         <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
                         <div class="title ms-3">Cadastrar Discente</div>
                         <div class="ms-auto d-flex align-items-center">
-                            <div class="profile-info d-flex align-items-center">
-                                <div class="profile-details me-2">
-                                    <span><?php echo htmlspecialchars($nome); ?></span>
-                                </div>
-                                <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
-                                    <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador">
-                                <?php else: ?>
-                                    <img src="imgs/setor-photo.png" alt="Foto do Setor">
-                                <?php endif; ?>
-                            </div>
+                        <div class="profile-info d-flex align-items-center">
+    <div class="profile-details me-2">
+        <span><?php echo htmlspecialchars($setor_nome); ?></span>
+    </div>
+    <?php if (!empty($setor_foto) && file_exists('uploads/' . basename($setor_foto))): ?>
+        <img src="uploads/<?php echo htmlspecialchars(basename($setor_foto)); ?>" alt="Foto do Setor">
+    <?php else: ?>
+        <img src="imgs/setor-photo.png" alt="Foto do Setor">
+    <?php endif; ?>
+</div>
+
                         </div>
                     </div>
                 </div>
+
                 <div class="container mt-4">
-                    <div class="card shadow-container">
+                    <div class="card shadow">
                         <div class="card-body">
                             <form action="cadastrar_discentes.php" method="post" enctype="multipart/form-data">
-                                <div class="mb-3">
-                                    <label for="numero_matricula" class="form-label">Número da Matrícula:</label>
-                                    <input type="text" id="numero_matricula" name="numero_matricula" class="form-control" required>
+                                <!-- Campos existentes -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="numero_matricula" class="form-label">Número da Matrícula:</label>
+                                        <input type="text" id="numero_matricula" name="numero_matricula" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="nome" class="form-label">Nome:</label>
+                                        <input type="text" id="nome" name="nome" class="form-control" required>
+                                    </div>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="nome" class="form-label">Nome:</label>
-                                    <input type="text" id="nome" name="nome" class="form-control" required>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="cidade" class="form-label">Cidade:</label>
+                                        <input type="text" id="cidade" name="cidade" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="uf" class="form-label">UF:</label>
+                                        <input type="text" id="uf" name="uf" class="form-control" required>
+                                    </div>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="cidade" class="form-label">Cidade:</label>
-                                    <input type="text" id="cidade" name="cidade" class="form-control" required>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">E-mail:</label>
+                                        <input type="email" id="email" name="email" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="cpf" class="form-label">CPF:</label>
+                                        <input type="text" id="cpf" name="cpf" class="form-control" required>
+                                    </div>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">E-mail:</label>
-                                    <input type="email" id="email" name="email" class="form-control" required>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="genero" class="form-label">Gênero:</label>
+                                        <select id="genero" name="genero" class="form-select" required>
+                                            <option value="Masculino">Masculino</option>
+                                            <option value="Feminino">Feminino</option>
+                                            <option value="Outro">Outro</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="data_nascimento" class="form-label">Data de Nascimento:</label>
+                                        <input type="date" id="data_nascimento" name="data_nascimento" class="form-control" required>
+                                    </div>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="genero" class="form-label">Gênero:</label>
-                                    <select id="genero" name="genero" class="form-select" required>
-                                        <option value="Masculino">Masculino</option>
-                                        <option value="Feminino">Feminino</option>
-                                        <option value="Outro">Outro</option>
-                                    </select>
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                        <label for="observacoes" class="form-label">Observações:</label>
+                                        <textarea id="observacoes" name="observacoes" class="form-control" rows="3"></textarea>
+                                    </div>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="data_nascimento" class="form-label">Data de Nascimento:</label>
-                                    <input type="date" id="data_nascimento" name="data_nascimento" class="form-control" required>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="reprovacoes" class="form-label">Reprovações:</label>
+                                        <input type="number" id="reprovacoes" name="reprovacoes" class="form-control">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="foto" class="form-label">Foto:</label>
+                                        <input type="file" id="foto" name="foto" class="form-control" accept="image/*">
+                                    </div>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="observacoes" class="form-label">Observações:</label>
-                                    <textarea id="observacoes" name="observacoes" class="form-control"></textarea>
+                                <!-- Campos adicionais como checkboxes agrupados em colunas -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Acompanhamento:</label>
+                                            <div class="form-check">
+                                                <input type="radio" id="acompanhamento-sim" name="acompanhamento" value="Sim" class="form-check-input">
+                                                <label for="acompanhamento-sim" class="form-check-label">Sim</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="radio" id="acompanhamento-nao" name="acompanhamento" value="Não" class="form-check-input">
+                                                <label for="acompanhamento-nao" class="form-check-label">Não</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Apoio Psicológico:</label>
+                                            <div class="form-check">
+                                                <input type="radio" id="apoio_psicologico-sim" name="apoio_psicologico" value="Sim" class="form-check-input">
+                                                <label for="apoio_psicologico-sim" class="form-check-label">Sim</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="radio" id="apoio_psicologico-nao" name="apoio_psicologico" value="Não" class="form-check-input">
+                                                <label for="apoio_psicologico-nao" class="form-check-label">Não</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Auxílio Permanência:</label>
+                                            <div class="form-check">
+                                                <input type="radio" id="auxilio_permanencia-sim" name="auxilio_permanencia" value="Sim" class="form-check-input">
+                                                <label for="auxilio_permanencia-sim" class="form-check-label">Sim</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="radio" id="auxilio_permanencia-nao" name="auxilio_permanencia" value="Não" class="form-check-input">
+                                                <label for="auxilio_permanencia-nao" class="form-check-label">Não</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Cotista:</label>
+                                            <div class="form-check">
+                                                <input type="radio" id="cotista-sim" name="cotista" value="Sim" class="form-check-input">
+                                                <label for="cotista-sim" class="form-check-label">Sim</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="radio" id="cotista-nao" name="cotista" value="Não" class="form-check-input">
+                                                <label for="cotista-nao" class="form-check-label">Não</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Estágio:</label>
+                                            <div class="form-check">
+                                                <input type="radio" id="estagio-sim" name="estagio" value="Sim" class="form-check-input">
+                                                <label for="estagio-sim" class="form-check-label">Sim</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="radio" id="estagio-nao" name="estagio" value="Não" class="form-check-input">
+                                                <label for="estagio-nao" class="form-check-label">Não</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Acompanhamento de Saúde:</label>
+                                            <div class="form-check">
+                                                <input type="radio" id="acompanhamento_saude-sim" name="acompanhamento_saude" value="Sim" class="form-check-input">
+                                                <label for="acompanhamento_saude-sim" class="form-check-label">Sim</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="radio" id="acompanhamento_saude-nao" name="acompanhamento_saude" value="Não" class="form-check-input">
+                                                <label for="acompanhamento_saude-nao" class="form-check-label">Não</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Projeto de Pesquisa:</label>
+                                            <div class="form-check">
+                                                <input type="radio" id="projeto_pesquisa-sim" name="projeto_pesquisa" value="Sim" class="form-check-input">
+                                                <label for="projeto_pesquisa-sim" class="form-check-label">Sim</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="radio" id="projeto_pesquisa-nao" name="projeto_pesquisa" value="Não" class="form-check-input">
+                                                <label for="projeto_pesquisa-nao" class="form-check-label">Não</label>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Projeto de Extensão:</label>
+                                            <div class="form-check">
+                                                <input type="radio" id="projeto_extensao-sim" name="projeto_extensao" value="Sim" class="form-check-input">
+                                                <label for="projeto_extensao-sim" class="form-check-label">Sim</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="radio" id="projeto_extensao-nao" name="projeto_extensao" value="Não" class="form-check-input">
+                                                <label for="projeto_extensao-nao" class="form-check-label">Não</label>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="foto" class="form-label">Foto:</label>
-                                    <input type="file" id="foto" name="foto" class="form-control" accept="image/*">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Projeto de Ensino:</label>
+                                            <div class="form-check">
+                                                <input type="radio" id="projeto_ensino-sim" name="projeto_ensino" value="Sim" class="form-check-input">
+                                                <label for="projeto_ensino-sim" class="form-check-label">Sim</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="radio" id="projeto_ensino-nao" name="projeto_ensino" value="Não" class="form-check-input">
+                                                <label for="projeto_ensino-nao" class="form-check-label">Não</label>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <button type="submit" class="btn btn-light">Cadastrar Discentes</button>
                             </form>
+                            <!-- Exibir mensagem de sucesso ou erro -->
+                            <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
+                                    <div id="mensagem-sucesso" class="alert alert-success mt-3">
+                                        <?php echo $_SESSION['mensagem_sucesso']; ?>
+                                    </div>
+                                    <?php unset($_SESSION['mensagem_sucesso']); ?>
+                                <?php elseif (isset($_SESSION['mensagem_erro'])): ?>
+                                    <div id="mensagem-erro" class="alert alert-danger mt-3">
+                                        <?php echo $_SESSION['mensagem_erro']; ?>
+                                    </div>
+                                    <?php unset($_SESSION['mensagem_erro']); ?>
+                                <?php endif; ?>
                         </div>
-                    </div>
-                </div>
+                    </div> 
             </div>
         </div>
     </div>

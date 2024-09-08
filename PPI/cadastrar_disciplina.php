@@ -179,26 +179,30 @@ $mysqli->close();
                 </div>
 
                 <div class="container mt-4">
-                    <div class="card shadow-container">
+                    <div class="card shadow">
                         <div class="card-body">
                             <form action="cadastrar_disciplina.php" method="post">
-                                <div class="mb-3">
-                                    <label for="nome" class="form-label">Nome da Disciplina:</label>
-                                    <input type="text" id="nome" name="nome" class="form-control" required>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="curso" class="form-label">Curso:</label>
-                                    <select id="curso" name="curso_id" class="form-select" required>
-                                        <option value="">Selecione um Curso</option>
-                                        <?php foreach ($cursos as $curso): ?>
-                                            <option value="<?php echo htmlspecialchars($curso['id']); ?>"><?php echo htmlspecialchars($curso['nome']); ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="nome" class="form-label">Nome da Disciplina:</label>
+                                        <input type="text" id="nome" name="nome" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="curso" class="form-label">Curso:</label>
+                                        <select id="curso" name="curso_id" class="form-select" required>
+                                            <option value="">Selecione um Curso</option>
+                                            <?php foreach ($cursos as $curso): ?>
+                                                <option value="<?php echo htmlspecialchars($curso['id']); ?>">
+                                                    <?php echo htmlspecialchars($curso['nome']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <button type="submit" name="cadastrar_disciplina" class="btn btn-light">Cadastrar Disciplina</button>
 
+                                <!-- Exibir mensagem de sucesso ou erro -->
                                 <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
                                     <div id="mensagem-sucesso" class="alert alert-success mt-3">
                                         <?php echo $_SESSION['mensagem_sucesso']; ?>

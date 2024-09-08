@@ -179,7 +179,7 @@ $conn->close();
                 <div class="container">
                     <div class="header-container">
                         <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
-                        <div class="title ms-3">Cadastrar Setor</div>
+                        <div class="title ms-3">Cadastrar Turma</div>
                         <div class="ms-auto d-flex align-items-center">
                             <div class="profile-info d-flex align-items-center">
                                 <div class="profile-details me-2">
@@ -196,27 +196,29 @@ $conn->close();
                 </div>
 
                 <div class="container mt-4">
-                    <div class="card shadow-container">
+                    <div class="card shadow">
                         <div class="card-body">
                             <form action="cadastrar_turma.php" method="post">
-                                <div class="mb-3">
-                                    <label for="numero" class="form-label">Número da Turma:</label>
-                                    <input type="number" id="numero" name="numero" class="form-control" required>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="numero" class="form-label">Número da Turma:</label>
+                                        <input type="number" id="numero" name="numero" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="ano" class="form-label">Ano:</label>
+                                        <input type="number" id="ano" name="ano" class="form-control" min="2000" max="2099" step="1" required>
+                                    </div>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="ano" class="form-label">Ano:</label>
-                                    <input type="number" id="ano" name="ano" class="form-control" min="2000" max="2099" step="1" required>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="ano_ingresso" class="form-label">Ano de Ingresso:</label>
-                                    <input type="number" id="ano_ingresso" name="ano_ingresso" class="form-control" min="2000" max="2099" step="1" required>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="ano_oferta" class="form-label">Ano de Oferta:</label>
-                                    <input type="number" id="ano_oferta" name="ano_oferta" class="form-control" min="2000" max="2099" step="1" required>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="ano_ingresso" class="form-label">Ano de Ingresso:</label>
+                                        <input type="number" id="ano_ingresso" name="ano_ingresso" class="form-control" min="2000" max="2099" step="1" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="ano_oferta" class="form-label">Ano de Oferta:</label>
+                                        <input type="number" id="ano_oferta" name="ano_oferta" class="form-control" min="2000" max="2099" step="1" required>
+                                    </div>
                                 </div>
 
                                 <div class="mb-3">
@@ -230,11 +232,11 @@ $conn->close();
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
-
+                                <hr>                
                                 <fieldset>
                                     <legend>Disciplinas Associadas</legend>
                                     <?php foreach ($disciplinas as $disciplina): ?>
-                                        <div class="form-check checkbox-group">
+                                        <div class="form-check">
                                             <input type="checkbox" id="disciplina-<?php echo htmlspecialchars($disciplina['id']); ?>" name="disciplinas[]" value="<?php echo htmlspecialchars($disciplina['id']); ?>" class="form-check-input">
                                             <label for="disciplina-<?php echo htmlspecialchars($disciplina['id']); ?>" class="form-check-label">
                                                 <?php echo htmlspecialchars($disciplina['disciplina_nome']); ?> (<?php echo htmlspecialchars($disciplina['curso_nome']); ?>)
@@ -242,6 +244,8 @@ $conn->close();
                                         </div>
                                     <?php endforeach; ?>
                                 </fieldset>                        
+                                
+                                <button type="submit" name="cadastrar_turma" class="btn btn-light mt-3">Cadastrar Turma</button>
                             </form>
                         </div>
                     </div>
