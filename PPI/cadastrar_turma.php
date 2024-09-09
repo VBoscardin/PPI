@@ -164,9 +164,34 @@ $conn->close();
                 <button onclick="location.href='gerar_slide.php'">
                     <i class="fas fa-sliders-h"></i> Gerar Slide Pré Conselho
                 </button>
-                <button onclick="location.href='listar.php'">
-                    <i class="fas fa-list"></i> Listar
+                 <!-- Botão expansível "Listar" -->
+                 <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#list-menu" aria-expanded="false" aria-controls="list-menu">
+                    <i id="toggle-icon" class="fas fa-list"></i> Listar
                 </button>
+
+                <!-- Menu expansível para listar opções -->
+                <div id="list-menu" class="collapse expandable-container">
+                    <div class="expandable-menu">
+                        <button onclick="location.href='listar_administradores.php'">
+                            <i class="fas fa-list"></i> Administradores
+                        </button>
+                        <button onclick="location.href='listar_cursos.php'">
+                            <i class="fas fa-list"></i> Cursos
+                        </button>
+                        <button onclick="location.href='listar_disciplinas.php'">
+                            <i class="fas fa-list"></i> Disciplinas
+                        </button>
+                        <button onclick="location.href='listar_docentes.php'">
+                            <i class="fas fa-list"></i> Docentes
+                        </button>
+                        <button onclick="location.href='listar_setores.php'">
+                            <i class="fas fa-list"></i> Setores
+                        </button>
+                        <button onclick="location.href='listar_turmas.php'">
+                            <i class="fas fa-list"></i> Turmas
+                        </button>
+                    </div>
+                </div>
                 <button onclick="location.href='meu_perfil.php'">
                     <i class="fas fa-user"></i> Meu Perfil
                 </button>

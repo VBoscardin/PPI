@@ -66,13 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Mover o arquivo para o diretório de uploads
         if (!move_uploaded_file($foto_temp, $foto_path)) {
-            $error_message = 'Erro ao fazer upload da foto.';
+            $_SESSION['mensagem_erro'] = 'Erro ao fazer upload da foto.';
         }
     }
 
     // Validação de campos obrigatórios
     if (empty($numero_matricula) || empty($nome) || empty($cidade) || empty($uf) || empty($email) || empty($cpf) || empty($genero) || empty($data_nascimento) || empty($acompanhamento) || empty($apoio_psicologico) || empty($auxilio_permanencia) || empty($cotista) || empty($estagio) || empty($acompanhamento_saude) || empty($projeto_pesquisa) || empty($projeto_extensao) || empty($projeto_ensino)) {
-        $error_message = 'Por favor, preencha todos os campos obrigatórios.';
+        $_SESSION['mensagem_erro'] = 'Por favor, preencha todos os campos obrigatórios.';
     } else {
         // Iniciar uma transação
         $conn->begin_transaction();
@@ -88,24 +88,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             // Confirmar a transação
             $conn->commit();
-            $success_message = 'Discente cadastrado com sucesso!';
+            $_SESSION['mensagem_sucesso'] = 'Discente cadastrado com sucesso!';
         } catch (Exception $e) {
             // Reverter a transação em caso de erro
             $conn->rollback();
-            $error_message = 'Erro: ' . $e->getMessage();
+            $_SESSION['mensagem_erro'] = 'Erro: ' . $e->getMessage();
         }
 
         // Fechar a declaração
         $stmt->close();
     }
 
-    // Exibir a mensagem
-    if ($success_message) {
-        echo '<div class="alert alert-success mt-3">' . htmlspecialchars($success_message) . '</div>';
-    }
-    if ($error_message) {
-        echo '<div class="alert alert-danger mt-3">' . htmlspecialchars($error_message) . '</div>';
-    }
+    // Redirecionar para a mesma página para exibir mensagens
+    header('Location: cadastrar_discentes.php');
+    exit();
 }
 
 // Fechar a conexão
@@ -178,216 +174,234 @@ $conn->close();
                 </div>
 
                 <div class="container mt-4">
-                    <div class="card shadow">
-                        <div class="card-body">
-                            <form action="cadastrar_discentes.php" method="post" enctype="multipart/form-data">
-                                <!-- Campos existentes -->
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="numero_matricula" class="form-label">Número da Matrícula:</label>
-                                        <input type="text" id="numero_matricula" name="numero_matricula" class="form-control" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="nome" class="form-label">Nome:</label>
-                                        <input type="text" id="nome" name="nome" class="form-control" required>
-                                    </div>
-                                </div>
+    <div class="card shadow">
+        <div class="card-body">
+            <form action="cadastrar_discentes.php" method="post" enctype="multipart/form-data">
+                <!-- Campos existentes -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="numero_matricula" class="form-label">Número da Matrícula:</label>
+                        <input type="text" id="numero_matricula" name="numero_matricula" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="nome" class="form-label">Nome:</label>
+                        <input type="text" id="nome" name="nome" class="form-control" required>
+                    </div>
+                </div>
 
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="cidade" class="form-label">Cidade:</label>
-                                        <input type="text" id="cidade" name="cidade" class="form-control" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="uf" class="form-label">UF:</label>
-                                        <input type="text" id="uf" name="uf" class="form-control" required>
-                                    </div>
-                                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="cidade" class="form-label">Cidade:</label>
+                        <input type="text" id="cidade" name="cidade" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="uf" class="form-label">UF:</label>
+                        <input type="text" id="uf" name="uf" class="form-control" required>
+                    </div>
+                </div>
 
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="email" class="form-label">E-mail:</label>
-                                        <input type="email" id="email" name="email" class="form-control" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="cpf" class="form-label">CPF:</label>
-                                        <input type="text" id="cpf" name="cpf" class="form-control" required>
-                                    </div>
-                                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">E-mail:</label>
+                        <input type="email" id="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cpf" class="form-label">CPF:</label>
+                        <input type="text" id="cpf" name="cpf" class="form-control" required>
+                    </div>
+                </div>
 
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="genero" class="form-label">Gênero:</label>
-                                        <select id="genero" name="genero" class="form-select" required>
-                                            <option value="Masculino">Masculino</option>
-                                            <option value="Feminino">Feminino</option>
-                                            <option value="Outro">Outro</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="data_nascimento" class="form-label">Data de Nascimento:</label>
-                                        <input type="date" id="data_nascimento" name="data_nascimento" class="form-control" required>
-                                    </div>
-                                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="genero" class="form-label">Gênero:</label>
+                        <select id="genero" name="genero" class="form-select" required>
+                            <option value="Masculino">Masculino</option>
+                            <option value="Feminino">Feminino</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="data_nascimento" class="form-label">Data de Nascimento:</label>
+                        <input type="date" id="data_nascimento" name="data_nascimento" class="form-control" required>
+                    </div>
+                </div>
 
-                                <div class="row mb-3">
-                                    <div class="col-md-12">
-                                        <label for="observacoes" class="form-label">Observações:</label>
-                                        <textarea id="observacoes" name="observacoes" class="form-control" rows="3"></textarea>
-                                    </div>
-                                </div>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="observacoes" class="form-label">Observações:</label>
+                        <textarea id="observacoes" name="observacoes" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
 
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="reprovacoes" class="form-label">Reprovações:</label>
-                                        <input type="number" id="reprovacoes" name="reprovacoes" class="form-control">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="foto" class="form-label">Foto:</label>
-                                        <input type="file" id="foto" name="foto" class="form-control" accept="image/*">
-                                    </div>
-                                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="reprovacoes" class="form-label">Reprovações:</label>
+                        <input type="number" id="reprovacoes" name="reprovacoes" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="foto" class="form-label">Foto:</label>
+                        <input type="file" id="foto" name="foto" class="form-control" accept="image/*">
+                    </div>
+                </div>
 
-                                <!-- Campos adicionais como checkboxes agrupados em colunas -->
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">Acompanhamento:</label>
-                                            <div class="form-check">
-                                                <input type="radio" id="acompanhamento-sim" name="acompanhamento" value="Sim" class="form-check-input">
-                                                <label for="acompanhamento-sim" class="form-check-label">Sim</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input type="radio" id="acompanhamento-nao" name="acompanhamento" value="Não" class="form-check-input">
-                                                <label for="acompanhamento-nao" class="form-check-label">Não</label>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label">Apoio Psicológico:</label>
-                                            <div class="form-check">
-                                                <input type="radio" id="apoio_psicologico-sim" name="apoio_psicologico" value="Sim" class="form-check-input">
-                                                <label for="apoio_psicologico-sim" class="form-check-label">Sim</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input type="radio" id="apoio_psicologico-nao" name="apoio_psicologico" value="Não" class="form-check-input">
-                                                <label for="apoio_psicologico-nao" class="form-check-label">Não</label>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label">Auxílio Permanência:</label>
-                                            <div class="form-check">
-                                                <input type="radio" id="auxilio_permanencia-sim" name="auxilio_permanencia" value="Sim" class="form-check-input">
-                                                <label for="auxilio_permanencia-sim" class="form-check-label">Sim</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input type="radio" id="auxilio_permanencia-nao" name="auxilio_permanencia" value="Não" class="form-check-input">
-                                                <label for="auxilio_permanencia-nao" class="form-check-label">Não</label>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label">Cotista:</label>
-                                            <div class="form-check">
-                                                <input type="radio" id="cotista-sim" name="cotista" value="Sim" class="form-check-input">
-                                                <label for="cotista-sim" class="form-check-label">Sim</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input type="radio" id="cotista-nao" name="cotista" value="Não" class="form-check-input">
-                                                <label for="cotista-nao" class="form-check-label">Não</label>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">Estágio:</label>
-                                            <div class="form-check">
-                                                <input type="radio" id="estagio-sim" name="estagio" value="Sim" class="form-check-input">
-                                                <label for="estagio-sim" class="form-check-label">Sim</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input type="radio" id="estagio-nao" name="estagio" value="Não" class="form-check-input">
-                                                <label for="estagio-nao" class="form-check-label">Não</label>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label">Acompanhamento de Saúde:</label>
-                                            <div class="form-check">
-                                                <input type="radio" id="acompanhamento_saude-sim" name="acompanhamento_saude" value="Sim" class="form-check-input">
-                                                <label for="acompanhamento_saude-sim" class="form-check-label">Sim</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input type="radio" id="acompanhamento_saude-nao" name="acompanhamento_saude" value="Não" class="form-check-input">
-                                                <label for="acompanhamento_saude-nao" class="form-check-label">Não</label>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label">Projeto de Pesquisa:</label>
-                                            <div class="form-check">
-                                                <input type="radio" id="projeto_pesquisa-sim" name="projeto_pesquisa" value="Sim" class="form-check-input">
-                                                <label for="projeto_pesquisa-sim" class="form-check-label">Sim</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input type="radio" id="projeto_pesquisa-nao" name="projeto_pesquisa" value="Não" class="form-check-input">
-                                                <label for="projeto_pesquisa-nao" class="form-check-label">Não</label>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Projeto de Extensão:</label>
-                                            <div class="form-check">
-                                                <input type="radio" id="projeto_extensao-sim" name="projeto_extensao" value="Sim" class="form-check-input">
-                                                <label for="projeto_extensao-sim" class="form-check-label">Sim</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input type="radio" id="projeto_extensao-nao" name="projeto_extensao" value="Não" class="form-check-input">
-                                                <label for="projeto_extensao-nao" class="form-check-label">Não</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        
-
-                                        <div class="mb-3">
-                                            <label class="form-label">Projeto de Ensino:</label>
-                                            <div class="form-check">
-                                                <input type="radio" id="projeto_ensino-sim" name="projeto_ensino" value="Sim" class="form-check-input">
-                                                <label for="projeto_ensino-sim" class="form-check-label">Sim</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input type="radio" id="projeto_ensino-nao" name="projeto_ensino" value="Não" class="form-check-input">
-                                                <label for="projeto_ensino-nao" class="form-check-label">Não</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button type="submit" class="btn btn-light">Cadastrar Discentes</button>
-                            </form>
-                            <!-- Exibir mensagem de sucesso ou erro -->
-                            <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
-                                    <div id="mensagem-sucesso" class="alert alert-success mt-3">
-                                        <?php echo $_SESSION['mensagem_sucesso']; ?>
-                                    </div>
-                                    <?php unset($_SESSION['mensagem_sucesso']); ?>
-                                <?php elseif (isset($_SESSION['mensagem_erro'])): ?>
-                                    <div id="mensagem-erro" class="alert alert-danger mt-3">
-                                        <?php echo $_SESSION['mensagem_erro']; ?>
-                                    </div>
-                                    <?php unset($_SESSION['mensagem_erro']); ?>
-                                <?php endif; ?>
+                <!-- Campos adicionais como checkboxes agrupados em colunas -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Acompanhamento:</label>
+                            <div class="form-check">
+                                <input type="radio" id="acompanhamento-sim" name="acompanhamento" value="Sim" class="form-check-input">
+                                <label for="acompanhamento-sim" class="form-check-label">Sim</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" id="acompanhamento-nao" name="acompanhamento" value="Não" class="form-check-input">
+                                <label for="acompanhamento-nao" class="form-check-label">Não</label>
+                            </div>
                         </div>
-                    </div> 
+
+                        <div class="mb-3">
+                            <label class="form-label">Apoio Psicológico:</label>
+                            <div class="form-check">
+                                <input type="radio" id="apoio_psicologico-sim" name="apoio_psicologico" value="Sim" class="form-check-input">
+                                <label for="apoio_psicologico-sim" class="form-check-label">Sim</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" id="apoio_psicologico-nao" name="apoio_psicologico" value="Não" class="form-check-input">
+                                <label for="apoio_psicologico-nao" class="form-check-label">Não</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Auxílio Permanência:</label>
+                            <div class="form-check">
+                                <input type="radio" id="auxilio_permanencia-sim" name="auxilio_permanencia" value="Sim" class="form-check-input">
+                                <label for="auxilio_permanencia-sim" class="form-check-label">Sim</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" id="auxilio_permanencia-nao" name="auxilio_permanencia" value="Não" class="form-check-input">
+                                <label for="auxilio_permanencia-nao" class="form-check-label">Não</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Cotista:</label>
+                            <div class="form-check">
+                                <input type="radio" id="cotista-sim" name="cotista" value="Sim" class="form-check-input">
+                                <label for="cotista-sim" class="form-check-label">Sim</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" id="cotista-nao" name="cotista" value="Não" class="form-check-input">
+                                <label for="cotista-nao" class="form-check-label">Não</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Estágio:</label>
+                            <div class="form-check">
+                                <input type="radio" id="estagio-sim" name="estagio" value="Sim" class="form-check-input">
+                                <label for="estagio-sim" class="form-check-label">Sim</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" id="estagio-nao" name="estagio" value="Não" class="form-check-input">
+                                <label for="estagio-nao" class="form-check-label">Não</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Acompanhamento de Saúde:</label>
+                            <div class="form-check">
+                                <input type="radio" id="acompanhamento_saude-sim" name="acompanhamento_saude" value="Sim" class="form-check-input">
+                                <label for="acompanhamento_saude-sim" class="form-check-label">Sim</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" id="acompanhamento_saude-nao" name="acompanhamento_saude" value="Não" class="form-check-input">
+                                <label for="acompanhamento_saude-nao" class="form-check-label">Não</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Projeto de Pesquisa:</label>
+                            <div class="form-check">
+                                <input type="radio" id="projeto_pesquisa-sim" name="projeto_pesquisa" value="Sim" class="form-check-input">
+                                <label for="projeto_pesquisa-sim" class="form-check-label">Sim</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" id="projeto_pesquisa-nao" name="projeto_pesquisa" value="Não" class="form-check-input">
+                                <label for="projeto_pesquisa-nao" class="form-check-label">Não</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Projeto de Extensão:</label>
+                            <div class="form-check">
+                                <input type="radio" id="projeto_extensao-sim" name="projeto_extensao" value="Sim" class="form-check-input">
+                                <label for="projeto_extensao-sim" class="form-check-label">Sim</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" id="projeto_extensao-nao" name="projeto_extensao" value="Não" class="form-check-input">
+                                <label for="projeto_extensao-nao" class="form-check-label">Não</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Projeto de Ensino:</label>
+                            <div class="form-check">
+                                <input type="radio" id="projeto_ensino-sim" name="projeto_ensino" value="Sim" class="form-check-input">
+                                <label for="projeto_ensino-sim" class="form-check-label">Sim</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" id="projeto_ensino-nao" name="projeto_ensino" value="Não" class="form-check-input">
+                                <label for="projeto_ensino-nao" class="form-check-label">Não</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+                <button type="submit" class="btn btn-light">Cadastrar Discentes</button>
+
+                <!-- Exibir mensagem de sucesso ou erro abaixo do botão -->
+                <div class="mt-3">
+                    <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
+                        <div id="mensagem-sucesso" class="alert alert-success">
+                            <?php echo $_SESSION['mensagem_sucesso']; ?>
+                        </div>
+                        <?php unset($_SESSION['mensagem_sucesso']); ?>
+                    <?php elseif (isset($_SESSION['mensagem_erro'])): ?>
+                        <div id="mensagem-erro" class="alert alert-danger">
+                            <?php echo $_SESSION['mensagem_erro']; ?>
+                        </div>
+                        <?php unset($_SESSION['mensagem_erro']); ?>
+                    <?php endif; ?>
+                </div>
+            </form>
+        </div>
+    </div> 
+</div>
+
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Remover a mensagem de sucesso ou erro após 5 segundos
+        setTimeout(function() {
+            var mensagemSucesso = document.getElementById('mensagem-sucesso');
+            var mensagemErro = document.getElementById('mensagem-erro');
+            if (mensagemSucesso) {
+                mensagemSucesso.style.display = 'none';
+            }
+            if (mensagemErro) {
+                mensagemErro.style.display = 'none';
+            }
+        }, 10000); // 5 segundos
+    </script>
 </body>
 </html>

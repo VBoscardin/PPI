@@ -1,3 +1,5 @@
+CREATE DATABASE bd_ppi;
+
 CREATE TABLE `usuarios` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(50) NOT NULL,

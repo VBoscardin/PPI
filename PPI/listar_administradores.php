@@ -14,6 +14,32 @@ if ($conn->connect_error) {
     die("Conexão falhou: " . $conn->connect_error);
 }
 
+// Obter lista de administradores
+$sql = "SELECT id, username, email, tipo, foto_perfil FROM usuarios WHERE tipo = 'administrador'";
+$result = $conn->query($sql);
+
+// Atualizar administrador
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_adm'])) {
+    $id = $_POST['id'];
+    $username = trim($_POST['username']);
+    $email = trim($_POST['email']);
+    $tipo = trim($_POST['tipo']);
+
+    // Atualizar informações no banco de dados
+    $stmt = $conn->prepare("UPDATE usuarios SET username = ?, email = ?, tipo = ? WHERE id = ?");
+    $stmt->bind_param('sssi', $username, $email, $tipo, $id);
+
+    if ($stmt->execute()) {
+        $_SESSION['mensagem_sucesso'] = 'Administrador atualizado com sucesso!';
+    } else {
+        $_SESSION['mensagem_erro'] = 'Erro ao atualizar administrador: ' . $stmt->error;
+    }
+
+    $stmt->close();
+    header("Location: listar_administradores.php"); // Redirecionar para evitar reenvio do formulário
+    exit();
+}
+
 // Obter o nome e a foto do perfil do administrador
 $stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
 $stmt->bind_param("s", $_SESSION['email']);
@@ -22,92 +48,15 @@ $stmt->bind_result($nome, $foto_perfil);
 $stmt->fetch();
 $stmt->close();
 
-$host = 'localhost';
-$db = 'bd_ppi';
-$user = 'root'; // Seu usuário do banco de dados
-$pass = ''; // Sua senha do banco de dados
-
-$mysqli = new mysqli($host, $user, $pass, $db);
-
-if ($mysqli->connect_error) {
-    die('Conexão falhou: ' . $mysqli->connect_error);
-}
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_adm'])) {
-    $username = trim($_POST['username']);
-    $email = trim($_POST['email']);
-    $password = trim($_POST['password']);
-    $photo = $_FILES['photo'];
-
-    // Verificação de todos os campos obrigatórios
-    if (!empty($username) && !empty($email) && !empty($password) && !empty($photo['name'])) {
-        // Verificar se o email já está cadastrado
-        $stmt = $mysqli->prepare('SELECT COUNT(*) FROM usuarios WHERE email = ?');
-        $stmt->bind_param('s', $email);
-        $stmt->execute();
-        $stmt->bind_result($email_existente);
-        $stmt->fetch();
-        $stmt->close();
-
-        if ($email_existente > 0) {
-            $_SESSION['mensagem_erro'] = 'Erro ao cadastrar administrador: Este email já está cadastrado!';
-        } else {
-            $password_hash = password_hash($password, PASSWORD_DEFAULT);
-
-            $upload_dir = 'uploads/';
-            $foto_perfil_path = '';
-
-            if ($photo['error'] === UPLOAD_ERR_OK) {
-                $foto_perfil_name = basename($photo['name']);
-                $foto_perfil_path = $upload_dir . $foto_perfil_name;
-
-                if ($photo['size'] > 5000000) {
-                    $_SESSION['mensagem_erro'] = 'Erro ao cadastrar administrador: O arquivo é muito grande!';
-                } else {
-                    if (!move_uploaded_file($photo['tmp_name'], $foto_perfil_path)) {
-                        $_SESSION['mensagem_erro'] = 'Erro ao cadastrar administrador: Falha ao fazer upload da foto!';
-                        $foto_perfil_path = '';
-                    }
-                }
-            } else {
-                $_SESSION['mensagem_erro'] = 'Erro ao cadastrar administrador: Nenhum arquivo enviado ou erro no envio!';
-            }
-
-            if (!isset($_SESSION['mensagem_erro'])) {
-                // Inserir o novo administrador no banco de dados
-                $stmt = $mysqli->prepare('INSERT INTO usuarios (username, email, password_hash, tipo, foto_perfil) VALUES (?, ?, ?, "administrador", ?)');
-                $stmt->bind_param('ssss', $username, $email, $password_hash, $foto_perfil_path);
-
-                if ($stmt->execute()) {
-                    $_SESSION['mensagem_sucesso'] = 'Administrador cadastrado com sucesso!';
-                } else {
-                    $_SESSION['mensagem_erro'] = 'Erro ao cadastrar administrador: ' . $stmt->error;
-                }
-
-                $stmt->close();
-            }
-        }
-    } else {
-        $_SESSION['mensagem_erro'] = 'Todos os campos são obrigatórios!';
-    }
-
-    header("Location: cadastrar_adm.php"); // Redirecionar para evitar reenvio do formulário
-    exit();
-}
-
-$mysqli->close();
+$conn->close();
 ?>
-
-
-
-
 
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastrar Administrador</title>
+    <title>Listar Administradores</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="style.css" rel="stylesheet" type="text/css">
@@ -115,9 +64,8 @@ $mysqli->close();
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Barra lateral -->
             <div class="col-md-3 sidebar">
-                <div class="separator mb-3"></div>
+            <div class="separator mb-3"></div>
                 <div class="signe-text">SIGNE</div>
                 <div class="separator mt-3 mb-3"></div>
                 <button onclick="location.href='f_pagina_adm.php'">
@@ -155,8 +103,9 @@ $mysqli->close();
                 <button onclick="location.href='gerar_slide.php'">
                     <i class="fas fa-sliders-h"></i> Gerar Slide Pré Conselho
                 </button>
-                 <!-- Botão expansível "Listar" -->
-                 <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#list-menu" aria-expanded="false" aria-controls="list-menu">
+                
+                <!-- Botão expansível "Listar" -->
+                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#list-menu" aria-expanded="false" aria-controls="list-menu">
                     <i id="toggle-icon" class="fas fa-list"></i> Listar
                 </button>
 
@@ -196,7 +145,7 @@ $mysqli->close();
                 <div class="container">
                     <div class="header-container">
                         <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
-                        <div class="title ms-3">Cadastrar Administrador</div>
+                        <div class="title ms-3">Listar e Editar Administradores</div>
                         <div class="ms-auto d-flex align-items-center">
                             <div class="profile-info d-flex align-items-center">
                                 <div class="profile-details me-2">
@@ -212,48 +161,67 @@ $mysqli->close();
                     </div>
                 </div>
 
-                <!-- Container do Formulário -->
                 <div class="container mt-4">
+                    <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
+                        <div id="mensagem-sucesso" class="alert alert-success">
+                            <?php echo $_SESSION['mensagem_sucesso']; unset($_SESSION['mensagem_sucesso']); ?>
+                        </div>
+                    <?php elseif (isset($_SESSION['mensagem_erro'])): ?>
+                        <div id="mensagem-erro" class="alert alert-danger">
+                            <?php echo $_SESSION['mensagem_erro']; unset($_SESSION['mensagem_erro']); ?>
+                        </div>
+                    <?php endif; ?>
+
                     <div class="card shadow">
                         <div class="card-body">
-                            <form action="cadastrar_adm.php" method="post" enctype="multipart/form-data">
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="username" class="form-label">Nome de Usuário:</label>
-                                        <input type="text" id="username" name="username" class="form-control" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="email" class="form-label">Email:</label>
-                                        <input type="email" id="email" name="email" class="form-control" required>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="password" class="form-label">Senha:</label>
-                                        <input type="password" id="password" name="password" class="form-control" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="photo" class="form-label">Foto de Perfil:</label>
-                                        <input type="file" id="photo" name="photo" class="form-control" accept="image/*" required>
-                                    </div>
-                                </div>
-
-                                <button type="submit" name="cadastrar_adm" class="btn btn-light">Cadastrar Administrador</button>
-
-                                <!-- Exibir mensagem de sucesso ou erro -->
-                                <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
-                                    <div id="mensagem-sucesso" class="alert alert-success mt-3">
-                                        <?php echo $_SESSION['mensagem_sucesso']; ?>
-                                    </div>
-                                    <?php unset($_SESSION['mensagem_sucesso']); ?>
-                                <?php elseif (isset($_SESSION['mensagem_erro'])): ?>
-                                    <div id="mensagem-erro" class="alert alert-danger mt-3">
-                                        <?php echo $_SESSION['mensagem_erro']; ?>
-                                    </div>
-                                    <?php unset($_SESSION['mensagem_erro']); ?>
-                                <?php endif; ?>
-                            </form>
+                            <?php if ($result->num_rows > 0): ?>
+                                <form action="listar_administradores.php" method="post">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Nome de Usuário</th>
+                                                <th>Email</th>
+                                                <th>Tipo</th>
+                                                <th>Foto de Perfil</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php while ($row = $result->fetch_assoc()): ?>
+                                                <tr>
+                                                    <td><?php echo $row['id']; ?></td>
+                                                    <td>
+                                                        <input type="text" name="username" value="<?php echo htmlspecialchars($row['username']); ?>" class="form-control">
+                                                    </td>
+                                                    <td>
+                                                        <input type="email" name="email" value="<?php echo htmlspecialchars($row['email']); ?>" class="form-control">
+                                                    </td>
+                                                    <td>
+                                                        <select name="tipo" class="form-select">
+                                                            <option value="administrador" <?php echo $row['tipo'] == 'administrador' ? 'selected' : ''; ?>>Administrador</option>
+                                                            <!-- Adicione outros tipos se necessário -->
+                                                        </select>
+                                                    </td>
+                                                    <td>
+                                                        <?php if (!empty($row['foto_perfil']) && file_exists('uploads/' . basename($row['foto_perfil']))): ?>
+                                                            <img src="uploads/<?php echo htmlspecialchars(basename($row['foto_perfil'])); ?>" alt="Foto" class="img-thumbnail" width="50">
+                                                        <?php else: ?>
+                                                            <img src="imgs/admin-photo.png" alt="Foto" class="img-thumbnail" width="50">
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                                        <button type="submit" name="update_adm" class="btn btn-light">Salvar</button>
+                                                    </td>
+                                                </tr>
+                                            <?php endwhile; ?>
+                                        </tbody>
+                                    </table>
+                                </form>
+                            <?php else: ?>
+                                <p>Nenhum administrador encontrado.</p>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -273,7 +241,7 @@ $mysqli->close();
             if (mensagemErro) {
                 mensagemErro.style.display = 'none';
             }
-        }, 5000); // 5 segundos
+        }, 5000);
     </script>
 </body>
 </html>
