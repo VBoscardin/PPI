@@ -39,6 +39,16 @@ if ($disciplinas_result) {
         $disciplinas[] = $row;
     }
 }
+
+// Obter lista de cursos
+$cursos_result = $conn->query('SELECT id, nome FROM cursos');
+$cursos = [];
+if ($cursos_result) {
+    while ($row = $cursos_result->fetch_assoc()) {
+        $cursos[] = $row;
+    }
+}
+
 // Obter o nome e a foto do perfil do administrador
 $stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
 $stmt->bind_param("s", $_SESSION['email']);
@@ -60,7 +70,6 @@ if ($disciplinas_result) {
     }
 }
 
-
 // Função para cadastrar turma
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_turma'])) {
     $numero = $_POST['numero'];
@@ -68,17 +77,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_turma'])) {
     $ano_ingresso = $_POST['ano_ingresso'];
     $ano_oferta = $_POST['ano_oferta'];
     $professor_regente = $_POST['professor_regente'];
+    $curso_id = $_POST['curso']; // Novo campo para o curso
     $disciplinas_selecionadas = isset($_POST['disciplinas']) ? $_POST['disciplinas'] : [];
 
     // Verificar se os campos não estão vazios
-    if (!empty($numero) && !empty($ano) && !empty($ano_ingresso) && !empty($ano_oferta) && !empty($professor_regente) && !empty($disciplinas_selecionadas)) {
+    if (!empty($numero) && !empty($ano) && !empty($ano_ingresso) && !empty($ano_oferta) && !empty($professor_regente) && !empty($curso_id) && !empty($disciplinas_selecionadas)) {
         // Iniciar transação
         $conn->begin_transaction();
 
         try {
             // Inserir a turma na tabela turmas
-            $stmt = $conn->prepare('INSERT INTO turmas (numero, ano, ano_ingresso, ano_oferta, professor_regente) VALUES (?, ?, ?, ?, ?)');
-            $stmt->bind_param('iiiii', $numero, $ano, $ano_ingresso, $ano_oferta, $professor_regente);
+            $stmt = $conn->prepare('INSERT INTO turmas (numero, ano, ano_ingresso, ano_oferta, professor_regente, curso_id) VALUES (?, ?, ?, ?, ?, ?)');
+            $stmt->bind_param('iiiiii', $numero, $ano, $ano_ingresso, $ano_oferta, $professor_regente, $curso_id);
             $stmt->execute();
             $stmt->close();
 
@@ -107,6 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_turma'])) {
 // Fechar conexão
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -234,7 +245,7 @@ $conn->close();
                                         <input type="number" id="ano" name="ano" class="form-control" min="2000" max="2099" step="1" required>
                                     </div>
                                 </div>
-
+                                            
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="ano_ingresso" class="form-label">Ano de Ingresso:</label>
@@ -247,16 +258,27 @@ $conn->close();
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="professor_regente" class="form-label">Professor Regente:</label>
-                                    <select id="professor_regente" name="professor_regente" class="form-select" required>
-                                        <option value="">Selecione um professor</option>
-                                        <?php foreach ($docentes as $docente): ?>
-                                            <option value="<?php echo htmlspecialchars($docente['id']); ?>">
-                                                <?php echo htmlspecialchars($docente['nome']); ?>
+                                <div class="mb-3">
+                                    <label for="curso" class="form-label">Curso:</label>
+                                    <select id="curso" name="curso" class="form-select" required>
+                                        <option value="">Selecione um curso</option>
+                                        <?php foreach ($cursos as $curso): ?>
+                                            <option value="<?php echo htmlspecialchars($curso['id']); ?>">
+                                                <?php echo htmlspecialchars($curso['nome']); ?>
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
+                                    <label for="professor_regente" class="form-label">Professor Regente:</label>
+                                        <select id="professor_regente" name="professor_regente" class="form-select" required>
+                                            <option value="">Selecione um professor</option>
+                                            <?php foreach ($docentes as $docente): ?>
+                                                <option value="<?php echo htmlspecialchars($docente['id']); ?>">
+                                                    <?php echo htmlspecialchars($docente['nome']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
                                 <hr>                
                                 <fieldset>
                                     <legend>Disciplinas Associadas</legend>

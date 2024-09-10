@@ -112,3 +112,19 @@ ADD COLUMN foto_perfil VARCHAR(255) DEFAULT NULL;
 
 ALTER TABLE setores 
 ADD COLUMN foto_perfil VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE `turmas`
+ADD COLUMN `curso_id` INT NOT NULL,
+ADD FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`);
+
+CREATE TABLE `discentes_turmas` (
+  `numero_matricula` INT NOT NULL,
+  `turma_numero` INT NOT NULL,
+  `turma_ano` YEAR NOT NULL,
+  `turma_ano_ingresso` YEAR NOT NULL,
+  FOREIGN KEY (`numero_matricula`) REFERENCES `discentes` (`numero_matricula`) ON DELETE CASCADE,
+  FOREIGN KEY (`turma_numero`, `turma_ano`, `turma_ano_ingresso`) REFERENCES `turmas` (`numero`, `ano`, `ano_ingresso`),
+  PRIMARY KEY (`numero_matricula`, `turma_numero`, `turma_ano`, `turma_ano_ingresso`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
