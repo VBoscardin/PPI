@@ -132,22 +132,57 @@ body {
 }
 
 .btn-light {
-    width: 100%;
+    width: auto;
     margin-bottom: 10px;
     border-radius: 4px;
     color: white;
-    width: auto;
-    background-color: #003d00;
     display: flex;
     align-items: center;
     padding: 10px;
     border: none;
+    background-color: #003d00;
 }
 
 .btn-light:hover {
     background-color: green;
     color: white;
 }
+
+.btn-light, .btn-danger, .btn-warning {
+    width: 100%; /* Definindo largura igual para todos os botões */
+    margin-bottom: 10px;
+    border-radius: 4px;
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: none;
+}
+
+.btn-light {
+    background-color: #003d00; /* Verde escuro */
+}
+
+.btn-light:hover {
+    background-color: green;
+}
+
+.btn-danger {
+    background-color: #dc3545; /* Vermelho */
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn-warning {
+    background-color: #ffc107; /* Amarelo */
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+}
+
 
 
 /* Ajuste do título */
@@ -173,3 +208,9 @@ body {
 .checkbox-title {
     font-weight: bold; /* Adiciona negrito */
 }
+
+
+.table thead {
+    font-family: 'Forum'; /* Aplicar a fonte "Forum" ao cabeçalho da tabela */
+}
+

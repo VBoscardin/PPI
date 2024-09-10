@@ -15,6 +15,7 @@ if ($_SESSION['user_type'] !== 'setor') {
     exit();
 }
 
+// Incluir o arquivo de configuração
 include 'config.php';
 
 // Verificar conexão
@@ -30,6 +31,7 @@ $stmt->bind_result($nome, $foto_perfil);
 $stmt->fetch();
 $stmt->close();
 
+// Fechar conexão
 $conn->close();
 ?>
 
@@ -61,7 +63,7 @@ $conn->close();
                 <!-- Menu expansível com Bootstrap -->
                 <div id="expandable-menu" class="collapse expandable-container">
                     <div class="expandable-menu">
-                        <button onclick="location.href='cadastrar_discentes.php'">
+                        <button onclick="location.href='cadastrar/cadastrar_discentes.php'">
                             <i class="fas fa-plus"></i> Cadastrar Discente
                         </button>
                     </div>

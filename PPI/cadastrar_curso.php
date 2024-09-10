@@ -27,25 +27,23 @@ $stmt->bind_result($nome, $foto_perfil);
 $stmt->fetch();
 $stmt->close();
 
-$conn->close();
-
-$host = 'localhost';
-$db = 'bd_ppi';
-$user = 'root'; // Seu usuário do banco de dados
-$pass = ''; // Sua senha do banco de dados
-
-$mysqli = new mysqli($host, $user, $pass, $db);
-
-if ($mysqli->connect_error) {
-    die('Conexão falhou: ' . $mysqli->connect_error);
+// Obter a lista de docentes para o campo de coordenador
+$docentes = [];
+$stmt = $conn->prepare("SELECT id, nome FROM docentes");
+$stmt->execute();
+$stmt->bind_result($id, $nome_docente);
+while ($stmt->fetch()) {
+    $docentes[] = ['id' => $id, 'nome' => $nome_docente];
 }
+$stmt->close();
 
+// Verificar se o formulário foi enviado
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_curso'])) {
     $nome = $_POST['nome'];
     $coordenador = $_POST['coordenador'];
 
     // Verificar se o curso já existe
-    $stmt = $mysqli->prepare('SELECT COUNT(*) FROM cursos WHERE nome = ?');
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM cursos WHERE nome = ?');
     $stmt->bind_param('s', $nome);
     $stmt->execute();
     $stmt->bind_result($count);
@@ -56,13 +54,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_curso'])) {
         $_SESSION['mensagem_erro'] = 'Curso já cadastrado!';
     } else {
         // Preparar e executar a inserção do novo curso
-        $stmt = $mysqli->prepare('INSERT INTO cursos (nome, coordenador) VALUES (?, ?)');
+        $stmt = $conn->prepare('INSERT INTO cursos (nome, coordenador) VALUES (?, ?)');
         $stmt->bind_param('ss', $nome, $coordenador);
 
         if ($stmt->execute()) {
             $_SESSION['mensagem_sucesso'] = 'Curso cadastrado com sucesso!';
         } else {
-            $_SESSION['mensagem_erro'] = 'Erro ao cadastrar curso' . $stmt->error;
+            $_SESSION['mensagem_erro'] = 'Erro ao cadastrar curso: ' . $stmt->error;
         }
 
         $stmt->close();
@@ -72,7 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_curso'])) {
     exit();
 }
 
-$mysqli->close();
+// Fechar a conexão ao final do script
+$conn->close();
 ?>
 
 
@@ -202,8 +201,16 @@ $mysqli->close();
 
                                 <div class="mb-3">
                                     <label for="coordenador" class="form-label">Coordenador:</label>
-                                    <input type="text" id="coordenador" name="coordenador" class="form-control" required>
+                                    <select id="coordenador" name="coordenador" class="form-select" required>
+                                        <option value="">Selecione um Coordenador</option>
+                                        <?php foreach ($docentes as $docente): ?>
+                                            <option value="<?php echo htmlspecialchars($docente['id']); ?>">
+                                                <?php echo htmlspecialchars($docente['nome']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
                                 </div>
+
 
                                 <button type="submit" name="cadastrar_curso" class="btn btn-light">
                                     Cadastrar Curso
