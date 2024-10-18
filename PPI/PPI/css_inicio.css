@@ -1,0 +1,142 @@
+:root {
+    --cor-primaria: green; /* Verde */
+    --cor-secundaria: white; /* Branco */
+}
+
+body {
+    margin: 0;
+    font-family: 'Forum', sans-serif;
+    display: flex;
+}
+
+.sidebar {
+    width: 250px; /* Largura da barra lateral */
+    background-color: var(--cor-primaria); /* Verde */
+    color: var(--cor-secundaria); /* Branco */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto; /* Adiciona rolagem vertical se necessário */
+    transition: width 0.3s; /* Adiciona uma transição suave para a largura */
+}
+
+.logo-container {
+    display: flex;
+    align-items: center; /* Alinha verticalmente a imagem e o texto */
+    margin-bottom: 20px;
+}
+
+.sidebar img {
+    width: 80px; /* Tamanho reduzido da logo */
+    height: auto;
+    margin-right: 10px; /* Espaço entre a logo e o texto */
+}
+
+.logo-container span {
+    font-size: 32px; /* Tamanho do texto "SIGNE" aumentado */
+    color: var(--cor-secundaria); /* Branco */
+    font-weight: bold; /* Negrito opcional */
+}
+
+.sidebar button, .sidebar-button {
+    background-color: var(--cor-secundaria); /* Branco */
+    color: black; /* Preto - Cor do texto dos botões */
+    border: none;
+    font-family: 'Forum', sans-serif;
+    padding: 10px 15px; /* Ajuste o padding para reduzir a altura dos botões */
+    font-size: 16px; /* Ajuste o tamanho da fonte conforme necessário */
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 8px 0; /* Ajuste o margin para mais espaçamento entre os botões */
+    width: 200px; /* Ajuste a largura dos botões conforme necessário */
+    text-align: left; /* Alinha o texto à esquerda dentro do botão */
+    display: flex;
+    align-items: center; /* Alinha verticalmente o texto dentro do botão */
+    justify-content: center; /* Centraliza horizontalmente o texto */
+}
+
+.sidebar-button {
+    background-color: var(--cor-secundaria); /* Branco */
+    color: black; /* Preto - Cor do texto do botão */
+    border: none;
+    font-family: 'Forum', sans-serif;
+    padding: 10px 15px; /* Ajuste o padding para reduzir a altura */
+    font-size: 16px; /* Ajuste o tamanho da fonte conforme necessário */
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 8px 0; /* Ajuste o margin para mais espaçamento entre os botões */
+    width: 200px; /* Largura igual aos outros botões */
+    text-align: left; /* Alinha o texto à esquerda dentro do botão */
+    display: flex;
+    align-items: center; /* Alinha verticalmente o texto dentro do botão */
+    justify-content: center; /* Centraliza horizontalmente o texto */
+}
+
+.sidebar-button:hover {
+    background-color: black; /* Muda a cor de fundo para preto ao passar o mouse */
+    color: var(--cor-secundaria); /* Muda a cor do texto para branco ao passar o mouse */
+}
+
+#content {
+    margin-left: 250px; /* Espaço para a barra lateral */
+    padding: 20px;
+    width: calc(100% - 250px);
+}
+
+#cadastrar-opcoes {
+    display: none; /* Inicialmente oculto */
+    background-color: var(--cor-primaria); /* Mesma cor da barra lateral */
+    padding: 10px;
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    margin-top: 8px; /* Espaçamento acima das opções */
+    width: 100%; /* Largura igual ao label acima */
+}
+
+#cadastrar-opcoes button {
+    display: block; /* Botões empilhados verticalmente */
+    background-color: var(--cor-secundaria); /* Branco */
+    color: black; /* Preto - Cor do texto dos botões */
+    border: none;
+    font-family: 'Forum', sans-serif;
+    padding: 8px 12px; /* Menor padding para botões menores */
+    font-size: 14px; /* Menor tamanho da fonte */
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 6px; /* Menor espaço entre os botões */
+    width: 100%; /* Largura dos botões igual à largura do contêiner */
+    text-align: left; /* Alinha o texto à esquerda dentro do botão */
+    display: flex;
+    align-items: center; /* Alinha verticalmente o texto dentro do botão */
+    justify-content: center; /* Centraliza horizontalmente o texto */
+}
+
+#cadastrar-opcoes button:hover {
+    background-color: black; /* Muda a cor de fundo para preto ao passar o mouse */
+    color: var(--cor-secundaria); /* Muda a cor do texto para branco ao passar o mouse */
+}
+/* Adicionando um estilo específico para o botão "Cadastrar" */
+.sidebar .cadastrar-button {
+    background-color: var(--cor-secundaria); /* Branco */
+    color: black; /* Preto - Cor do texto */
+    border: none;
+    font-family: 'Forum', sans-serif;
+    padding: 10px 15px; /* Ajuste o padding para igualar aos outros botões */
+    font-size: 16px; /* Ajuste o tamanho da fonte conforme necessário */
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 8px 0; /* Ajuste o margin para mais espaçamento entre os botões */
+    width: 200px; /* Largura igual aos outros botões */
+    text-align: left; /* Alinha o texto à esquerda dentro do botão */
+    display: flex;
+    align-items: center; /* Alinha verticalmente o texto dentro do botão */
+    justify-content: center; /* Centraliza horizontalmente o texto */
+}
+
+.sidebar .cadastrar-button:hover {
+    background-color: black; /* Muda a cor de fundo para preto ao passar o mouse */
+    color: var(--cor-secundaria); /* Muda a cor do texto para branco ao passar o mouse */
+}

@@ -1,0 +1,216 @@
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+.sidebar {
+    background-color: #003d00;
+    color: white;
+    padding: 20px;
+    width: 250px;
+    min-height: 100vh;
+}
+
+.separator {
+    border-bottom: 1px solid white;
+}
+
+.signe-text {
+    font-family: 'Forum';
+    font-size: 3rem;
+    color: white;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.sidebar button {
+    width: 100%;
+    margin-bottom: 10px;
+    border: none;
+    background-color: white;
+    color: black;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.sidebar button i {
+    margin-right: 10px;
+}
+
+.sidebar button:hover {
+    background-color: black;
+    color: white;
+}
+
+.expandable-menu button {
+    width: 100%;
+    margin-bottom: 5px;
+    border: none;
+    background-color: white;
+    color: black;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    padding: 6px;
+    border-radius: 4px;
+}
+
+.expandable-menu button:hover {
+    background-color: black;
+    color: white;
+}
+
+.main-content {
+    padding: 20px;
+    padding-left: 15vh;
+    padding-right: 0px;
+    box-sizing: border-box;
+}
+
+.header-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    height: 20vh;
+}
+
+.logo {
+    max-width: 10vh;
+    height: relative;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0;
+    margin-left: 20px;
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    margin-left: 20px;
+}
+
+.profile-info img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.profile-details {
+    font-size: 1.2rem;
+    font-family: 'Forum';
+    font-weight: bold;
+}
+
+.expandable-container {
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    margin-top: 20px;
+}
+
+.shadow-container {
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.btn-light {
+    width: auto;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: none;
+    background-color: #003d00;
+}
+
+.btn-light:hover {
+    background-color: green;
+    color: white;
+}
+
+.btn-light, .btn-danger, .btn-warning {
+    width: 100%; /* Definindo largura igual para todos os botões */
+    margin-bottom: 10px;
+    border-radius: 4px;
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: none;
+}
+
+.btn-light {
+    background-color: #003d00; /* Verde escuro */
+}
+
+.btn-light:hover {
+    background-color: green;
+}
+
+.btn-danger {
+    background-color: #dc3545; /* Vermelho */
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn-warning {
+    background-color: #ffc107; /* Amarelo */
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+}
+
+
+
+/* Ajuste do título */
+.title {
+    font-family: 'Forum'; /* Ajusta a fonte para "Forum" */
+    font-size: 1.5rem; /* Ajusta o tamanho da fonte conforme necessário */
+}
+
+/* Estilo do texto de título */
+.title-text {
+    font-family: 'Forum'; /* Fonte Forum */
+    font-size: 3rem; /* Aumenta o tamanho do SIGNE */
+    color: white; /* Cor do texto SIGNE */
+    text-align: center;
+    margin-bottom: 10px; /* Espaço abaixo do SIGNE */
+}
+/* Estilo do texto dos títulos dos checkboxes */
+.form-label {
+    font-weight: bold; /* Adiciona negrito */
+    font-family: "Forums";
+}
+/* Estilo apenas para os títulos dos checkboxes */
+.checkbox-title {
+    font-weight: bold; /* Adiciona negrito */
+}
+
+
+.table thead {
+    font-family: 'Forum'; /* Aplicar a fonte "Forum" ao cabeçalho da tabela */
+}
+
