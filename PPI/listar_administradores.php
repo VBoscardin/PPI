@@ -21,6 +21,14 @@ $result = $conn->query($sql);
 // Atualizar administrador
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_adm'])) {
     $id = $_POST['id'];
+
+    // Impedir exclusão do próprio usuário
+    if ($id == $_SESSION['user_id']) {
+        $_SESSION['mensagem_erro'] = 'Você não pode editar seu próprio usuário!';
+        header("Location: listar_administradores.php");
+        exit();
+    }
+
     $username = trim($_POST['username']);
     $email = trim($_POST['email']);
     $tipo = trim($_POST['tipo']);
@@ -33,10 +41,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_adm'])) {
         $foto_perfil = basename($_FILES['foto_perfil']['name']);
         $upload_file = $upload_dir . $foto_perfil;
 
-        if (move_uploaded_file($tmp_name, $upload_file)) {
-            // Foto foi carregada com sucesso
-        } else {
-            // Falha ao carregar foto
+        // Verificar extensão da imagem
+        $ext = pathinfo($foto_perfil, PATHINFO_EXTENSION);
+        $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
+        if (!in_array(strtolower($ext), $allowed_types)) {
+            $_SESSION['mensagem_erro'] = 'Formato de arquivo inválido. Apenas JPG, JPEG, PNG e GIF são permitidos.';
+            header("Location: listar_administradores.php");
+            exit();
+        }
+
+        if (!move_uploaded_file($tmp_name, $upload_file)) {
             $_SESSION['mensagem_erro'] = 'Erro ao carregar a foto de perfil.';
             header("Location: listar_administradores.php");
             exit();
@@ -71,6 +85,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_adm'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_adm'])) {
     $id = $_POST['id'];
 
+    // Impedir exclusão do próprio usuário
+    if ($id == $_SESSION['user_id']) {
+        $_SESSION['mensagem_erro'] = 'Você não pode excluir seu próprio usuário!';
+        header("Location: listar_administradores.php");
+        exit();
+    }
+
     // Excluir administrador do banco de dados
     $stmt = $conn->prepare("DELETE FROM usuarios WHERE id = ?");
     $stmt->bind_param('i', $id);
@@ -82,11 +103,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_adm'])) {
     }
 
     $stmt->close();
-    header("Location: listar_administradores.php"); // Redirecionar para evitar reenvio do formulário
+    header("Location: listar_administradores.php");
     exit();
 }
 
-// Obter o nome e a foto do perfil do administrador
+// Obter o nome e a foto do perfil do administrador logado
 $stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
 $stmt->bind_param("s", $_SESSION['email']);
 $stmt->execute();
@@ -96,6 +117,7 @@ $stmt->close();
 
 $conn->close();
 ?>
+
 
 
 <!DOCTYPE html>
@@ -229,7 +251,6 @@ $conn->close();
                                             <th>ID</th>
                                             <th>Nome de Usuário</th>
                                             <th>Email</th>
-                                            <th>Tipo</th>
                                             <th>Foto de Perfil</th>
                                             <th>Ações</th>
                                         </tr>
@@ -240,7 +261,6 @@ $conn->close();
                                             <td><?php echo $row['id']; ?></td>
                                             <td><?php echo htmlspecialchars($row['username']); ?></td>
                                             <td><?php echo htmlspecialchars($row['email']); ?></td>
-                                            <td><?php echo htmlspecialchars($row['tipo']); ?></td>
                                             <td>
                                                 <?php if (!empty($row['foto_perfil']) && file_exists('uploads/' . basename($row['foto_perfil']))): ?>
                                                     <img src="uploads/<?php echo htmlspecialchars(basename($row['foto_perfil'])); ?>" alt="Foto" class="img-thumbnail" width="50">
@@ -252,8 +272,7 @@ $conn->close();
                                                 <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal"
                                                         data-id="<?php echo $row['id']; ?>"
                                                         data-username="<?php echo htmlspecialchars($row['username']); ?>"
-                                                        data-email="<?php echo htmlspecialchars($row['email']); ?>"
-                                                        data-tipo="<?php echo htmlspecialchars($row['tipo']); ?>">
+                                                        data-email="<?php echo htmlspecialchars($row['email']); ?>">
                                                     Editar
                                                 </button>
                                                 <form action="listar_administradores.php" method="post" class="d-inline">
@@ -263,14 +282,15 @@ $conn->close();
                                             </td>
                                         </tr>
                                     <?php endwhile; ?>
-                                </tbody>
-                            </table>
-                        <?php else: ?>
-                            <p>Nenhum administrador encontrado.</p>
-                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            <?php else: ?>
+                                <p>Nenhum administrador encontrado.</p>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
-
+                
                 <!-- Modal de Edição -->
                 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
                     <div class="modal-dialog">

@@ -13,18 +13,19 @@ if (isset($_POST['login'])) {
     $password = $_POST['password'];
 
     // Preparar e executar a consulta SQL
-    $stmt = $conn->prepare("SELECT password_hash, tipo FROM usuarios WHERE email = ?");
+    $stmt = $conn->prepare("SELECT id, password_hash, tipo FROM usuarios WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $stmt->store_result();
 
     if ($stmt->num_rows > 0) {
-        $stmt->bind_result($hashed_password, $user_type);
+        $stmt->bind_result($user_id, $hashed_password, $user_type);
         $stmt->fetch();
 
         // Verificar a senha
         if (password_verify($password, $hashed_password)) {
-            // Credenciais corretas, armazenar o tipo de usuário na sessão
+            // Credenciais corretas, armazenar os dados do usuário na sessão
+            $_SESSION['user_id'] = $user_id;  // Correção aqui para pegar o ID do usuário
             $_SESSION['email'] = $email;
             $_SESSION['user_type'] = $user_type;
 
@@ -58,6 +59,7 @@ if (isset($_POST['login'])) {
 
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="pt-BR">
