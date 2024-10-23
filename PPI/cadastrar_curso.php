@@ -201,7 +201,7 @@ $conn->close();
 
                                 <div class="mb-3">
                                     <label for="coordenador" class="form-label">Coordenador:</label>
-                                    <select id="coordenador" name="coordenador" class="form-select" required>
+                                    <select id="coordenador" name="coordenador" class="form-select" >
                                         <option value="">Selecione um Coordenador</option>
                                         <?php foreach ($docentes as $docente): ?>
                                             <option value="<?php echo htmlspecialchars($docente['id']); ?>">

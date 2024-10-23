@@ -68,8 +68,9 @@ if (isset($_POST['delete_curso'])) {
 $sql = "
     SELECT c.id, c.nome AS curso_nome, d.nome AS coordenador_nome, d.email AS coordenador_email
     FROM cursos c
-    JOIN docentes d ON c.coordenador = d.id
+    LEFT JOIN docentes d ON c.coordenador = d.id
 ";
+
 $result = $conn->query($sql);
 
 // Obter o nome e a foto do perfil do administrador
