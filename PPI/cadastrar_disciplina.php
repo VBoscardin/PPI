@@ -78,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_disciplina']
     exit();
 }
 
+
 // Obter lista de cursos para o menu suspenso
 $cursos_result = $mysqli->query('SELECT id, nome FROM cursos');
 $cursos = [];
