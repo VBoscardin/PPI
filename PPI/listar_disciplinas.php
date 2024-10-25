@@ -23,7 +23,7 @@ if (isset($_POST['update_disciplina'])) {
     $id = $_POST['id'];
     $nome = $_POST['nome'];
     $curso_id = $_POST['curso_id'];
-    $turma_id = $_POST['turma_id']; 
+    $turma_ids = isset($_POST['turma_id']) ? $_POST['turma_id'] : []; // Recebe múltiplas turmas
     $docente_id = $_POST['docente_id']; 
 
     // Atualizar a disciplina
@@ -31,11 +31,28 @@ if (isset($_POST['update_disciplina'])) {
     $stmt->bind_param("sii", $nome, $curso_id, $id);
     
     if ($stmt->execute()) {
-        // Atualizar a associação na tabela turmas_disciplinas
-        $stmt = $conn->prepare("INSERT INTO turmas_disciplinas (disciplina_id, turma_numero) VALUES (?, ?) ON DUPLICATE KEY UPDATE turma_numero = ?");
-        $stmt->bind_param("iii", $id, $turma_id, $turma_id);
+        // Excluir associações anteriores na tabela turmas_disciplinas
+        $stmt = $conn->prepare("DELETE FROM turmas_disciplinas WHERE disciplina_id = ?");
+        $stmt->bind_param("i", $id);
         $stmt->execute();
-        
+        $stmt->close();
+
+        // Inserir novas associações na tabela turmas_disciplinas
+        foreach ($turma_ids as $turma_id) {
+            // Obter o ano e o ano de ingresso da turma
+            $stmt = $conn->prepare("SELECT ano, ano_ingresso FROM turmas WHERE numero = ?");
+            $stmt->bind_param("i", $turma_id);
+            $stmt->execute();
+            $stmt->bind_result($turma_ano, $turma_ano_ingresso);
+            $stmt->fetch();
+            $stmt->close();
+
+            // Inserir nova associação
+            $stmt = $conn->prepare("INSERT INTO turmas_disciplinas (disciplina_id, turma_numero, turma_ano, turma_ano_ingresso) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("iiii", $id, $turma_id, $turma_ano, $turma_ano_ingresso);
+            $stmt->execute();
+        }
+
         // Atualizar a associação na tabela docentes_disciplinas
         $stmt = $conn->prepare("INSERT INTO docentes_disciplinas (docente_id, disciplina_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE docente_id = ?");
         $stmt->bind_param("iii", $docente_id, $id, $docente_id);
@@ -53,6 +70,18 @@ if (isset($_POST['update_disciplina'])) {
 // Excluir disciplina
 if (isset($_POST['delete_disciplina'])) {
     $id = $_POST['id'];
+
+    // Excluir associações na tabela turmas_disciplinas
+    $stmt = $conn->prepare("DELETE FROM turmas_disciplinas WHERE disciplina_id = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $stmt->close();
+
+    // Excluir associações na tabela docentes_disciplinas
+    $stmt = $conn->prepare("DELETE FROM docentes_disciplinas WHERE disciplina_id = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $stmt->close();
 
     // Excluir disciplina do banco de dados
     $stmt = $conn->prepare("DELETE FROM disciplinas WHERE id = ?");
@@ -82,7 +111,6 @@ LEFT JOIN docentes_disciplinas dd ON dd.disciplina_id = d.id
 LEFT JOIN docentes doc ON doc.id = dd.docente_id
 GROUP BY d.id
 ";
-// Executando a consulta
 $result = $conn->query($sql);
 
 // Verificando se a consulta retornou algum erro
@@ -102,8 +130,6 @@ $stmt->execute();
 $stmt->bind_result($nome, $foto_perfil);
 $stmt->fetch();
 $stmt->close();
-
-
 
 // Obter lista de turmas
 $turmas = [];
@@ -137,6 +163,7 @@ $stmt->close();
 
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -291,14 +318,13 @@ $conn->close();
                                                 <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#excluirModal<?php echo $row['id']; ?>">
                                                     <i class="fas fa-trash-alt"></i> Excluir
                                                 </button>
-                                            
-
+                                                
                                                 <!-- Modal Editar -->
-                                                <div class="modal fade" id="editarModal<?php echo $row['id']; ?>" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
+                                                <div class="modal fade" id="editarModal<?php echo $row['id']; ?>" tabindex="-1" aria-labelledby="editarModalLabel<?php echo $row['id']; ?>" aria-hidden="true">
                                                     <div class="modal-dialog modal-lg">
                                                         <div class="modal-content">
                                                             <div class="modal-header bg-warning text-white">
-                                                                <h5 class="modal-title" id="editarModalLabel"><i class="fas fa-edit"></i> Editar Disciplina</h5>
+                                                                <h5 class="modal-title" id="editarModalLabel<?php echo $row['id']; ?>"><i class="fas fa-edit"></i> Editar Disciplina</h5>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                             </div>
                                                             <form action="listar_disciplinas.php" method="POST">
@@ -308,44 +334,43 @@ $conn->close();
                                                                         <label for="nome" class="form-label">Nome da Disciplina</label>
                                                                         <input type="text" name="nome" class="form-control" value="<?php echo htmlspecialchars($row['disciplina_nome']); ?>" required>
                                                                     </div>
-                                                                   <!-- Seletor de Curso -->
-<div class="mb-3">
-    <label for="curso_id" class="form-label">Curso</label>
-    <select name="curso_id" class="form-select" required>
-        <option value="">Selecione um curso</option>
-        <?php foreach ($cursos as $curso): ?>
-            <option value="<?php echo $curso['id']; ?>" <?php echo $curso['id'] == $row['curso_id'] ? 'selected' : ''; ?>>
-                <?php echo htmlspecialchars($curso['nome']); ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-</div>
-
-
                                                                     <div class="mb-3">
-                                                                        <label for="turma_id" class="form-label">Turma</label>
-                                                                        <select name="turma_id" class="form-select" required>
-                                                                            <option value="">Selecione uma turma</option>
-                                                                            <?php foreach ($turmas as $turma): ?>
-                                                                                <option value="<?php echo $turma['numero']; ?>" <?php echo $turma['numero'] == $row['turma_numero'] ? 'selected' : ''; ?>>
-                                                                                    Turma <?php echo htmlspecialchars($turma['numero']); ?> - Ano <?php echo htmlspecialchars($turma['ano']); ?>
+                                                                        <label for="curso_id" class="form-label">Curso</label>
+                                                                        <select name="curso_id" class="form-select" required>
+                                                                            <option value="">Selecione um curso</option>
+                                                                            <?php foreach ($cursos as $curso): ?>
+                                                                                <option value="<?php echo $curso['id']; ?>" <?php echo $curso['id'] == $row['curso_id'] ? 'selected' : ''; ?>>
+                                                                                    <?php echo htmlspecialchars($curso['nome']); ?>
                                                                                 </option>
                                                                             <?php endforeach; ?>
                                                                         </select>
                                                                     </div>
-                                                                    <!-- Seletor de Docente -->
-                                                                <div class="mb-3">
-                                                                    <label for="docente_id" class="form-label">Docente</label>
-                                                                    <select name="docente_id" class="form-select" required>
-                                                                        <option value="">Selecione um docente</option>
-                                                                        <?php foreach ($docentes as $docente): ?>
-                                                                            <option value="<?php echo $docente['id']; ?>" <?php echo in_array($docente['id'], explode(',', $row['docente_id'])) ? 'selected' : ''; ?>>
-                                                                                <?php echo htmlspecialchars($docente['nome']); ?>
-                                                                            </option>
-                                                                        <?php endforeach; ?>
-                                                                    </select>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Turmas</label>
+                                                                        <div>
+                                                                            <?php foreach ($turmas as $turma): ?>
+                                                                                <div class="form-check">
+                                                                                    <input class="form-check-input" type="checkbox" name="turma_id[]" value="<?php echo $turma['numero']; ?>" 
+                                                                                        <?php echo in_array($turma['numero'], explode(',', $row['turma_numero'])) ? 'checked' : ''; ?>>
+                                                                                    <label class="form-check-label">
+                                                                                        Turma <?php echo htmlspecialchars($turma['numero']); ?> - Ano <?php echo htmlspecialchars($turma['ano']); ?>
+                                                                                    </label>
+                                                                                </div>
+                                                                            <?php endforeach; ?>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label for="docente_id" class="form-label">Docente</label>
+                                                                        <select name="docente_id" class="form-select" required>
+                                                                            <option value="">Selecione um docente</option>
+                                                                            <?php foreach ($docentes as $docente): ?>
+                                                                                <option value="<?php echo $docente['id']; ?>" <?php echo in_array($docente['id'], explode(',', $row['docente_id'])) ? 'selected' : ''; ?>>
+                                                                                    <?php echo htmlspecialchars($docente['nome']); ?>
+                                                                                </option>
+                                                                            <?php endforeach; ?>
+                                                                        </select>
+                                                                    </div>
                                                                 </div>
-                                                                
                                                                 <div class="modal-footer">
                                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                                                                     <button type="submit" name="update_disciplina" class="btn btn-success">Salvar Alterações</button>
@@ -353,17 +378,18 @@ $conn->close();
                                                             </form>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </div> 
+
 
                                                 <!-- Modal Excluir -->
-                                                <div class="modal fade" id="excluirModal<?php echo $row['id']; ?>" tabindex="-1" aria-labelledby="excluirModalLabel" aria-hidden="true">
+                                                <div class="modal fade" id="excluirModal<?php echo $row['id']; ?>" tabindex="-1" aria-labelledby="excluirModalLabel<?php echo $row['id']; ?>" aria-hidden="true">
                                                     <div class="modal-dialog modal-md">
                                                         <div class="modal-content">
                                                             <div class="modal-header bg-danger text-white">
-                                                                <h5 class="modal-title" id="excluirModalLabel"><i class="fas fa-trash-alt"></i> Excluir Disciplina</h5>
+                                                                <h5 class="modal-title" id="excluirModalLabel<?php echo $row['id']; ?>"><i class="fas fa-trash-alt"></i> Excluir Disciplina</h5>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                             </div>
-                                                            <form action="listar_disciplinas.php" method="POST">
+                                                            <form action="" method="POST">
                                                                 <div class="modal-body">
                                                                     <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
                                                                     <p>Tem certeza que deseja excluir a disciplina "<strong><?php echo htmlspecialchars($row['disciplina_nome']); ?></strong>"?</p>
@@ -379,7 +405,8 @@ $conn->close();
                                             </td>
                                         </tr>
                                     <?php endwhile; ?>
-                                    </tbody>
+                                </tbody>
+
                                 </table>
                             <?php else: ?>
                                 <p>Nenhuma disciplina encontrada.</p>
