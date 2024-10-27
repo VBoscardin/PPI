@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+
 // Verificar se o usuário está autenticado e é um administrador
 if (!isset($_SESSION['email']) || $_SESSION['user_type'] !== 'administrador') {
     header("Location: f_login.php");

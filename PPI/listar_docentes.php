@@ -9,6 +9,18 @@ if (!isset($_SESSION['email']) || $_SESSION['user_type'] !== 'administrador') {
 
 include 'config.php';
 
+// Mensagens
+$mensagem = '';
+$erro = '';
+
+// Obter o nome e a foto do perfil do administrador
+$stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
+$stmt->bind_param("s", $_SESSION['email']);
+$stmt->execute();
+$stmt->bind_result($nome, $foto_perfil);
+$stmt->fetch();
+$stmt->close();
+
 // Excluir docente
 if (isset($_POST['excluir_id'])) {
     $excluirId = $_POST['excluir_id'];
@@ -18,56 +30,27 @@ if (isset($_POST['excluir_id'])) {
     $conn->begin_transaction();
 
     try {
-        // Recuperar o email do docente para excluir o usuário associado
-        $stmt = $conn->prepare("SELECT email FROM docentes WHERE id = ?");
-        $stmt->bind_param("i", $excluirId);
-        $stmt->execute();
-        $stmt->bind_result($emailDocente);
-        $stmt->fetch();
-        $stmt->close();
-
-        // 1. Remover as associações de disciplinas com turmas
-        $stmt = $conn->prepare("DELETE FROM turmas_disciplinas 
-                                 WHERE disciplina_id IN (SELECT disciplina_id FROM docentes_disciplinas WHERE docente_id = ?)");
-        $stmt->bind_param("i", $excluirId);
-        if (!$stmt->execute()) {
-            throw new Exception("Erro ao excluir associações de turmas e disciplinas: " . $stmt->error);
-        }
-        $stmt->close();
-
-        // 2. Remover as disciplinas associadas ao docente
+        // 1. Remover as associações de disciplinas do docente
         $stmt = $conn->prepare("DELETE FROM docentes_disciplinas WHERE docente_id = ?");
         $stmt->bind_param("i", $excluirId);
         if (!$stmt->execute()) {
-            throw new Exception("Erro ao excluir disciplinas: " . $stmt->error);
+            throw new Exception("Erro ao excluir associações de disciplinas: " . $stmt->error);
         }
         $stmt->close();
 
-        // 3. Remover turmas (se for o caso, somente se existirem turmas que não precisam de um professor)
-        $stmt = $conn->prepare("DELETE FROM turmas WHERE professor_regente = ?");
-        $stmt->bind_param("i", $excluirId);
-        if (!$stmt->execute()) {
-            throw new Exception("Erro ao excluir turmas: " . $stmt->error);
-        }
-        $stmt->close();
-
-        // 4. Remover o docente
+        // 2. Remover o docente da tabela de docentes
         $stmt = $conn->prepare("DELETE FROM docentes WHERE id = ?");
         $stmt->bind_param("i", $excluirId);
         if (!$stmt->execute()) {
-            throw new Exception("Erro ao excluir docente: " . $stmt->error);
+            throw new Exception("Erro ao excluir o docente: " . $stmt->error);
         }
         $stmt->close();
 
-        // 5. Excluir o usuário associado na tabela usuarios
-        if ($emailDocente) {
-            $stmtUsuarios = $conn->prepare("DELETE FROM usuarios WHERE email = ?");
-            $stmtUsuarios->bind_param("s", $emailDocente);
-            if (!$stmtUsuarios->execute()) {
-                throw new Exception("Erro ao excluir o usuário na tabela usuarios: " . $stmtUsuarios->error);
-            }
-            $stmtUsuarios->close();
-        }
+        // 3. Remover informações do usuário (se necessário) - isso é opcional e depende de como você deseja gerenciar os usuários.
+        // $stmt = $conn->prepare("DELETE FROM usuarios WHERE email = ?");
+        // $stmt->bind_param("s", $emailDoDocente); // Obtenha o email do docente se necessário
+        // $stmt->execute();
+        // $stmt->close();
 
         // Se tudo ocorrer bem, confirmar a transação
         $conn->commit();
@@ -77,9 +60,11 @@ if (isset($_POST['excluir_id'])) {
     } catch (Exception $e) {
         // Em caso de erro, reverter a transação
         $conn->rollback();
-        echo $e->getMessage();
+        $erro = $e->getMessage();
     }
 }
+
+
 
 // Atualizar docente
 if (isset($_POST['salvar_edicao'])) {
@@ -88,7 +73,6 @@ if (isset($_POST['salvar_edicao'])) {
     $email = $_POST['email'];
     $cpf = $_POST['cpf'];
     $disciplinasSelecionadas = $_POST['disciplinas'] ?? [];
-    $foto = $_FILES['foto'] ?? null;
 
     // Atualizar dados do docente
     $stmt = $conn->prepare("UPDATE docentes SET nome = ?, email = ?, cpf = ? WHERE id = ?");
@@ -99,29 +83,11 @@ if (isset($_POST['salvar_edicao'])) {
     // Atualizar disciplinas do docente
     $conn->query("DELETE FROM docentes_disciplinas WHERE docente_id = $editarId");
     foreach ($disciplinasSelecionadas as $disciplinaId) {
+        // Inserir a nova associação
         $stmt = $conn->prepare("INSERT INTO docentes_disciplinas (docente_id, disciplina_id) VALUES (?, ?)");
         $stmt->bind_param("ii", $editarId, $disciplinaId);
         $stmt->execute();
-        $stmt->close(); // Fechar a instrução
-    }
-
-    // Atualizar foto do docente
-    if ($foto && $foto['error'] === UPLOAD_ERR_OK) {
-        $extensao = pathinfo($foto['name'], PATHINFO_EXTENSION);
-        $nomeFoto = "docente_{$editarId}." . $extensao;
-        $caminhoFoto = 'uploads/' . $nomeFoto;
-
-        if (move_uploaded_file($foto['tmp_name'], $caminhoFoto)) {
-            // Atualizar a foto na tabela usuarios
-            $stmt = $conn->prepare("UPDATE usuarios SET foto_perfil = ? WHERE email = (SELECT email FROM docentes WHERE id = ?)");
-            $stmt->bind_param("si", $nomeFoto, $editarId);
-            if (!$stmt->execute()) {
-                echo "Erro ao atualizar a foto na tabela usuarios: " . $stmt->error;
-            }
-            $stmt->close();
-        } else {
-            echo "Erro ao fazer upload da foto.";
-        }
+        $stmt->close();
     }
 
     header("Location: listar_docentes.php");
@@ -141,6 +107,12 @@ LEFT JOIN turmas_disciplinas AS td ON td.disciplina_id = dis.id
 GROUP BY d.id
 ";
 $result = $conn->query($sql);
+
+// Verifique se a consulta foi bem-sucedida e se há resultados
+if ($result === false) {
+    echo "Erro na consulta: " . $conn->error;
+    exit();
+}
 
 // Obter todas as disciplinas e turmas disponíveis
 $disciplinasQuery = "
@@ -169,7 +141,6 @@ if (isset($_POST['exibir_edicao'])) {
 }
 ?>
 
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -181,190 +152,199 @@ if (isset($_POST['exibir_edicao'])) {
     <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-3 sidebar">
-                <div class="separator mb-3"></div>
-                <div class="signe-text">SIGNE</div>
-                <div class="separator mt-3 mb-3"></div>
-                <button onclick="location.href='f_pagina_adm.php'">
-                    <i class="fas fa-home"></i> Início
-                </button>
-                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
-                    <i id="toggle-icon" class="fas fa-plus"></i> Cadastrar
-                </button>
-                <div id="expandable-menu" class="collapse expandable-container">
-                    <div class="expandable-menu">
-                        <button onclick="location.href='cadastrar_adm.php'">
-                            <i class="fas fa-plus"></i> Cadastrar Administrador
-                        </button>
-                        <button onclick="location.href='cadastrar_curso.php'">
-                            <i class="fas fa-plus"></i> Cadastrar Curso
-                        </button>
-                        <button onclick="location.href='cadastrar_disciplina.php'">
-                            <i class="fas fa-plus"></i> Cadastrar Disciplina
-                        </button>
-                        <button onclick="location.href='cadastrar_docente.php'">
-                            <i class="fas fa-plus"></i> Cadastrar Docente
-                        </button>
-                        <button onclick="location.href='cadastrar_setor.php'">
-                            <i class="fas fa-plus"></i> Cadastrar Setor
-                        </button>
-                        <button onclick="location.href='cadastrar_turma.php'">
-                            <i class="fas fa-plus"></i> Cadastrar Turma
-                        </button>
-                    </div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3 sidebar">
+            <div class="separator mb-3"></div>
+            <div class="signe-text">SIGNE</div>
+            <div class="separator mt-3 mb-3"></div>
+            <button onclick="location.href='f_pagina_adm.php'">
+                <i class="fas fa-home"></i> Início
+            </button>
+            <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
+                <i id="toggle-icon" class="fas fa-plus"></i> Cadastrar
+            </button>
+            <div id="expandable-menu" class="collapse expandable-container">
+                <div class="expandable-menu">
+                    <button onclick="location.href='cadastrar_adm.php'">
+                        <i class="fas fa-plus"></i> Cadastrar Administrador
+                    </button>
+                    <button onclick="location.href='cadastrar_curso.php'">
+                        <i class="fas fa-plus"></i> Cadastrar Curso
+                    </button>
+                    <button onclick="location.href='cadastrar_disciplina.php'">
+                        <i class="fas fa-plus"></i> Cadastrar Disciplina
+                    </button>
+                    <button onclick="location.href='cadastrar_docente.php'">
+                        <i class="fas fa-plus"></i> Cadastrar Docente
+                    </button>
+                    <button onclick="location.href='cadastrar_setor.php'">
+                        <i class="fas fa-plus"></i> Cadastrar Setor
+                    </button>
+                    <button onclick="location.href='cadastrar_turma.php'">
+                        <i class="fas fa-plus"></i> Cadastrar Turma
+                    </button>
                 </div>
-                <button onclick="location.href='gerar_boletim.php'">
-                    <i class="fas fa-file-alt"></i> Gerar Boletim
-                </button>
-                <button onclick="location.href='gerar_slide.php'">
-                    <i class="fas fa-sliders-h"></i> Gerar Slide Pré Conselho
-                </button>
-                
-                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#list-menu" aria-expanded="false" aria-controls="list-menu">
-                    <i id="toggle-icon" class="fas fa-list"></i> Listar
-                </button>
-
-                <div id="list-menu" class="collapse expandable-container">
-                    <div class="expandable-menu">
-                        <button onclick="location.href='listar_administradores.php'">
-                            <i class="fas fa-list"></i> Administradores
-                        </button>
-                        <button onclick="location.href='listar_cursos.php'">
-                            <i class="fas fa-list"></i> Cursos
-                        </button>
-                        <button onclick="location.href='listar_disciplinas.php'">
-                            <i class="fas fa-list"></i> Disciplinas
-                        </button>
-                        <button onclick="location.href='listar_docentes.php'">
-                            <i class="fas fa-list"></i> Docentes
-                        </button>
-                        <button onclick="location.href='listar_setores.php'">
-                            <i class="fas fa-list"></i> Setores
-                        </button>
-                        <button onclick="location.href='listar_turmas.php'">
-                            <i class="fas fa-list"></i> Turmas
-                        </button>
-                    </div>
-                </div>
-                <button onclick="location.href='meu_perfil.php'">
-                    <i class="fas fa-user"></i> Meu Perfil
-                </button>
-                <button class="btn btn-danger" onclick="location.href='sair.php'">
-                    <i class="fas fa-sign-out-alt"></i> Sair
-                </button>
             </div>
+            <button onclick="location.href='gerar_boletim.php'">
+                <i class="fas fa-file-alt"></i> Gerar Boletim
+            </button>
+            <button onclick="location.href='gerar_slide.php'">
+                <i class="fas fa-sliders-h"></i> Gerar Slide Pré Conselho
+            </button>
+            
+            <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#list-menu" aria-expanded="false" aria-controls="list-menu">
+                <i id="toggle-icon" class="fas fa-list"></i> Listar
+            </button>
 
-            <div class="col-md-9 main-content">
-                <div class="container">
-                    <h1>Docentes</h1>
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nome</th>
-                                <th>Foto</th>
-                                <th>Email</th>
-                                <th>CPF</th>
-                                <th>Disciplinas e Turmas</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        <?php while ($docente = $result->fetch_assoc()): ?>
-                            <tr>
-                                <td><?php echo $docente['id']; ?></td>
-                                <td><?php echo htmlspecialchars($docente['nome']); ?></td>
-                                <td>
-    <?php if (!empty($docente['foto_perfil']) && file_exists('uploads/' . basename($docente['foto_perfil']))): ?>
-        <img src="uploads/<?php echo htmlspecialchars(basename($docente['foto_perfil'])); ?>" alt="Foto" class="img-thumbnail" width="50">
-    <?php else: ?>
-        <img src="imgs/docente-photo.png" alt="Foto" class="img-thumbnail" width="50">
-    <?php endif; ?>
-</td>
+            <div id="list-menu" class="collapse expandable-container">
+                <div class="expandable-menu">
+                    <button onclick="location.href='listar_administradores.php'">
+                        <i class="fas fa-list"></i> Administradores
+                    </button>
+                    <button onclick="location.href='listar_cursos.php'">
+                        <i class="fas fa-list"></i> Cursos
+                    </button>
+                    <button onclick="location.href='listar_disciplinas.php'">
+                        <i class="fas fa-list"></i> Disciplinas
+                    </button>
+                    <button onclick="location.href='listar_docentes.php'">
+                        <i class="fas fa-list"></i> Docentes
+                    </button>
+                    <button onclick="location.href='listar_setores.php'">
+                        <i class="fas fa-list"></i> Setores
+                    </button>
+                    <button onclick="location.href='listar_turmas.php'">
+                        <i class="fas fa-list"></i> Turmas
+                    </button>
+                </div>
+            </div>
+            <div class="separator mt-3 mb-3"></div>
+            <button onclick="location.href='sair.php'" class="btn btn-danger">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </button>
+        </div>
+        <div class="col-md-9">
+            <h1>Listagem de Docentes</h1>
+            <div class="alert alert-danger" role="alert" style="<?php echo empty($erro) ? 'display:none;' : ''; ?>">
+                <?php echo $erro; ?>
+            </div>
+            <div class="alert alert-success" role="alert" style="<?php echo empty($mensagem) ? 'display:none;' : ''; ?>">
+                <?php echo $mensagem; ?>
+            </div>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Foto</th>
+                        <th>Email</th>
+                        <th>CPF</th>
+                        <th>Disciplinas</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($row = $result->fetch_assoc()): ?>
+                        <tr>
+                            <td><?php echo $row['id']; ?></td>
+                            <td><?php echo $row['nome']; ?></td>
+                            <td>
+                                <img src="<?php echo $row['foto_perfil']; ?>" alt="Foto de <?php echo $row['nome']; ?>" width="50">
+                            </td>
+                            <td><?php echo $row['email']; ?></td>
+                            <td><?php echo $row['cpf']; ?></td>
+                            <td><?php echo $row['disciplinas'] ?: 'Nenhuma'; ?></td>
+                            <td>
+                                <form method="POST" style="display:inline;">
+                                    <input type="hidden" name="editar_id" value="<?php echo $row['id']; ?>">
+                                    <button type="submit" name="exibir_edicao" class="btn btn-warning">
+                                        Editar
+                                    </button>
+                                </form>
+                                <form method="POST" style="display:inline;">
+                                    <input type="hidden" name="excluir_id" value="<?php echo $row['id']; ?>">
+                                    <button type="submit" name="excluir" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir o vínculo deste docente com as disciplinas?')">
+                                        Excluir
+                                    </button>
+                                    </td>
+                                </tr>
 
-                                <td><?php echo htmlspecialchars($docente['email']); ?></td>
-                                <td><?php echo htmlspecialchars($docente['cpf']); ?></td>
-                                <td>
-                                    <?php 
-                                    if ($docente['disciplinas']) {
-                                        // Explode as disciplinas em um array
-                                        $disciplinasArray = explode('; ', $docente['disciplinas']);
-                                        echo '<ul>';
-                                        foreach ($disciplinasArray as $disciplina) {
-                                            echo '<li>' . htmlspecialchars($disciplina) . '</li>';
-                                        }
-                                        echo '</ul>';
-                                    } else {
-                                        echo 'Nenhuma disciplina';
-                                    }
-                                    ?>
-                                </td>
-                                <td>
-                                    <form method="post" style="display:inline;">
-                                        <input type="hidden" name="editar_id" value="<?php echo $docente['id']; ?>">
-                                        <button class="btn btn-warning btn-sm" name="exibir_edicao"><i class="fas fa-edit"></i> Editar</button>
-                                    </form>
-                                    <form method="post" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir este docente?');">
-                                        <input type="hidden" name="excluir_id" value="<?php echo $docente['id']; ?>">
-                                        <button class="btn btn-danger btn-sm">Excluir</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
+                                <!-- Modal Editar -->
+                                <div class="modal fade" id="editarModal<?php echo $docente['id']; ?>" tabindex="-1" aria-labelledby="editarModalLabel<?php echo $docente['id']; ?>" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-warning text-white">
+                                                <h5 class="modal-title" id="editarModalLabel<?php echo $docente['id']; ?>"><i class="fas fa-edit"></i> Editar Docente</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form action="listar_docentes.php" method="POST">
+                                                <div class="modal-body">
+                                                    <input type="hidden" name="editar_id" value="<?php echo htmlspecialchars($docente['id']); ?>">
+                                                    <div class="mb-3">
+                                                        <label for="nome" class="form-label">Nome:</label>
+                                                        <input type="text" class="form-control" id="nome" name="nome" value="<?php echo htmlspecialchars($docente['nome']); ?>" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="email" class="form-label">Email:</label>
+                                                        <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($docente['email']); ?>" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="cpf" class="form-label">CPF:</label>
+                                                        <input type="text" class="form-control" id="cpf" name="cpf" value="<?php echo htmlspecialchars($docente['cpf']); ?>" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Disciplinas:</label><br>
+                                                        <?php foreach ($disciplinasTurmas as $disciplina): ?>
+                                                            <div class="form-check">
+                                                                <input type="checkbox" class="form-check-input" id="disciplina<?php echo htmlspecialchars($disciplina['disciplina_id']); ?>" name="disciplinas[]" value="<?php echo htmlspecialchars($disciplina['disciplina_id']); ?>" <?php echo in_array($disciplina['disciplina_id'], $disciplinasDocente) ? 'checked' : ''; ?>>
+                                                                <label class="form-check-label" for="disciplina<?php echo htmlspecialchars($disciplina['disciplina_id']); ?>">
+                                                                    <?php echo htmlspecialchars($disciplina['disciplina_nome']) . ' - Turma: ' . htmlspecialchars($disciplina['turma_numero']) . ', Ano: ' . htmlspecialchars($disciplina['turma_ano']); ?>
+                                                                </label>
+                                                            </div>
+                                                        <?php endforeach; ?>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                    <button type="submit" name="salvar_edicao" class="btn btn-success">Salvar Alterações</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Modal Excluir -->
+<div class="modal fade" id="excluirModal<?php echo $row['id']; ?>" tabindex="-1" aria-labelledby="excluirModalLabel<?php echo $row['id']; ?>" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="excluirModalLabel<?php echo $row['id']; ?>"><i class="fas fa-trash-alt"></i> Excluir Docente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="listar_docentes.php" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="excluir_id" value="<?php echo htmlspecialchars($row['id']); ?>">
+                    <p>Tem certeza que deseja excluir o docente "<strong><?php echo htmlspecialchars($row['nome']); ?></strong>"?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" name="excluir" class="btn btn-danger">Excluir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+                            <?php endwhile; ?>
                         </tbody>
                     </table>
-
-                    <?php if ($editarDocente): ?>
-                        <h2>Editar Docente</h2>
-                        <form method="post" enctype="multipart/form-data">
-                            <input type="hidden" name="editar_id" value="<?php echo $editarDocente['id']; ?>">
-                            <div class="mb-3">
-                                <label for="nome" class="form-label">Nome:</label>
-                                <input type="text" name="nome" class="form-control" value="<?php echo htmlspecialchars($editarDocente['nome']); ?>" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Email:</label>
-                                <input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($editarDocente['email']); ?>" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="cpf" class="form-label">CPF:</label>
-                                <input type="text" name="cpf" class="form-control" value="<?php echo htmlspecialchars($editarDocente['cpf']); ?>" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="disciplinas" class="form-label">Disciplinas:</label><br>
-                                <?php foreach ($disciplinasTurmas as $dt): ?>
-                                    <div class="form-check">
-                                        <input type="checkbox" class="form-check-input" name="disciplinas[]" value="<?php echo $dt['disciplina_id']; ?>" <?php echo in_array($dt['disciplina_id'], $disciplinasDocente) ? 'checked' : ''; ?>>
-                                        <label class="form-check-label"><?php echo htmlspecialchars($dt['disciplina_nome']) . ' - Turma: ' . htmlspecialchars($dt['turma_numero']) . ', Ano: ' . htmlspecialchars($dt['turma_ano']); ?></label>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                            <div class="mb-3">
-                                <label for="foto" class="form-label">Foto:</label>
-                                <input type="file" name="foto" class="form-control">
-                            </div>
-                            <button type="submit" name="salvar_edicao" class="btn btn-success">Salvar</button>
-                        </form>
-                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const menuButtons = document.querySelectorAll('.btn-light');
-            menuButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const icon = button.querySelector('#toggle-icon');
-                    icon.classList.toggle('fa-plus');
-                    icon.classList.toggle('fa-minus');
-                });
-            });
-        });
-    </script>
 </body>
 </html>
-
