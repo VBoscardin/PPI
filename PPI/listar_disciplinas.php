@@ -244,10 +244,11 @@ $conn->close();
                         </button>
                     </div>
                 </div>
-                <button onclick="location.href='meu_perfil.php'">
-                    <i class="fas fa-user"></i> Meu Perfil
+                <button onclick="location.href='meu_perfil.php'" class="btn btn-danger">
+                    <i class="fas fa-user"></i> Meu  Perfil
                 </button>
-                <button class="btn btn-danger" onclick="location.href='sair.php'">
+                <div class="separator mt-3 mb-3"></div>
+                <button onclick="location.href='sair.php'" class="btn btn-danger">
                     <i class="fas fa-sign-out-alt"></i> Sair
                 </button>
             </div>

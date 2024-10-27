@@ -1,4 +1,3 @@
-CREATE DATABASE bd_ppi;
 
 CREATE TABLE `usuarios` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -21,8 +20,18 @@ VALUES
 CREATE TABLE `cursos` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `nome` VARCHAR(255) NOT NULL,
-    `coordenador` VARCHAR(100) NOT NULL
+    `coordenador` VARCHAR(100)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO  `cursos` (`id`, `nome`, `coordenador`)
+VALUES 
+(0, 'Técnico em Informática', NULL);
+INSERT INTO  `cursos` (`id`, `nome`, `coordenador`)
+VALUES 
+(0, 'Técnico em Aministração', NULL);
+INSERT INTO  `cursos` (`id`, `nome`, `coordenador`)
+VALUES 
+(0, 'Técnico em Agropecuária', NULL);
 
 CREATE TABLE `disciplinas` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -31,6 +40,16 @@ CREATE TABLE `disciplinas` (
   PRIMARY KEY (`id`),
   FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO  `disciplinas` (`id`, `curso_id`, `nome`)
+VALUES
+(0, 1, 'Matemática');
+INSERT INTO  `disciplinas` (`id`, `curso_id`, `nome`)
+VALUES
+(0, 2, 'Língua Portuguesa');
+INSERT INTO  `disciplinas` (`id`, `curso_id`, `nome`)
+VALUES
+(0, 3, 'Contabilidade');
 
 CREATE TABLE `setores` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -51,6 +70,13 @@ CREATE TABLE `docentes` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+INSERT INTO   `docentes` (`id`, `nome`, `email`, `cpf`, `senha`)
+VALUES
+(0, 'João', 'joao@gmail.com', '12345678901', '1234');
+INSERT INTO   `docentes` (`id`, `nome`, `email`, `cpf`, `senha`)
+VALUES
+(0, 'César', 'cesar@gmail.com', '12345678902', '1234');
+
 CREATE TABLE `docentes_disciplinas` (
   `docente_id` int(11) NOT NULL,
   `disciplina_id` int(11) NOT NULL,
@@ -65,15 +91,26 @@ CREATE TABLE `turmas` (
   `ano_ingresso` YEAR NOT NULL,
   `ano_oferta` YEAR NOT NULL,
   `professor_regente` INT NOT NULL,
-  PRIMARY KEY (`numero`, `ano`, `ano_ingresso`),
-  FOREIGN KEY (`professor_regente`) REFERENCES `docentes` (`id`)
+  `curso_id` INT NOT NULL,
+  PRIMARY KEY (`numero`),
+  FOREIGN KEY (`professor_regente`) REFERENCES `docentes` (`id`),
+  FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `turmas` (`numero`, `ano`, `ano_ingresso`, `ano_oferta`, `professor_regente`, `curso_id`)
+VALUES
+(14, 2024, 2024, 2026, 1, 1),
+(24, 2024, 2023, 2025, 1, 1),
+(34, 2024, 2022, 2024, 1, 1);
+
+
+
 CREATE TABLE `turmas_disciplinas` (
   `turma_numero` INT NOT NULL,
   `turma_ano` YEAR NOT NULL,
   `turma_ano_ingresso` YEAR NOT NULL,
   `disciplina_id` INT NOT NULL,
-  FOREIGN KEY (`turma_numero`, `turma_ano`, `turma_ano_ingresso`) REFERENCES `turmas` (`numero`, `ano`, `ano_ingresso`),
+  FOREIGN KEY (`turma_numero`) REFERENCES `turmas` (`numero`),
   FOREIGN KEY (`disciplina_id`) REFERENCES `disciplinas` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -113,9 +150,7 @@ ADD COLUMN foto_perfil VARCHAR(255) DEFAULT NULL;
 ALTER TABLE setores 
 ADD COLUMN foto_perfil VARCHAR(255) DEFAULT NULL;
 
-ALTER TABLE `turmas`
-ADD COLUMN `curso_id` INT NOT NULL,
-ADD FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`);
+
 
 CREATE TABLE `discentes_turmas` (
   `numero_matricula` INT NOT NULL,
@@ -123,8 +158,9 @@ CREATE TABLE `discentes_turmas` (
   `turma_ano` YEAR NOT NULL,
   `turma_ano_ingresso` YEAR NOT NULL,
   FOREIGN KEY (`numero_matricula`) REFERENCES `discentes` (`numero_matricula`) ON DELETE CASCADE,
-  FOREIGN KEY (`turma_numero`, `turma_ano`, `turma_ano_ingresso`) REFERENCES `turmas` (`numero`, `ano`, `ano_ingresso`),
-  PRIMARY KEY (`numero_matricula`, `turma_numero`, `turma_ano`, `turma_ano_ingresso`)
+  FOREIGN KEY (`turma_numero`) REFERENCES `turmas` (`numero`),
+  PRIMARY KEY (`numero_matricula`, `turma_numero`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
+ALTER TABLE docentes_disciplinas ADD COLUMN turma_numero VARCHAR(50), ADD COLUMN turma_ano INT;
