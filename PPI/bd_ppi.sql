@@ -164,3 +164,4 @@ CREATE TABLE `discentes_turmas` (
 
 
 ALTER TABLE docentes_disciplinas ADD COLUMN turma_numero VARCHAR(50), ADD COLUMN turma_ano INT;
+

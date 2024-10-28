@@ -32,8 +32,8 @@ $conn->close();
 
 $host = 'localhost';
 $db = 'bd_ppi';
-$user = 'root'; // Seu usuário do banco de dados
-$pass = ''; // Sua senha do banco de dados
+$user = 'root';
+$pass = '';
 
 $mysqli = new mysqli($host, $user, $pass, $db);
 
@@ -41,55 +41,90 @@ if ($mysqli->connect_error) {
     die('Conexão falhou: ' . $mysqli->connect_error);
 }
 
-// Função para cadastrar disciplina
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_disciplina'])) {
-    $curso_id = $_POST['curso_id'];
+    // Capturando os dados do formulário
+    $turma_numero = $_POST['turma_numero'];
     $nome = $_POST['nome'];
 
-    if (!empty($curso_id) && !empty($nome)) {
-        // Verificar se a disciplina já existe
-        $stmt = $mysqli->prepare('SELECT COUNT(*) FROM disciplinas WHERE curso_id = ? AND nome = ?');
-        $stmt->bind_param('is', $curso_id, $nome);
+    // Verificando se os campos não estão vazios
+    if (!empty($turma_numero) && !empty($nome)) {
+        // Verificar se já existe uma disciplina com o mesmo nome para a turma selecionada
+        $stmt = $mysqli->prepare('
+            SELECT COUNT(*) 
+            FROM disciplinas d 
+            JOIN turmas_disciplinas td ON d.id = td.disciplina_id 
+            WHERE td.turma_numero = ? AND d.nome = ?');
+        $stmt->bind_param('is', $turma_numero, $nome);
         $stmt->execute();
-        $stmt->bind_result($count);
+        $stmt->bind_result($existing_count);
         $stmt->fetch();
         $stmt->close();
 
-        if ($count > 0) {
-            $_SESSION['mensagem_erro'] = 'Disciplina já cadastrada para este curso!';
+        if ($existing_count > 0) {
+            $_SESSION['mensagem_erro'] = 'Já existe uma disciplina com esse nome para a turma selecionada!';
         } else {
-            // Preparar e executar a inserção do novo curso
-            $stmt = $mysqli->prepare('INSERT INTO disciplinas (curso_id, nome) VALUES (?, ?)');
-            $stmt->bind_param('is', $curso_id, $nome);
-
-            if ($stmt->execute()) {
-                $_SESSION['mensagem_sucesso'] = 'Disciplina cadastrada com sucesso!';
-            } else {
-                $_SESSION['mensagem_erro'] = 'Erro ao cadastrar disciplina: ' . $stmt->error;
-            }
-
+            // Obter o curso_id associado à turma
+            $stmt = $mysqli->prepare('SELECT curso_id FROM turmas WHERE numero = ?');
+            $stmt->bind_param('i', $turma_numero);
+            $stmt->execute();
+            $stmt->bind_result($curso_id);
+            $stmt->fetch();
             $stmt->close();
+
+            if ($curso_id) {
+                // Inserir a nova disciplina na tabela disciplinas
+                $stmt = $mysqli->prepare('INSERT INTO disciplinas (curso_id, nome) VALUES (?, ?)');
+                $stmt->bind_param('is', $curso_id, $nome);
+
+                if ($stmt->execute()) {
+                    $disciplina_id = $stmt->insert_id;
+
+                    // Associar a disciplina à turma na tabela turmas_disciplinas
+                    $stmt = $mysqli->prepare('INSERT INTO turmas_disciplinas (turma_numero, disciplina_id) VALUES (?, ?)');
+                    $stmt->bind_param('ii', $turma_numero, $disciplina_id);
+
+                    if ($stmt->execute()) {
+                        $_SESSION['mensagem_sucesso'] = 'Disciplina cadastrada e associada à turma com sucesso!';
+                    } else {
+                        $_SESSION['mensagem_erro'] = 'Erro ao associar disciplina à turma: ' . $stmt->error;
+                    }
+                } else {
+                    $_SESSION['mensagem_erro'] = 'Erro ao cadastrar disciplina: ' . $stmt->error;
+                }
+            } else {
+                $_SESSION['mensagem_erro'] = 'Turma não encontrada!';
+            }
         }
     } else {
         $_SESSION['mensagem_erro'] = 'Todos os campos são obrigatórios!';
     }
 
-    header("Location: cadastrar_disciplina.php"); // Redirecionar para evitar reenvio do formulário
+    header("Location: cadastrar_disciplina.php");
     exit();
 }
 
+// Obter lista de turmas para o menu suspenso
+$turmas_result = $mysqli->query('SELECT numero, ano FROM turmas');
+$turmas = [];
+if ($turmas_result) {
+    while ($row = $turmas_result->fetch_assoc()) {
+        $turmas[] = $row;
+    }
+}
 
-// Obter lista de cursos para o menu suspenso
-$cursos_result = $mysqli->query('SELECT id, nome FROM cursos');
-$cursos = [];
-if ($cursos_result) {
-    while ($row = $cursos_result->fetch_assoc()) {
-        $cursos[] = $row;
+// Obter lista de disciplinas cadastradas
+$disciplinas_result = $mysqli->query('SELECT d.nome, t.numero FROM disciplinas d JOIN turmas_disciplinas td ON d.id = td.disciplina_id JOIN turmas t ON td.turma_numero = t.numero');
+
+$disciplinas = [];
+if ($disciplinas_result) {
+    while ($row = $disciplinas_result->fetch_assoc()) {
+        $disciplinas[] = $row;
     }
 }
 
 $mysqli->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -147,8 +182,9 @@ $mysqli->close();
                 <button onclick="location.href='gerar_slide.php'">
                     <i class="fas fa-sliders-h"></i> Gerar Slide Pré Conselho
                 </button>
-                 <!-- Botão expansível "Listar" -->
-                 <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#list-menu" aria-expanded="false" aria-controls="list-menu">
+
+                <!-- Botão expansível "Listar" -->
+                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#list-menu" aria-expanded="false" aria-controls="list-menu">
                     <i id="toggle-icon" class="fas fa-list"></i> Listar
                 </button>
 
@@ -188,7 +224,7 @@ $mysqli->close();
                 <div class="container">
                     <div class="header-container">
                         <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
-                        <div class="title ms-3">Cadastrar Disciplina</div>
+                        <div class="title ms-3">Cadastrar Docente</div>
                         <div class="ms-auto d-flex align-items-center">
                             <div class="profile-info d-flex align-items-center">
                                 <div class="profile-details me-2">
@@ -204,43 +240,43 @@ $mysqli->close();
                     </div>
                 </div>
 
-                <div class="container mt-4">
+         <div class="container mt-4">
+            <!-- Mensagens de sucesso ou erro -->
+        <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
+            <div class="alert alert-success">
+                <?php echo $_SESSION['mensagem_sucesso']; ?>
+                <?php unset($_SESSION['mensagem_sucesso']); ?>
+            </div>
+        <?php endif; ?>
+        <?php if (isset($_SESSION['mensagem_erro'])): ?>
+            <div class="alert alert-danger">
+                <?php echo $_SESSION['mensagem_erro']; ?>
+                <?php unset($_SESSION['mensagem_erro']); ?>
+            </div>
+        <?php endif; ?>
                     <div class="card shadow">
                         <div class="card-body">
-                            <form action="cadastrar_disciplina.php" method="post">
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="nome" class="form-label">Nome da Disciplina:</label>
-                                        <input type="text" id="nome" name="nome" class="form-control" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="curso" class="form-label">Curso:</label>
-                                        <select id="curso" name="curso_id" class="form-select" required>
-                                            <option value="">Selecione um Curso</option>
-                                            <?php foreach ($cursos as $curso): ?>
-                                                <option value="<?php echo htmlspecialchars($curso['id']); ?>">
-                                                    <?php echo htmlspecialchars($curso['nome']); ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
+                        <form action="cadastrar_disciplina.php" method="post">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="nome" class="form-label">Nome da Disciplina:</label>
+                                    <input type="text" id="nome" name="nome" class="form-control" required>
                                 </div>
+                                <div class="col-md-6">
+                                <label for="turma_numero" class="form-label">Número da Turma</label>
+                        <select name="turma_numero" class="form-select" required>
+                            <option value="">Selecione a Turma</option>
+                            <?php foreach ($turmas as $turma): ?>
+                                <option value="<?php echo $turma['numero']; ?>">
+                                    <?php echo htmlspecialchars($turma['numero'] . " (" . $turma['ano'] . ")"); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                                </div>
+                            </div>
 
-                                <button type="submit" name="cadastrar_disciplina" class="btn btn-light">Cadastrar Disciplina</button>
-
-                                <!-- Exibir mensagem de sucesso ou erro -->
-                                <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
-                                    <div id="mensagem-sucesso" class="alert alert-success mt-3">
-                                        <?php echo $_SESSION['mensagem_sucesso']; ?>
-                                    </div>
-                                    <?php unset($_SESSION['mensagem_sucesso']); ?>
-                                <?php elseif (isset($_SESSION['mensagem_erro'])): ?>
-                                    <div id="mensagem-erro" class="alert alert-danger mt-3">
-                                        <?php echo $_SESSION['mensagem_erro']; ?>
-                                    </div>
-                                    <?php unset($_SESSION['mensagem_erro']); ?>
-                                <?php endif; ?>
-                            </form>
+                            <button type="submit" name="cadastrar_disciplina" class="btn btn-light">Cadastrar Disciplina</button>
+                        </form>
                         </div>
                     </div>
                 </div>
