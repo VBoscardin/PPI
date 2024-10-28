@@ -1,131 +1,143 @@
 <?php
-session_start();
+require 'config.php';
 
-// Verificar se o usuário está autenticado e é um administrador
-if (!isset($_SESSION['email']) || $_SESSION['user_type'] !== 'administrador') {
-    header("Location: f_login.php");
-    exit();
+// Função para buscar todos os docentes
+function listarDocentes($conn) {
+    $result = $conn->query("SELECT * FROM docentes");
+    return $result->fetch_all(MYSQLI_ASSOC);
 }
 
-include 'config.php';
-
-// Obter o nome e a foto do perfil do administrador logado
-$stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
-$stmt->bind_param("s", $_SESSION['email']);
-$stmt->execute();
-$stmt->bind_result($nome, $foto_perfil);
-$stmt->fetch();
-$stmt->close();
-
-// Mensagens
-$mensagem = '';
-
-// Consulta SQL para selecionar todos os docentes, suas disciplinas e turmas
-$sql = "
-    SELECT d.id, d.nome, d.email, d.cpf, 
-           disc.nome AS disciplina_nome,
-           t.numero AS turma_numero,
-           t.ano AS turma_ano
-    FROM docentes d
-    LEFT JOIN docentes_disciplinas dd ON d.id = dd.docente_id
-    LEFT JOIN disciplinas disc ON dd.disciplina_id = disc.id
-    LEFT JOIN turmas_disciplinas td ON td.disciplina_id = disc.id
-    LEFT JOIN turmas t ON td.turma_numero = t.numero AND td.turma_ano = t.ano
-    GROUP BY d.id, disc.id, t.numero, t.ano
-    ORDER BY d.id, disc.nome
-";
-
-$result = $conn->query($sql);
-
-// Verifica se a consulta foi bem-sucedida
-if (!$result) {
-    die("Erro na consulta: " . $conn->error);
+// Função para buscar todas as disciplinas com turma e ano
+function obterTodasDisciplinasETurmas($conn) {
+    $result = $conn->query("
+        SELECT d.id AS disciplina_id, d.nome AS disciplina, t.numero AS turma_numero, t.ano AS turma_ano
+        FROM disciplinas d
+        JOIN turmas t ON d.turma_id = t.id
+    ");
+    return $result->fetch_all(MYSQLI_ASSOC);
 }
 
-// Verifica se há resultados
-if ($result->num_rows > 0) {
-    // Armazenar os dados dos docentes em um array
-    $docentes = [];
-    while ($row = $result->fetch_assoc()) {
-        $docentes[] = $row;
+
+// Função para obter disciplinas e turmas de um docente específico
+function obterDisciplinasETurmas($conn, $docente_id) {
+    $stmt = $conn->prepare("
+        SELECT d.nome AS disciplina, t.numero AS turma_numero, t.ano AS turma_ano
+        FROM docentes_disciplinas dd
+        JOIN disciplinas d ON dd.disciplina_id = d.id
+        JOIN turmas t ON dd.turma_numero = t.numero
+        WHERE dd.docente_id = ?
+    ");
+    $stmt->bind_param("i", $docente_id);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+}
+
+// Função para editar um docente
+function editarDocente($conn, $id, $nome, $email, $cpf) {
+    $stmt = $conn->prepare("UPDATE docentes SET nome = ?, email = ?, cpf = ? WHERE id = ?");
+    $stmt->bind_param("sssi", $nome, $email, $cpf, $id);
+    return $stmt->execute();
+}
+
+// Função para excluir um docente
+function excluirDocente($conn, $id) {
+    $stmt = $conn->prepare("DELETE FROM docentes WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    return $stmt->execute();
+}
+
+// Verificar se um formulário de edição ou exclusão foi enviado
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['editar'])) {
+        $id = $_POST['id'];
+        $nome = $_POST['nome'];
+        $email = $_POST['email'];
+        $cpf = $_POST['cpf'];
+        editarDocente($conn, $id, $nome, $email, $cpf);
+    } elseif (isset($_POST['excluir'])) {
+        $id = $_POST['id'];
+        excluirDocente($conn, $id);
     }
-} else {
-    $mensagem = "Nenhum docente encontrado.";
 }
 
-// Fecha a conexão
-$conn->close();
+// Obter a lista de docentes
+$docentes = listarDocentes($conn);
 ?>
 
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Listar Docentes</title>
+    <title>Lista de Docentes</title>
 </head>
 <body>
-    <h1>Lista de Docentes</h1>
-
-    <?php if (!empty($mensagem)): ?>
-        <p><?php echo htmlspecialchars($mensagem); ?></p>
-    <?php endif; ?>
-
-    <?php if (!empty($docentes)): ?>
-        <table border="1">
+    <h1>Docentes</h1>
+    <table border="1">
+        <thead>
             <tr>
+                <th>Foto</th>
                 <th>ID</th>
                 <th>Nome</th>
                 <th>Email</th>
                 <th>CPF</th>
-                <th>Disciplinas (Turma - Ano)</th>
+                <th>Disciplinas</th>
                 <th>Ações</th>
             </tr>
-
-            <?php
-            // Variável para armazenar o ID do último docente exibido
-            $ultimoDocenteId = null;
-
-            foreach ($docentes as $docente): 
-                // Se o ID do docente mudar, exibir os dados do docente
-                if ($ultimoDocenteId !== $docente['id']): 
-                    $ultimoDocenteId = $docente['id'];
-            ?>
+        </thead>
+        <tbody>
+            <?php foreach ($docentes as $docente): ?>
+                <?php 
+                    $disciplinas = obterDisciplinasETurmas($conn, $docente['id']); 
+                    $disciplinasIds = array_column($disciplinas, 'disciplina_id'); // IDs das disciplinas associadas
+                ?>
                 <tr>
-                    <td><?php echo htmlspecialchars($docente['id']); ?></td>
-                    <td><?php echo htmlspecialchars($docente['nome']); ?></td>
-                    <td><?php echo htmlspecialchars($docente['email']); ?></td>
-                    <td><?php echo htmlspecialchars($docente['cpf']); ?></td>
                     <td>
-                        <?php
-                        // Exibir a disciplina com o número da turma e o ano
-                        if ($docente['disciplina_nome']) {
-                            echo htmlspecialchars($docente['disciplina_nome']) . ' (' . htmlspecialchars($docente['turma_numero'] ?? 'N/A') . ' - ' . htmlspecialchars($docente['turma_ano'] ?? 'N/A') . ')';
-                        } else {
-                            echo 'N/A';
-                        }
-                        ?>
+                        <?php if (!empty($docente['foto_perfil'])): ?>
+                            <img src="<?= htmlspecialchars($docente['foto_perfil']) ?>" alt="Foto de <?= htmlspecialchars($docente['nome']) ?>" width="50" height="50">
+                        <?php endif; ?>
+                    </td>
+                    <td><?= htmlspecialchars($docente['id']) ?></td>
+                    <td><?= htmlspecialchars($docente['nome']) ?></td>
+                    <td><?= htmlspecialchars($docente['email']) ?></td>
+                    <td><?= htmlspecialchars($docente['cpf']) ?></td>
+                    <td>
+                        <ul>
+                            <?php foreach ($disciplinas as $disciplina): ?>
+                                <li><?= htmlspecialchars($disciplina['disciplina']) ?> - Turma <?= htmlspecialchars($disciplina['turma_numero']) ?>, Ano <?= htmlspecialchars($disciplina['turma_ano']) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
                     </td>
                     <td>
-                        <a href="editar_docente.php?id=<?php echo htmlspecialchars($docente['id']); ?>">Editar</a> |
-                        <a href="deletar_docente.php?id=<?php echo htmlspecialchars($docente['id']); ?>">Deletar</a>
+                        <form action="" method="post" style="display:inline;">
+                            <input type="hidden" name="id" value="<?= htmlspecialchars($docente['id']) ?>">
+                            <button type="submit" name="excluir" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
+                        </form>
+                        <button onclick="document.getElementById('editForm<?= $docente['id'] ?>').style.display='block'">Editar</button>
+                        <div id="editForm<?= $docente['id'] ?>" style="display:none;">
+                            <form action="" method="post">
+                                <input type="hidden" name="id" value="<?= htmlspecialchars($docente['id']) ?>">
+                                <input type="text" name="nome" value="<?= htmlspecialchars($docente['nome']) ?>" required>
+                                <input type="email" name="email" value="<?= htmlspecialchars($docente['email']) ?>" required>
+                                <input type="text" name="cpf" value="<?= htmlspecialchars($docente['cpf']) ?>" required>
+                                
+                                <!-- Disciplinas como Checkboxes -->
+                                <h4>Disciplinas:</h4>
+                                <?php foreach ($disciplinasETurmas as $disciplina): ?>
+                                    <label>
+                                        <input type="checkbox" name="disciplinas[]" value="<?= htmlspecialchars($disciplina['disciplina_id']) ?>"
+                                            <?php if (in_array($disciplina['disciplina_id'], $disciplinasIds)) echo 'checked'; ?>>
+                                        <?= htmlspecialchars($disciplina['disciplina']) ?> - Turma <?= htmlspecialchars($disciplina['turma_numero']) ?>, Ano <?= htmlspecialchars($disciplina['turma_ano']) ?>
+                                    </label><br>
+                                <?php endforeach; ?>
+
+                                <button type="submit" name="editar">Salvar</button>
+                                <button type="button" onclick="document.getElementById('editForm<?= $docente['id'] ?>').style.display='none'">Cancelar</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
-            <?php else: ?>
-                <tr>
-                    <td colspan="4"></td>
-                    <td>
-                        <?php
-                        // Exibir as disciplinas e as turmas correspondentes
-                        echo htmlspecialchars($docente['disciplina_nome']) . ' - Turma: ' . htmlspecialchars($docente['turma_numero'] ?? 'N/A') . ' - Ano: ' . htmlspecialchars($docente['turma_ano'] ?? 'N/A');
-                        ?>
-                    </td>
-                    <td></td>
-                </tr>
-            <?php endif; endforeach; ?>
-        </table>
-    <?php else: ?>
-        <p>Nenhum docente encontrado.</p>
-    <?php endif; ?>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
 </body>
 </html>
