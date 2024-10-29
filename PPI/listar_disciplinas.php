@@ -195,7 +195,7 @@ $docentes = $conn->query("SELECT id, nome FROM docentes")->fetch_all(MYSQLI_ASSO
             <div class="container">
                     <div class="header-container">
                         <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
-                        <div class="title ms-3">Listar e Editar Cursos</div>
+                        <div class="title ms-3">Listar e Editar Disciplinas</div>
                         <div class="ms-auto d-flex align-items-center">
                             <div class="profile-info d-flex align-items-center">
                                 <div class="profile-details me-2">
@@ -210,17 +210,16 @@ $docentes = $conn->query("SELECT id, nome FROM docentes")->fetch_all(MYSQLI_ASSO
                         </div>
                     </div>
                 </div>
-
                 <div class="container mt-4">
                    <!-- Exibir mensagens de sucesso e erro -->
-<?php if (isset($_SESSION['mensagem'])): ?>
-    <div class="alert alert-success" role="alert">
-        <?php
-            echo htmlspecialchars($_SESSION['mensagem']);
-            unset($_SESSION['mensagem']); // Limpar a mensagem após exibição
-        ?>
-    </div>
-<?php endif; ?>
+                    <?php if (isset($_SESSION['mensagem'])): ?>
+                        <div class="alert alert-success" role="alert">
+                            <?php
+                                echo htmlspecialchars($_SESSION['mensagem']);
+                                unset($_SESSION['mensagem']); // Limpar a mensagem após exibição
+                            ?>
+                        </div>
+                    <?php endif; ?>
 
 
                     <div class="card shadow">

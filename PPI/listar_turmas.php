@@ -1,173 +1,53 @@
 <?php
-session_start();
-
-// Verificar se o usuário está autenticado e é um administrador
-if (!isset($_SESSION['email']) || $_SESSION['user_type'] !== 'administrador') {
-    header("Location: f_login.php");
-    exit();
-}
-
+// Inclua o arquivo de configuração que contém a conexão ao banco de dados
 include 'config.php';
 
-// Habilitar exibição de erros
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-// Verificar conexão
-if ($conn->connect_error) {
-    die("Conexão falhou: " . $conn->connect_error);
-}
-
-$erro = ""; // Inicialize a variável de erro
-
-// Processar a edição de uma disciplina
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_disciplina'])) {
-    $id = intval($_POST['id']);
-    $nome = $_POST['nome'] ?? ''; // Usar valor padrão se não estiver definido
+// Verificar se o formulário de edição foi enviado
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['turma_numero'])) {
+    // Capturar os dados do formulário
     $turma_numero = intval($_POST['turma_numero']);
-    $docente_ids = $_POST['docente_ids'] ?? []; // Captura o array de IDs dos docentes
+    $turma_ano = intval($_POST['turma_ano']);
+    $ano_ingresso = intval($_POST['ano_ingresso']);
+    $ano_oferta = intval($_POST['ano_oferta']);
+    $professor_regente = intval($_POST['professor_regente']);
+    $curso_id = intval($_POST['curso_id']);
 
-    // Verificar se a turma existe
-    $turma_check = $conn->prepare("SELECT numero FROM turmas WHERE numero = ?");
-    $turma_check->bind_param("i", $turma_numero);
-    $turma_check->execute();
-    $turma_check->store_result();
-
-    if ($turma_check->num_rows > 0) {
-        echo "Turma existe.<br>"; // Log de verificação
-
-        // Verificar se já existe uma disciplina com o mesmo nome na nova turma
-        $disciplina_check = $conn->prepare("SELECT d.id FROM disciplinas d
-            JOIN turmas_disciplinas td ON d.id = td.disciplina_id
-            WHERE td.turma_numero = ? AND d.nome = ? AND d.id != ?");
-        $disciplina_check->bind_param("ssi", $turma_numero, $nome, $id);
-        $disciplina_check->execute();
-        $disciplina_check->store_result();
-
-        if ($disciplina_check->num_rows > 0) {
-            $_SESSION['erro'] = "Já existe uma disciplina com o mesmo nome nesta turma.";
-        } else {
-            echo "Nenhuma disciplina existente nesta turma, prosseguindo com a atualização.<br>"; // Log de verificação
-
-            // Atualizar a disciplina
-            $stmt_update = $conn->prepare("UPDATE disciplinas SET nome = ? WHERE id = ?");
-            $stmt_update->bind_param("si", $nome, $id);
-
-            if ($stmt_update->execute()) {
-                // Excluir a relação existente
-                $stmt_delete = $conn->prepare("DELETE FROM turmas_disciplinas WHERE disciplina_id = ?");
-                $stmt_delete->bind_param("i", $id);
-                $stmt_delete->execute();
-                $stmt_delete->close();
-
-                // Inserir a nova relação com a turma
-                $stmt_insert_turma = $conn->prepare("INSERT INTO turmas_disciplinas (disciplina_id, turma_numero) VALUES (?, ?)");
-                $stmt_insert_turma->bind_param("ii", $id, $turma_numero);
-                $stmt_insert_turma->execute();
-                $stmt_insert_turma->close();
-
-                // Atualizar docentes relacionados
-                $stmt_delete_docentes = $conn->prepare("DELETE FROM docentes_disciplinas WHERE disciplina_id = ?");
-                $stmt_delete_docentes->bind_param("i", $id);
-                $stmt_delete_docentes->execute();
-                $stmt_delete_docentes->close();
-
-                // Inserir novos docentes
-                foreach ($docente_ids as $docente_id) {
-                    $stmt_insert_docente = $conn->prepare("INSERT INTO docentes_disciplinas (disciplina_id, docente_id) VALUES (?, ?)");
-                    $stmt_insert_docente->bind_param("ii", $id, $docente_id);
-                    $stmt_insert_docente->execute();
-                    $stmt_insert_docente->close();
-                }
-
-                $_SESSION['mensagem'] = "Disciplina atualizada com sucesso.";
-            } else {
-                $_SESSION['erro'] = "Erro ao atualizar disciplina: " . $stmt_update->error;
-            }
-            $stmt_update->close();
-        }
-
-        $disciplina_check->close();
-    } else {
-        $_SESSION['erro'] = "Turma não encontrada.";
-    }
-    $turma_check->close();
-}
-
-// Processar a exclusão de uma disciplina
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['delete_disciplina'])) {
-    $id = intval($_POST['id']);
+    // Atualizar os dados da turma
+    $sql_update = "UPDATE turmas SET ano = ?, ano_ingresso = ?, ano_oferta = ?, professor_regente = ?, curso_id = ? WHERE numero = ?";
+    $stmt = $conn->prepare($sql_update);
+    $stmt->bind_param("iiiiii", $turma_ano, $ano_ingresso, $ano_oferta, $professor_regente, $curso_id, $turma_numero);
     
-    // Verificar se a disciplina existe antes de tentar excluir
-    $stmt_check = $conn->prepare("SELECT id FROM disciplinas WHERE id = ?");
-    $stmt_check->bind_param("i", $id);
-    $stmt_check->execute();
-    $stmt_check->store_result();
-
-    if ($stmt_check->num_rows > 0) {
-        // Excluir da tabela turmas_disciplinas
-        $stmt_delete_turma = $conn->prepare("DELETE FROM turmas_disciplinas WHERE disciplina_id = ?");
-        $stmt_delete_turma->bind_param("i", $id);
-        $stmt_delete_turma->execute();
-        $stmt_delete_turma->close();
-
-        // Excluir da tabela docentes_disciplinas
-        $stmt_delete_docente = $conn->prepare("DELETE FROM docentes_disciplinas WHERE disciplina_id = ?");
-        $stmt_delete_docente->bind_param("i", $id);
-        $stmt_delete_docente->execute();
-        $stmt_delete_docente->close();
-
-        // Se a disciplina existir, proceder para a exclusão
-        $stmt_delete = $conn->prepare("DELETE FROM disciplinas WHERE id = ?");
-        $stmt_delete->bind_param("i", $id);
-        if ($stmt_delete->execute()) {
-            $_SESSION['mensagem'] = "Disciplina excluída com sucesso.";
-        } else {
-            $_SESSION['erro'] = "Erro ao excluir disciplina: " . $stmt_delete->error;
-        }
-        $stmt_delete->close();
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true]);
+        exit;
     } else {
-        $_SESSION['erro'] = "Disciplina não encontrada.";
-    }
-    $stmt_check->close();
-}
-
-// Recuperar disciplinas com suas turmas e docentes
-$result = $conn->query("
-    SELECT d.id AS disciplina_id, d.nome AS disciplina_nome, td.turma_numero, 
-           GROUP_CONCAT(doc.id ORDER BY doc.nome SEPARATOR ', ') AS docentes_ids,
-           GROUP_CONCAT(doc.nome ORDER BY doc.nome SEPARATOR ', ') AS docentes_nomes
-    FROM turmas_disciplinas td
-    JOIN disciplinas d ON td.disciplina_id = d.id
-    LEFT JOIN docentes_disciplinas dd ON d.id = dd.disciplina_id
-    LEFT JOIN docentes doc ON dd.docente_id = doc.id
-    GROUP BY d.id, td.turma_numero
-    ORDER BY d.nome
-");
-
-
-// Verifique se a consulta foi bem-sucedida
-if ($result === false) {
-    die("Erro na consulta: " . $conn->error);
-} else {
-    echo "Consulta executada com sucesso!<br>"; // Adicione isso
-    if ($result->num_rows == 0) {
-        echo "Nenhuma disciplina encontrada.<br>"; // Adicione isso para verificar se não há resultados
+        echo json_encode(['success' => false]);
+        exit;
     }
 }
 
-
-// Preencher o array $disciplinas_array com os dados da consulta
-$disciplinas_array = [];
-while ($row = $result->fetch_assoc()) {
-    $row['docente_ids'] = !empty($row['docentes_ids']) ? explode(',', $row['docentes_ids']) : [];
-    $disciplinas_array[] = $row;
-    echo "Disciplina adicionada: " . htmlspecialchars($row['disciplina_nome']) . "<br>"; // Adicione isso
+// Verificar se um ID de turma foi passado para exclusão
+if (isset($_GET['delete_id'])) {
+    $delete_id = intval($_GET['delete_id']);
+    $sql_delete = "DELETE FROM turmas WHERE numero = ?";
+    $stmt_delete = $conn->prepare($sql_delete);
+    $stmt_delete->bind_param("i", $delete_id);
+    $stmt_delete->execute();
 }
 
+// Consulta para obter todas as turmas, suas disciplinas e docentes
+$sql_turmas = "
+    SELECT t.numero, t.ano, t.ano_ingresso, t.ano_oferta, t.professor_regente, c.nome AS curso_nome, 
+           d.nome AS docente_nome, di.nome AS disciplina_nome
+    FROM turmas t
+    LEFT JOIN cursos c ON t.curso_id = c.id
+    LEFT JOIN turmas_disciplinas td ON t.numero = td.turma_numero
+    LEFT JOIN disciplinas di ON td.disciplina_id = di.id
+    LEFT JOIN docentes d ON di.id = (SELECT dd.docente_id FROM docentes_disciplinas dd WHERE dd.disciplina_id = di.id LIMIT 1)
+";
 
-// Liberar o resultado após usar todos os dados
-$result->free();
+$result_turmas = $conn->query($sql_turmas);
+
 ?>
 
 <!DOCTYPE html>
@@ -175,82 +55,136 @@ $result->free();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciar Disciplinas</title>
+    <title>Listar Turmas</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
-    <h1>Listar Disciplinas</h1>
+    <div class="container mt-5">
+        <h1>Lista de Turmas</h1>
 
-    <!-- Exibir mensagens de erro ou sucesso -->
-    <?php if (!empty($_SESSION['erro'])): ?>
-    <div style="color: red;">
-        <?php echo htmlspecialchars($_SESSION['erro']); ?>
-        <?php unset($_SESSION['erro']); ?>
-    </div>
-<?php endif; ?>
-<?php if (!empty($_SESSION['mensagem'])): ?>
-    <div style="color: green;">
-        <?php echo htmlspecialchars($_SESSION['mensagem']); ?>
-        <?php unset($_SESSION['mensagem']); ?>
-    </div>
-<?php endif; ?>
+        <?php if ($result_turmas->num_rows > 0): ?>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Ano</th>
+                        <th>Ano de Ingresso</th>
+                        <th>Ano de Oferta</th>
+                        <th>Professor Regente</th>
+                        <th>Curso</th>
+                        <th>Disciplina</th>
+                        <th>Docente</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php 
+                    $turmas_data = []; // Array para agrupar turmas
+                    while ($turma = $result_turmas->fetch_assoc()) {
+                        $turma_numero = $turma['numero'];
 
+                        if (!isset($turmas_data[$turma_numero])) {
+                            $turmas_data[$turma_numero] = [
+                                'ano' => $turma['ano'],
+                                'ano_ingresso' => $turma['ano_ingresso'],
+                                'ano_oferta' => $turma['ano_oferta'],
+                                'professor_regente' => $turma['professor_regente'],
+                                'curso_nome' => $turma['curso_nome'],
+                                'disciplinas' => []
+                            ];
+                        }
 
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nome da Disciplina</th>
-                <th>Turma</th>
-                <th>Docentes</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($disciplinas_array as $disciplina): ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($disciplina['disciplina_id']); ?></td>
-                    <td><?php echo htmlspecialchars($disciplina['disciplina_nome']); ?></td>
-                    <td><?php echo htmlspecialchars($disciplina['turma_numero']); ?></td>
-                    <td><?php echo htmlspecialchars($disciplina['docentes_nomes']); ?></td>
-                    <td>
-                        <form method="POST" action="editar_disciplina.php">
-                            <input type="hidden" name="id" value="<?php echo $disciplina['disciplina_id']; ?>">
-                            <input type="submit" name="editar" value="Editar">
+                        if ($turma['disciplina_nome']) {
+                            $turmas_data[$turma_numero]['disciplinas'][] = [
+                                'disciplina' => $turma['disciplina_nome'],
+                                'docente' => $turma['docente_nome'] ?: 'Não atribuído'
+                            ];
+                        }
+                    }
+
+                    // Exibir as turmas e suas disciplinas
+                    foreach ($turmas_data as $numero => $data): 
+                    ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($numero); ?></td>
+                            <td><?php echo htmlspecialchars($data['ano']); ?></td>
+                            <td><?php echo htmlspecialchars($data['ano_ingresso']); ?></td>
+                            <td><?php echo htmlspecialchars($data['ano_oferta']); ?></td>
+                            <td><?php echo htmlspecialchars($data['professor_regente']); ?></td>
+                            <td><?php echo htmlspecialchars($data['curso_nome']); ?></td>
+                            <td>
+                                <?php foreach ($data['disciplinas'] as $disciplina): ?>
+                                    <p><?php echo htmlspecialchars($disciplina['disciplina']); ?> (<?php echo htmlspecialchars($disciplina['docente']); ?>)</p>
+                                <?php endforeach; ?>
+                            </td>
+                            <td>
+                                <button onclick="openEditModal(<?php echo htmlspecialchars($numero); ?>, <?php echo htmlspecialchars($data['ano']); ?>, <?php echo htmlspecialchars($data['ano_ingresso']); ?>, <?php echo htmlspecialchars($data['ano_oferta']); ?>, <?php echo htmlspecialchars($data['professor_regente']); ?>)">Editar</button>
+                                <a href="?delete_id=<?php echo htmlspecialchars($numero); ?>" onclick="return confirm('Tem certeza que deseja excluir esta turma?');">Deletar</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php else: ?>
+            <p>Nenhuma turma encontrada.</p>
+        <?php endif; ?>
+
+        <!-- Modal -->
+        <div class="modal" id="editModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Editar Turma</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editForm" method="POST">
+                            <input type="hidden" name="turma_numero" id="turma_numero">
+                            <div class="form-group">
+                                <label for="turma_ano">Ano:</label>
+                                <input type="number" id="turma_ano" name="turma_ano" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ano_ingresso">Ano de Ingresso:</label>
+                                <input type="number" id="ano_ingresso" name="ano_ingresso" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ano_oferta">Ano de Oferta:</label>
+                                <input type="number" id="ano_oferta" name="ano_oferta" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="professor_regente">Professor Regente:</label>
+                                <input type="number" id="professor_regente" name="professor_regente" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="curso_id">Curso ID:</label>
+                                <input type="number" id="curso_id" name="curso_id" required>
+                            </div>
+                            <button type="submit">Salvar</button>
                         </form>
-                        <form method="POST" action="">
-                            <input type="hidden" name="id" value="<?php echo $disciplina['disciplina_id']; ?>">
-                            <input type="submit" name="delete_disciplina" value="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta disciplina?');">
-                        </form>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <h2>Criar Nova Disciplina</h2>
-    <form method="POST" action="criar_disciplina.php">
-        <label for="nome">Nome da Disciplina:</label>
-        <input type="text" id="nome" name="nome" required>
-        <label for="turma_numero">Número da Turma:</label>
-        <input type="number" id="turma_numero" name="turma_numero" required>
-        <label for="docente_ids">Docentes:</label>
-        <select id="docente_ids" name="docente_ids[]" multiple>
-            <!-- Aqui você deve popular o select com os docentes disponíveis -->
-            <?php
-            // Consulta para obter docentes
-            $docentes_result = $conn->query("SELECT id, nome FROM docentes");
-            while ($docente = $docentes_result->fetch_assoc()): ?>
-                <option value="<?php echo $docente['id']; ?>"><?php echo htmlspecialchars($docente['nome']); ?></option>
-            <?php endwhile; ?>
-        </select>
-        <input type="submit" value="Criar Disciplina">
-    </form>
+    </div>
 
-    <a href="logout.php">Sair</a>
+    <!-- Inclua jQuery e Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function openEditModal(numero, ano, ano_ingresso, ano_oferta, professor_regente) {
+            // Preencher os campos do modal
+            document.getElementById('turma_numero').value = numero;
+            document.getElementById('turma_ano').value = ano;
+            document.getElementById('ano_ingresso').value = ano_ingresso;
+            document.getElementById('ano_oferta').value = ano_oferta;
+            document.getElementById('professor_regente').value = professor_regente;
+
+            // Abrir o modal
+            $('#editModal').modal('show');
+        }
+    </script>
 </body>
 </html>
-
-<?php
-// Fechar a conexão
-$conn->close();
-?>
