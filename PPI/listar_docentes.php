@@ -200,7 +200,7 @@ foreach ($disciplinas_options as $disciplina) {
     $result_turma = $stmt_turma->get_result();
 
     // Exibir a disciplina com a turma e ano
-    $turma_info = 'N/A';
+    
     if ($result_turma->num_rows > 0) {
         $turmas = [];
         while ($turma_row = $result_turma->fetch_assoc()) {

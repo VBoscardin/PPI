@@ -165,3 +165,6 @@ CREATE TABLE `discentes_turmas` (
 
 ALTER TABLE docentes_disciplinas ADD COLUMN turma_numero VARCHAR(50), ADD COLUMN turma_ano INT;
 
+ALTER TABLE turmas
+ADD COLUMN presidente_id INT,
+ADD FOREIGN KEY (presidente_id) REFERENCES discentes(numero_matricula);
