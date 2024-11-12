@@ -21,15 +21,23 @@ $stmt->close();
 $mensagem = '';
 $erro = '';
 
-// Deletar disciplina
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     $deleteId = $_POST['delete_id'];
+
+    // Primeiro, exclua as dependências na tabela turmas_disciplinas
+    $stmt = $conn->prepare("DELETE FROM turmas_disciplinas WHERE disciplina_id = ?");
+    $stmt->bind_param("i", $deleteId);
+    $stmt->execute();
+
+    // Depois, exclua a disciplina
     $stmt = $conn->prepare("DELETE FROM disciplinas WHERE id = ?");
     $stmt->bind_param("i", $deleteId);
     $stmt->execute();
+
     header("Location: listar_disciplinas.php");
     exit;
 }
+
 
 // Atualizar disciplina, turma e docentes
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_id'])) {
