@@ -168,3 +168,27 @@ ALTER TABLE docentes_disciplinas ADD COLUMN turma_numero VARCHAR(50), ADD COLUMN
 ALTER TABLE turmas
 ADD COLUMN presidente_id INT,
 ADD FOREIGN KEY (presidente_id) REFERENCES discentes(numero_matricula);
+
+
+CREATE TABLE `notas` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `discente_id` INT NOT NULL,
+  `disciplina_id` INT NOT NULL,
+  `turma_numero` INT NOT NULL,
+  `turma_ano` YEAR NOT NULL,
+  `nota` DECIMAL(5, 2) NOT NULL CHECK (`nota` >= 0 AND `nota` <= 10),
+  `data_avaliacao` DATE NOT NULL,
+  `tipo_avaliacao` ENUM('prova', 'trabalho', 'atividade', 'participacao') NOT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`discente_id`) REFERENCES `discentes` (`numero_matricula`) ON DELETE CASCADE,
+  FOREIGN KEY (`disciplina_id`) REFERENCES `disciplinas` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`turma_numero`) REFERENCES `turmas` (`numero`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE matriculas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    turma_numero INT,
+    discente_id INT,
+    FOREIGN KEY (turma_numero) REFERENCES turmas(numero),
+    FOREIGN KEY (discente_id) REFERENCES discentes(numero_matricula)
+);
