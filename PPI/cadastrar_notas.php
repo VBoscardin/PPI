@@ -20,109 +20,82 @@ if ($conn->connect_error) {
     die("Conexão falhou: " . $conn->connect_error);
 }
 
-// Utilize o user_id ao invés de docente_id
 $docente_id = $_SESSION['user_id'];
 
-// Buscar as disciplinas que o docente leciona com informações da turma
+// Buscar disciplinas que o docente leciona
 $disciplinesQuery = $conn->prepare("
-    SELECT d.id, d.nome, td.turma_numero, td.turma_ano
+    SELECT d.id, d.nome, td.turma_numero, t.ano AS turma_ano
     FROM disciplinas d
     JOIN docentes_disciplinas dd ON d.id = dd.disciplina_id
     JOIN turmas_disciplinas td ON d.id = td.disciplina_id
+    JOIN turmas t ON td.turma_numero = t.numero
     WHERE dd.docente_id = ?
 ");
 $disciplinesQuery->bind_param("i", $docente_id);
 $disciplinesQuery->execute();
 $disciplinesResult = $disciplinesQuery->get_result();
 
-// Verificar se o formulário de notas foi enviado
+// Processar envio do formulário
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['disciplina_id'])) {
     $selected_discipline_id = intval($_POST['disciplina_id']);
-    
-    // Verificar se todos os dados necessários foram enviados
-    if (!isset($_POST['notas']) || !isset($_POST['data_avaliacao']) || !isset($_POST['tipo_avaliacao'])) {
-        echo "Erro: Dados de notas incompletos.";
+
+    if (!isset($_POST['notas']) || !is_array($_POST['notas'])) {
+        echo "Erro: Dados incompletos.";
         exit();
     }
 
-    // Obter alunos na disciplina e turma selecionadas
-    $studentsQuery = $conn->prepare("
-        SELECT dt.numero_matricula, ds.nome 
-        FROM discentes_turmas dt
-        JOIN discentes ds ON dt.numero_matricula = ds.numero_matricula
-        JOIN turmas_disciplinas td ON dt.turma_numero = td.turma_numero
-        WHERE td.disciplina_id = ?
-    ");
-    $studentsQuery->bind_param("i", $selected_discipline_id);
-    $studentsQuery->execute();
-    $studentsResult = $studentsQuery->get_result();
-
-    // Processar as notas enviadas
+    // Atualizar notas dos alunos
     foreach ($_POST['notas'] as $matricula => $nota_data) {
-        $data_avaliacao = $_POST['data_avaliacao'][$matricula];
-        $tipo_avaliacao = $_POST['tipo_avaliacao'][$matricula];
-        
-        // Verificar se todos os campos de notas foram preenchidos
-        if (empty($nota_data['nota_parcial_1']) || empty($nota_data['semestre_1']) || empty($nota_data['nota_parcial_2']) || empty($nota_data['semestre_2']) || empty($nota_data['nota_exame']) || empty($nota_data['faltas_bio']) || empty($nota_data['np_bio']) || empty($nota_data['nf_bio']) || empty($nota_data['sit_bio'])) {
-            echo "Erro: Dados de notas incompletos para o aluno de matrícula $matricula.<br>";
-            continue;
-        }
-
-        // Validar notas
-        foreach ($nota_data as $key => $value) {
-            if ($key != 'sit_bio' && ($value < 0 || $value > 10)) {
-                echo "Erro: A $key deve estar entre 0 e 10 para o aluno de matrícula $matricula.<br>";
-                continue 2; // Pula para o próximo aluno
-            }
-        }
-
         $matricula = intval($matricula);
-        $nota_parcial_1 = floatval($nota_data['nota_parcial_1']);
-        $semestre_1 = floatval($nota_data['semestre_1']);
-        $nota_parcial_2 = floatval($nota_data['nota_parcial_2']);
-        $semestre_2 = floatval($nota_data['semestre_2']);
-        $nota_exame = floatval($nota_data['nota_exame']);
-        $faltas_bio = floatval($nota_data['faltas_bio']);
-        $np_bio = floatval($nota_data['np_bio']);
-        $nf_bio = floatval($nota_data['nf_bio']);
-        $sit_bio = $nota_data['sit_bio'];
+        $parcial_1 = floatval($nota_data['parcial_1']);
+        $nota_semestre_1 = floatval($nota_data['nota_semestre_1']);
+        $parcial_2 = floatval($nota_data['parcial_2']);
+        $nota_semestre_2 = floatval($nota_data['nota_semestre_2']);
+        $nota_final = isset($nota_data['nota_final']) ? floatval($nota_data['nota_final']) : null;
+        $nota_exame = isset($nota_data['nota_exame']) ? floatval($nota_data['nota_exame']) : null;
+        $faltas = intval($nota_data['faltas']);
+        $observacoes = isset($nota_data['observacoes']) ? $nota_data['observacoes'] : null;
 
-        // Inserir as notas no banco de dados
-        $stmt = $conn->prepare("
-            INSERT INTO notas (discente_id, disciplina_id, turma_numero, turma_ano, 
-                               nota_parcial_1, semestre_1, nota_parcial_2, semestre_2, 
-                               nota_exame, faltas_bio, np_bio, nf_bio, sit_bio, 
-                               data_avaliacao, tipo_avaliacao)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
+        // Verificar se já existe registro
+        $stmt_check = $conn->prepare("SELECT COUNT(*) FROM notas WHERE discente_id = ? AND disciplina_id = ?");
+        $stmt_check->bind_param("ii", $matricula, $selected_discipline_id);
+        $stmt_check->execute();
+        $stmt_check->bind_result($count);
+        $stmt_check->fetch();
+        $stmt_check->close();
 
-        // Obter os dados da turma
-        $turmaQuery = $conn->prepare("
-            SELECT turma_numero, turma_ano
-            FROM turmas_disciplinas
-            WHERE disciplina_id = ?
-            LIMIT 1
-        ");
-        $turmaQuery->bind_param("i", $selected_discipline_id);
-        $turmaQuery->execute();
-        $turmaQuery->bind_result($turma_numero, $turma_ano);
-        $turmaQuery->fetch();
-        $turmaQuery->close();
-
-        $stmt->bind_param("iiiiddddddssss", $matricula, $selected_discipline_id, $turma_numero, $turma_ano,
-                          $nota_parcial_1, $semestre_1, $nota_parcial_2, $semestre_2, $nota_exame,
-                          $faltas_bio, $np_bio, $nf_bio, $sit_bio, $data_avaliacao, $tipo_avaliacao);
-
-        if ($stmt->execute()) {
-            echo "Notas cadastradas para o aluno de matrícula $matricula.<br>";
+        if ($count > 0) {
+            // Atualizar nota
+            $stmt = $conn->prepare("
+                UPDATE notas 
+                SET parcial_1 = ?, nota_semestre_1 = ?, parcial_2 = ?, nota_semestre_2 = ?, 
+                    nota_final = ?, nota_exame = ?, faltas = ?, observacoes = ? 
+                WHERE discente_id = ? AND disciplina_id = ?
+            ");
+            $stmt->bind_param("dddddisssi", 
+                $parcial_1, $nota_semestre_1, $parcial_2, $nota_semestre_2, 
+                $nota_final, $nota_exame, $faltas, $observacoes, $matricula, $selected_discipline_id);
         } else {
-            echo "Erro ao cadastrar as notas para o aluno de matrícula $matricula: " . $stmt->error . "<br>";
+            // Inserir nova nota
+            $stmt = $conn->prepare("
+                INSERT INTO notas (discente_id, disciplina_id, parcial_1, nota_semestre_1, parcial_2, nota_semestre_2, 
+                                   nota_final, nota_exame, faltas, observacoes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            $stmt->bind_param("iiddddddis", 
+                $matricula, $selected_discipline_id, $parcial_1, $nota_semestre_1, 
+                $parcial_2, $nota_semestre_2, $nota_final, $nota_exame, $faltas, $observacoes);
         }
 
+        if (!$stmt->execute()) {
+            echo "Erro ao salvar dados para o aluno $matricula: " . $stmt->error . "<br>";
+        }
         $stmt->close();
     }
+    echo "Notas atualizadas com sucesso!";
 }
 
+// Obter disciplina selecionada
 $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['disciplina_id']) : null;
 ?>
 
@@ -133,7 +106,6 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
     <title>Cadastro de Notas</title>
 </head>
 <body>
-
 <h1>Cadastrar Notas</h1>
 
 <h2>Disciplinas que você leciona:</h2>
@@ -141,7 +113,7 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
     <?php while ($discipline = $disciplinesResult->fetch_assoc()): ?>
         <li>
             <a href="cadastrar_notas.php?disciplina_id=<?= $discipline['id'] ?>">
-                <?= htmlspecialchars($discipline['nome']) ?> (Turma: <?= $discipline['turma_numero'] ?>, Ano: <?= $discipline['turma_ano'] ?>)
+                <?= htmlspecialchars($discipline['nome']) ?> (Turma: <?= $discipline['turma_numero'] ?> - Ano: <?= $discipline['turma_ano'] ?>)
             </a>
         </li>
     <?php endwhile; ?>
@@ -149,73 +121,55 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
 
 <?php if ($selected_discipline_id): ?>
     <h2>Alunos na disciplina</h2>
-    
     <?php
-    // Obter alunos na disciplina e turma selecionadas
     $studentsQuery = $conn->prepare("
-        SELECT dt.numero_matricula, ds.nome 
+        SELECT dt.numero_matricula, ds.nome, 
+               MAX(n.parcial_1) AS parcial_1, MAX(n.nota_semestre_1) AS nota_semestre_1,
+               MAX(n.parcial_2) AS parcial_2, MAX(n.nota_semestre_2) AS nota_semestre_2,
+               MAX(n.nota_final) AS nota_final, MAX(n.nota_exame) AS nota_exame,
+               MAX(n.faltas) AS faltas, MAX(n.observacoes) AS observacoes
         FROM discentes_turmas dt
         JOIN discentes ds ON dt.numero_matricula = ds.numero_matricula
-        JOIN turmas_disciplinas td ON dt.turma_numero = td.turma_numero
-        WHERE td.disciplina_id = ?
+        LEFT JOIN notas n ON n.discente_id = dt.numero_matricula AND n.disciplina_id = ?
+        WHERE dt.turma_numero = (SELECT turma_numero FROM turmas_disciplinas WHERE disciplina_id = ? LIMIT 1)
+        GROUP BY dt.numero_matricula
     ");
-    $studentsQuery->bind_param("i", $selected_discipline_id);
+    $studentsQuery->bind_param("ii", $selected_discipline_id, $selected_discipline_id);
     $studentsQuery->execute();
     $studentsResult = $studentsQuery->get_result();
     ?>
 
-    <form action="cadastrar_notas.php" method="post">
+    <form method="POST">
         <input type="hidden" name="disciplina_id" value="<?= $selected_discipline_id ?>">
-        
-        <table border="1">
+        <table>
             <tr>
-                <th>Nome do Aluno</th>
-                <th>Nota Parcial 1</th>
+                <th>Aluno</th>
+                <th>Parcial 1</th>
                 <th>Semestre 1</th>
-                <th>Nota Parcial 2</th>
+                <th>Parcial 2</th>
                 <th>Semestre 2</th>
+                <th>Nota Final</th>
                 <th>Nota Exame</th>
-                <th>Faltas (BIO)</th>
-                <th>NP BIO</th>
-                <th>NF BIO</th>
-                <th>SIT BIO</th>
-                <th>Data da Avaliação</th>
-                <th>Tipo de Avaliação</th>
+                <th>Faltas</th>
+                <th>Observações</th>
             </tr>
-
             <?php while ($student = $studentsResult->fetch_assoc()): ?>
                 <tr>
                     <td><?= htmlspecialchars($student['nome']) ?></td>
-                    <td><input type="number" step="0.01" min="0" max="10" name="notas[<?= $student['numero_matricula'] ?>][nota_parcial_1]" required></td>
-                    <td><input type="number" step="0.01" min="0" max="10" name="notas[<?= $student['numero_matricula'] ?>][semestre_1]" required></td>
-                    <td><input type="number" step="0.01" min="0" max="10" name="notas[<?= $student['numero_matricula'] ?>][nota_parcial_2]" required></td>
-                    <td><input type="number" step="0.01" min="0" max="10" name="notas[<?= $student['numero_matricula'] ?>][semestre_2]" required></td>
-                    <td><input type="number" step="0.01" min="0" max="10" name="notas[<?= $student['numero_matricula'] ?>][nota_exame]" required></td>
-                    <td><input type="number" step="0.01" min="0" name="notas[<?= $student['numero_matricula'] ?>][faltas_bio]" required></td>
-                    <td><input type="number" step="0.01" min="0" max="10" name="notas[<?= $student['numero_matricula'] ?>][np_bio]" required></td>
-                    <td><input type="number" step="0.01" min="0" max="10" name="notas[<?= $student['numero_matricula'] ?>][nf_bio]" required></td>
-                    <td><input type="text" name="notas[<?= $student['numero_matricula'] ?>][sit_bio]" required></td>
-                    <td><input type="date" name="data_avaliacao[<?= $student['numero_matricula'] ?>]" required></td>
-                    <td>
-                        <select name="tipo_avaliacao[<?= $student['numero_matricula'] ?>]" required>
-                            <option value="prova">Prova</option>
-                            <option value="trabalho">Trabalho</option>
-                            <option value="atividade">Atividade</option>
-                            <option value="participacao">Participação</option>
-                        </select>
-                    </td>
+                    <td><input type="number" name="notas[<?= $student['numero_matricula'] ?>][parcial_1]" value="<?= $student['parcial_1'] ?>"></td>
+                    <td><input type="number" name="notas[<?= $student['numero_matricula'] ?>][nota_semestre_1]" value="<?= $student['nota_semestre_1'] ?>"></td>
+                    <td><input type="number" name="notas[<?= $student['numero_matricula'] ?>][parcial_2]" value="<?= $student['parcial_2'] ?>"></td>
+                    <td><input type="number" name="notas[<?= $student['numero_matricula'] ?>][nota_semestre_2]" value="<?= $student['nota_semestre_2'] ?>"></td>
+                    <td><input type="number" name="notas[<?= $student['numero_matricula'] ?>][nota_final]" value="<?= $student['nota_final'] ?>"></td>
+                    <td><input type="number" name="notas[<?= $student['numero_matricula'] ?>][nota_exame]" value="<?= $student['nota_exame'] ?>"></td>
+                    <td><input type="number" name="notas[<?= $student['numero_matricula'] ?>][faltas]" value="<?= $student['faltas'] ?>"></td>
+                    <td><textarea name="notas[<?= $student['numero_matricula'] ?>][observacoes]"><?= htmlspecialchars($student['observacoes']) ?></textarea></td>
                 </tr>
             <?php endwhile; ?>
         </table>
-
-        <button type="submit">Cadastrar Notas</button>
+        <button type="submit">Salvar Notas</button>
     </form>
-
 <?php endif; ?>
 
 </body>
 </html>
-
-<?php
-$conn->close();
-?>

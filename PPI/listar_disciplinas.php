@@ -177,6 +177,9 @@ $docentes = $conn->query("SELECT id, nome FROM docentes")->fetch_all(MYSQLI_ASSO
                         <button onclick="location.href='listar_cursos.php'">
                             <i class="fas fa-list"></i> Cursos
                         </button>
+                        <button onclick="location.href='listar_discentes.php'">
+                            <i class="fas fa-list"></i> Discentes
+                        </button>
                         <button onclick="location.href='listar_disciplinas.php'">
                             <i class="fas fa-list"></i> Disciplinas
                         </button>

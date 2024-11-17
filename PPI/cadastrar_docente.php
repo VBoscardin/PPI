@@ -189,6 +189,9 @@ $mysqli->close();
                         <button onclick="location.href='cadastrar_curso.php'">
                             <i class="fas fa-plus"></i> Cadastrar Curso
                         </button>
+                        <button onclick="location.href='listar_discentes.php'">
+                            <i class="fas fa-list"></i> Discentes
+                        </button>
                         <button onclick="location.href='cadastrar_disciplina.php'">
                             <i class="fas fa-plus"></i> Cadastrar Disciplina
                         </button>

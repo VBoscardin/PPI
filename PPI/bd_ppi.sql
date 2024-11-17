@@ -169,17 +169,32 @@ ALTER TABLE turmas
 ADD COLUMN presidente_id INT,
 ADD FOREIGN KEY (presidente_id) REFERENCES discentes(numero_matricula);
 
-
 CREATE TABLE `notas` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `discente_id` INT NOT NULL,
   `disciplina_id` INT NOT NULL,
   `turma_numero` INT NOT NULL,
   `turma_ano` YEAR NOT NULL,
-  `nota` DECIMAL(5, 2) NOT NULL CHECK (`nota` >= 0 AND `nota` <= 10),
-  `data_avaliacao` DATE NOT NULL,
-  `tipo_avaliacao` ENUM('prova', 'trabalho', 'atividade', 'participacao') NOT NULL,
+
+  -- Notas Parciais e Semestrais
+  `parcial_1` DECIMAL(5, 2) NOT NULL DEFAULT 0 CHECK (`parcial_1` >= 0 AND `parcial_1` <= 10),
+  `nota_semestre_1` DECIMAL(5, 2) NOT NULL DEFAULT 0 CHECK (`nota_semestre_1` >= 0 AND `nota_semestre_1` <= 10),
+  `parcial_2` DECIMAL(5, 2) NOT NULL DEFAULT 0 CHECK (`parcial_2` >= 0 AND `parcial_2` <= 10),
+  `nota_semestre_2` DECIMAL(5, 2) NOT NULL DEFAULT 0 CHECK (`nota_semestre_2` >= 0 AND `nota_semestre_2` <= 10),
+
+  -- Nota Final e Exame
+  `nota_final` DECIMAL(5, 2) DEFAULT NULL CHECK (`nota_final` >= 0 AND `nota_final` <= 10),
+  `nota_exame` DECIMAL(5, 2) DEFAULT NULL CHECK (`nota_exame` >= 0 AND `nota_exame` <= 10),
+
+  -- Frequência
+  `faltas` INT NOT NULL DEFAULT 0 CHECK (`faltas` >= 0),
+
+  -- Informações adicionais
+  `observacoes` TEXT DEFAULT NULL,
+
   PRIMARY KEY (`id`),
+
+  -- Relações e integridade referencial
   FOREIGN KEY (`discente_id`) REFERENCES `discentes` (`numero_matricula`) ON DELETE CASCADE,
   FOREIGN KEY (`disciplina_id`) REFERENCES `disciplinas` (`id`) ON DELETE CASCADE,
   FOREIGN KEY (`turma_numero`) REFERENCES `turmas` (`numero`) ON DELETE CASCADE
@@ -192,3 +207,5 @@ CREATE TABLE matriculas (
     FOREIGN KEY (turma_numero) REFERENCES turmas(numero),
     FOREIGN KEY (discente_id) REFERENCES discentes(numero_matricula)
 );
+
+
