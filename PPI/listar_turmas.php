@@ -2,7 +2,81 @@
 // Inclui o arquivo de configuração para conexão com o banco de dados
 include 'config.php';
 
-// Consulta SQL para obter as turmas, incluindo curso, professor regente, disciplinas, e o presidente da turma
+
+
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Verifica se o campo 'numero_atual' existe no POST
+    if (isset($_POST['numero_atual'])) {
+        // Captura os dados do formulário
+        $numero_atual = $_POST['numero_atual']; // Número da turma a ser atualizado
+        $novo_numero = $_POST['numero']; // Novo número da turma
+        $ano = $_POST['ano'];
+        $ano_ingresso = $_POST['ano_ingresso'];
+        $ano_oferta = $_POST['ano_oferta'];
+        $curso_id = $_POST['curso_id'];
+        $professor_regente = $_POST['professor_regente'];
+        $presidente = $_POST['presidente'];
+
+        // Verificar se o novo número da turma já está vinculado a outra turma
+        $verificar_numero_query = "SELECT COUNT(*) FROM turmas WHERE numero = ?";
+        $stmt_verificar_numero = $conn->prepare($verificar_numero_query);
+        $stmt_verificar_numero->bind_param('i', $novo_numero);
+        $stmt_verificar_numero->execute();
+        $stmt_verificar_numero->bind_result($count);
+        $stmt_verificar_numero->fetch();
+        $stmt_verificar_numero->close();
+
+        if ($count == 0) {
+            echo "<script>alert('Erro: Este número de turma não existe na tabela de turmas!');</script>";
+        } else {
+            // Verificar se o novo número de turma já está vinculado a discentes
+            $verificar_discente_query = "SELECT COUNT(*) FROM discentes_turmas WHERE turma_numero = ?";
+            $stmt_verificar_discente = $conn->prepare($verificar_discente_query);
+            $stmt_verificar_discente->bind_param('i', $novo_numero);
+            $stmt_verificar_discente->execute();
+            $stmt_verificar_discente->bind_result($count_discente);
+            $stmt_verificar_discente->fetch();
+            $stmt_verificar_discente->close();
+
+            // Se já houver discentes na turma, podemos atualizar a tabela discentes_turmas
+            if ($count_discente > 0) {
+                $update_discente_turma_query = "
+                    UPDATE discentes_turmas 
+                    SET turma_numero = ? 
+                    WHERE turma_numero = ?
+                ";
+                $stmt_discente_turma = $conn->prepare($update_discente_turma_query);
+                $stmt_discente_turma->bind_param('ii', $novo_numero, $numero_atual);
+                $stmt_discente_turma->execute();
+                $stmt_discente_turma->close();
+            }
+
+            // Atualiza a tabela 'turmas'
+            $update_numero_query = "
+                UPDATE turmas 
+                SET numero = ?, ano = ?, ano_ingresso = ?, ano_oferta = ?, curso_id = ?, professor_regente = ?, presidente_id = ? 
+                WHERE numero = ?
+            ";
+            $stmt_numero = $conn->prepare($update_numero_query);
+            $stmt_numero->bind_param('iiiiiiii', $novo_numero, $ano, $ano_ingresso, $ano_oferta, $curso_id, $professor_regente, $presidente, $numero_atual);
+            if ($stmt_numero->execute()) {
+                echo "<script>alert('Turma atualizada com sucesso!');</script>";
+            } else {
+                echo "<script>alert('Erro ao atualizar a turma: " . $stmt_numero->error . "');</script>";
+            }
+            $stmt_numero->close();
+        }
+    } else {
+        echo "<script>alert('Campo numero_atual não encontrado!');</script>";
+    }
+}
+
+
+
+
+
+// Consulta SQL para obter as turmas
 $sql = "
     SELECT 
         turmas.numero, 
@@ -10,25 +84,41 @@ $sql = "
         turmas.ano_ingresso, 
         turmas.ano_oferta, 
         cursos.nome AS curso_nome, 
-        docentes.nome AS professor_regente,
-        disciplinas.nome AS disciplina_nome, 
-        discentes.nome AS presidente_nome,
-        matriculas.discente_id, 
-        discentes.nome AS discente_nome
+        turmas.curso_id,
+        turmas.professor_regente,
+        turmas.professor_regente AS professor_regente_id,
+        turmas.presidente_id,
+        discentes.nome AS presidente_nome
     FROM 
         turmas
     INNER JOIN cursos ON turmas.curso_id = cursos.id
-    INNER JOIN docentes ON turmas.professor_regente = docentes.id
-    LEFT JOIN turmas_disciplinas ON turmas.numero = turmas_disciplinas.turma_numero
-    LEFT JOIN disciplinas ON turmas_disciplinas.disciplina_id = disciplinas.id
     LEFT JOIN discentes ON turmas.presidente_id = discentes.numero_matricula
-    LEFT JOIN matriculas ON turmas.numero = matriculas.turma_numero
-    LEFT JOIN discentes AS discente_info ON matriculas.discente_id = discente_info.numero_matricula
-    ORDER BY turmas.ano DESC, turmas.numero ASC, disciplinas.nome ASC, discente_info.nome ASC
+    ORDER BY turmas.ano DESC, turmas.numero ASC
 ";
 
 $result = $conn->query($sql);
 
+// Consultas para obter todos os docentes e discentes
+$docentes_query = "SELECT id, nome FROM docentes ORDER BY nome";
+$docentes_result = $conn->query($docentes_query);
+
+$discentes_query = "SELECT numero_matricula, nome FROM discentes ORDER BY nome";
+$discentes_result = $conn->query($discentes_query);
+
+// Consulta para obter as disciplinas e seus respectivos docentes para cada turma
+$disciplinas_query = "
+    SELECT 
+        disciplinas.nome AS disciplina_nome,
+        docentes.nome AS docente_nome,
+        turmas_disciplinas.turma_numero
+    FROM 
+        turmas_disciplinas
+    INNER JOIN disciplinas ON turmas_disciplinas.disciplina_id = disciplinas.id
+    INNER JOIN docentes_disciplinas ON disciplinas.id = docentes_disciplinas.disciplina_id
+    INNER JOIN docentes ON docentes_disciplinas.docente_id = docentes.id
+    ORDER BY disciplinas.nome
+";
+$disciplinas_result = $conn->query($disciplinas_query);
 ?>
 
 <!DOCTYPE html>
@@ -44,7 +134,7 @@ $result = $conn->query($sql);
     <h1>Lista de Turmas</h1>
 
     <?php if ($result->num_rows > 0): ?>
-        <table border="1" class="table">
+        <table class="table">
             <thead>
                 <tr>
                     <th>Número</th>
@@ -60,153 +150,185 @@ $result = $conn->query($sql);
                 </tr>
             </thead>
             <tbody>
-                <?php 
-                $current_turma = null;
-                $discentes = [];
-                while($row = $result->fetch_assoc()): 
-                    if ($current_turma !== $row['numero']) {
-                        if ($current_turma !== null) {
-                            echo "</ul></td><td>";
-                            // Exibe os discentes
-                            if (!empty($discentes)) {
-                                echo "<ul>";
-                                foreach ($discentes as $discente) {
-                                    echo "<li>" . htmlspecialchars($discente['discente_nome']) . "</li>";
-                                }
-                                echo "</ul>";
-                            } else {
-                                echo "Nenhum discente";
+            <?php while ($row = $result->fetch_assoc()): ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($row['numero']); ?></td>
+                    <td><?php echo htmlspecialchars($row['ano']); ?></td>
+                    <td><?php echo htmlspecialchars($row['ano_ingresso']); ?></td>
+                    <td><?php echo htmlspecialchars($row['ano_oferta']); ?></td>
+                    <td><?php echo htmlspecialchars($row['curso_nome']); ?></td>
+                    <td><?php 
+                        // Nome do professor regente
+                        $professor_query = "SELECT nome FROM docentes WHERE id = " . $row['professor_regente_id'];
+                        $professor_result = $conn->query($professor_query);
+                        $professor = $professor_result->fetch_assoc();
+                        echo htmlspecialchars($professor['nome']);
+                    ?></td>
+                    <td><?php echo htmlspecialchars($row['presidente_nome'] ?: 'N/A'); ?></td>
+                    
+                    <!-- Exibindo as disciplinas da turma -->
+                    <td>
+                        <?php
+                        // Reseta o ponteiro para as disciplinas e exibe apenas as associadas à turma
+                        $disciplinas_result->data_seek(0); // Reseta o ponteiro da consulta de disciplinas
+                        while ($disciplina = $disciplinas_result->fetch_assoc()) {
+                            if ($disciplina['turma_numero'] == $row['numero']) {
+                                echo "<p>" . htmlspecialchars($disciplina['disciplina_nome']) . " - " . htmlspecialchars($disciplina['docente_nome']) . "</p>";
                             }
-                            echo "</td><td>";
-                            ?>
-                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $current_turma; ?>">Editar</button>
-                            <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#excluirModal<?php echo $current_turma; ?>">Excluir</button>
-                            <?php
-                            echo "</td></tr>";
                         }
-                        $current_turma = $row['numero'];
-                        $discentes = []; // Reseta a lista de discentes
-                ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($row['numero']); ?></td>
-                        <td><?php echo htmlspecialchars($row['ano']); ?></td>
-                        <td><?php echo htmlspecialchars($row['ano_ingresso']); ?></td>
-                        <td><?php echo htmlspecialchars($row['ano_oferta']); ?></td>
-                        <td><?php echo htmlspecialchars($row['curso_nome']); ?></td>
-                        <td><?php echo htmlspecialchars($row['professor_regente']); ?></td>
-                        <td><?php echo htmlspecialchars($row['presidente_nome'] ?: 'N/A'); ?></td>
-                        <td>
-                            <ul>
-                <?php 
-                    }
-                    if ($row['disciplina_nome']) {
-                        echo "<li>" . htmlspecialchars($row['disciplina_nome']) . "</li>";
-                    }
-
-                    // Adiciona discentes à lista
-                    if ($row['discente_nome']) {
-                        $discentes[] = $row;
-                    }
-                endwhile;
-
-                if ($current_turma !== null) {
-                    echo "</ul></td><td>";
-                    // Exibe os discentes
-                    if (!empty($discentes)) {
-                        echo "<ul>";
-                        foreach ($discentes as $discente) {
-                            echo "<li>" . htmlspecialchars($discente['discente_nome']) . "</li>";
+                        ?>
+                    </td>
+                    
+                    <!-- Exibindo os discentes da turma -->
+                    <td>
+                        <?php
+                        // Consulta para pegar os discentes dessa turma específica
+                        $discentes_turma_query = "
+                        SELECT 
+                            discentes.nome 
+                        FROM 
+                            discentes_turmas
+                        INNER JOIN discentes ON discentes_turmas.numero_matricula = discentes.numero_matricula
+                        WHERE 
+                            discentes_turmas.turma_numero = " . $row['numero'];
+                        
+                        $discentes_turma_result = $conn->query($discentes_turma_query);
+                        
+                        if ($discentes_turma_result->num_rows > 0) {
+                            while ($discente = $discentes_turma_result->fetch_assoc()) {
+                                echo "<p>" . htmlspecialchars($discente['nome']) . "</p>";
+                            }
+                        } else {
+                            echo "<p>Nenhum discente associado.</p>";
                         }
-                        echo "</ul>";
-                    } else {
-                        echo "Nenhum discente";
-                    }
-                    echo "</td><td>";
-                    ?>
-                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $current_turma; ?>">Editar</button>
-                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#excluirModal<?php echo $current_turma; ?>">Excluir</button>
-                    <?php
-                    echo "</td></tr>";
-                }
-                ?>
+                        ?>
+                    </td>
+
+                    <td>
+                        <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $row['numero']; ?>">Editar</button>
+                    </td>
+                </tr>
+            <?php endwhile; ?>
             </tbody>
         </table>
     <?php else: ?>
         <p>Nenhuma turma encontrada.</p>
     <?php endif; ?>
 
-    <!-- Modais para Edição e Exclusão -->
+    <!-- Modais para Edição -->
     <?php 
-    $result->data_seek(0);
+    $result->data_seek(0); // Reset the result pointer
     while($row = $result->fetch_assoc()):
         $turmaNumero = $row['numero'];
     ?>
-        <!-- Modal Editar -->
-        <div class="modal fade" id="editarModal<?php echo $turmaNumero; ?>" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-warning text-white">
-                        <h5 class="modal-title" id="editarModalLabel">Editar Turma</h5>
+    <!-- Modal de Edição -->
+    <div class="modal fade" id="editarModal<?php echo $row['numero']; ?>" tabindex="-1" aria-labelledby="editarModalLabel<?php echo $row['numero']; ?>" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editarModalLabel<?php echo $row['numero']; ?>">Editar Turma</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form action="editar_turma.php" method="POST">
-                            <input type="hidden" name="turma_id" value="<?php echo $turmaNumero; ?>">
 
-                            <!-- Campos de edição da turma -->
-                            <div class="mb-3">
-                                <label for="ano" class="form-label">Ano</label>
-                                <input type="text" name="ano" class="form-control" value="<?php echo htmlspecialchars($row['ano']); ?>">
-                            </div>
-                            <div class="mb-3">
-                                <label for="ano_ingresso" class="form-label">Ano de Ingresso</label>
-                                <input type="text" name="ano_ingresso" class="form-control" value="<?php echo htmlspecialchars($row['ano_ingresso']); ?>">
-                            </div>
-                            <div class="mb-3">
-                                <label for="ano_oferta" class="form-label">Ano de Oferta</label>
-                                <input type="text" name="ano_oferta" class="form-control" value="<?php echo htmlspecialchars($row['ano_oferta']); ?>">
-                            </div>
-                            <div class="mb-3">
-                                <label for="curso" class="form-label">Curso</label>
-                                <input type="text" name="curso" class="form-control" value="<?php echo htmlspecialchars($row['curso_nome']); ?>">
-                            </div>
-                            <div class="mb-3">
-                                <label for="professor_regente" class="form-label">Professor Regente</label>
-                                <input type="text" name="professor_regente" class="form-control" value="<?php echo htmlspecialchars($row['professor_regente']); ?>">
-                            </div>
-                            <div class="mb-3">
-                                <label for="presidente" class="form-label">Presidente da Turma</label>
-                                <input type="text" name="presidente" class="form-control" value="<?php echo htmlspecialchars($row['presidente_nome']); ?>">
-                            </div>
+                        <!-- Campo oculto para passar o número atual -->
+                        <input type="hidden" name="numero_atual" value="<?php echo $row['numero']; ?>">
 
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn btn-success">Salvar Alterações</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        <!-- Número da Turma -->
+                        <input type="hidden" name="numero_atual" value="<?php echo $row['numero']; ?>">
+                                    <div class="mb-3">
+                                        <label for="numero_<?php echo $row['numero']; ?>" class="form-label">Número da Turma</label>
+                                        <input type="number" class="form-control" id="numero_<?php echo $row['numero']; ?>" name="numero" value="<?php echo $row['numero']?>" s step="10" required>
+                                        </div>
 
-        <!-- Modal Excluir -->
-        <div class="modal fade" id="excluirModal<?php echo $turmaNumero; ?>" tabindex="-1" aria-labelledby="excluirModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title" id="excluirModalLabel">Excluir Turma</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Tem certeza que deseja excluir esta turma?</p>
+                        <!-- Ano -->
+                        <div class="mb-3">
+                            <label for="ano_<?php echo $row['numero']; ?>" class="form-label">Ano</label>
+                            <input type="number" class="form-control" id="ano_<?php echo $row['numero']; ?>" name="ano" value="<?php echo htmlspecialchars($row['ano']); ?>" required>
+                        </div>
+
+                        <!-- Ano de Ingresso -->
+                        <div class="mb-3">
+                            <label for="ano_ingresso_<?php echo $row['numero']; ?>" class="form-label">Ano de Ingresso</label>
+                            <input type="number" class="form-control" id="ano_ingresso_<?php echo $row['numero']; ?>" name="ano_ingresso" value="<?php echo htmlspecialchars($row['ano_ingresso']); ?>" required>
+                        </div>
+
+                        <!-- Ano de Oferta -->
+                        <div class="mb-3">
+                            <label for="ano_oferta_<?php echo $row['numero']; ?>" class="form-label">Ano de Oferta</label>
+                            <input type="number" class="form-control" id="ano_oferta_<?php echo $row['numero']; ?>" name="ano_oferta" value="<?php echo htmlspecialchars($row['ano_oferta']); ?>" required>
+                        </div>
+
+                        <!-- Curso -->
+                        <div class="mb-3">
+                            <label for="curso_id_<?php echo $row['numero']; ?>" class="form-label">Curso</label>
+                            <select class="form-select" id="curso_id_<?php echo $row['numero']; ?>" name="curso_id" required>
+                                <?php
+                                $curso_query = "SELECT * FROM cursos";
+                                $curso_result = $conn->query($curso_query);
+                                while ($curso = $curso_result->fetch_assoc()):
+                                    $selected = ($curso['id'] == $row['curso_id']) ? 'selected' : '';
+                                    echo "<option value='" . $curso['id'] . "' $selected>" . htmlspecialchars($curso['nome']) . "</option>";
+                                endwhile;
+                                ?>
+                            </select>
+                        </div>
+
+                        <!-- Professor Regente -->
+                        <!-- Professor Regente -->
+<div class="mb-3">
+    <label for="professor_regente_<?php echo $row['numero']; ?>" class="form-label">Professor Regente</label>
+    <select class="form-select" id="professor_regente_<?php echo $row['numero']; ?>" name="professor_regente" required>
+        <?php
+        // Consultar todos os professores (docentes)
+        $docentes_query = "SELECT id, nome FROM docentes ORDER BY nome";
+        $docentes_result = $conn->query($docentes_query);
+
+        // Exibir todos os professores no select
+        while ($docente = $docentes_result->fetch_assoc()):
+            // Verificar se o docente é o professor regente da turma
+            $selected = ($docente['id'] == $row['professor_regente']) ? 'selected' : '';
+            echo "<option value='" . $docente['id'] . "' $selected>" . htmlspecialchars($docente['nome']) . "</option>";
+        endwhile;
+        ?>
+    </select>
+</div>
+
+
+                        <!-- Presidente -->
+                        <!-- Presidente -->
+<div class="mb-3">
+    <label for="presidente_<?php echo $row['numero']; ?>" class="form-label">Presidente</label>
+    <select class="form-select" id="presidente_<?php echo $row['numero']; ?>" name="presidente" required>
+        <?php
+        // Consulta para obter os discentes dessa turma específica
+        $discentes_turma_query = "
+        SELECT discentes.numero_matricula, discentes.nome 
+        FROM discentes_turmas
+        INNER JOIN discentes ON discentes_turmas.numero_matricula = discentes.numero_matricula
+        WHERE discentes_turmas.turma_numero = " . $row['numero'];
+        
+        $discentes_turma_result = $conn->query($discentes_turma_query);
+        
+        // Exibe os discentes associados a essa turma
+        while ($discente = $discentes_turma_result->fetch_assoc()):
+            $selected = ($discente['numero_matricula'] == $row['presidente_id']) ? 'selected' : '';
+            echo "<option value='" . $discente['numero_matricula'] . "' $selected>" . htmlspecialchars($discente['nome']) . "</option>";
+        endwhile;
+        ?>
+    </select>
+</div>
+
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <a href="excluir_turma.php?id=<?php echo $turmaNumero; ?>" class="btn btn-danger">Excluir</a>
+                        <button type="submit" class="btn btn-primary">Salvar alterações</button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
+    </div>
     <?php endwhile; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
