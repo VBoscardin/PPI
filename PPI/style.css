@@ -213,3 +213,34 @@ body {
 .table thead {
     font-family: 'Forum'; /* Aplicar a fonte "Forum" ao cabeçalho da tabela */
 }
+
+table {
+    height: auto;
+    width: 100%;
+    margin: 20px 0;
+    border-radius: 4px;
+    overflow: hidden;
+    font-family: 'Forum'; 
+}
+table th, table td {
+    padding: 10px;
+    text-align: left;
+    
+}
+table th {
+    background-color: #343a40;
+    color: white;
+}
+table td {
+    background-color: #f1f1f1;
+}
+table tr:nth-child(even) td {
+    background-color: #e9ecef;
+}
+table tr:hover {
+    background-color: #d1d8e0;
+}
+
+h4{
+    font-family: "Forum";
+}

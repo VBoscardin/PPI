@@ -166,7 +166,7 @@ CREATE TABLE `discentes_turmas` (
 ALTER TABLE docentes_disciplinas ADD COLUMN turma_numero VARCHAR(50), ADD COLUMN turma_ano INT;
 
 ALTER TABLE turmas
-ADD COLUMN presidente_id INT,
+ADD COLUMN presidente_id INT NUll,
 ADD FOREIGN KEY (presidente_id) REFERENCES discentes(numero_matricula);
 
 CREATE TABLE `notas` (
@@ -209,3 +209,21 @@ CREATE TABLE matriculas (
 );
 
 
+ALTER TABLE discentes_turmas
+DROP FOREIGN KEY discentes_turmas_ibfk_2;
+
+ALTER TABLE discentes_turmas
+ADD CONSTRAINT discentes_turmas_ibfk_2
+FOREIGN KEY (turma_numero) REFERENCES turmas(numero)
+ON DELETE CASCADE
+ON UPDATE CASCADE;
+
+ALTER TABLE notas 
+DROP FOREIGN KEY notas_ibfk_3;
+
+ALTER TABLE notas 
+ADD CONSTRAINT notas_ibfk_3 
+FOREIGN KEY (turma_numero) 
+REFERENCES turmas(numero) 
+ON DELETE CASCADE 
+ON UPDATE CASCADE;

@@ -44,6 +44,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['disciplina_id'])) {
         exit();
     }
 
+    // Obter turma correspondente à disciplina
+    $turmaQuery = $conn->prepare("SELECT turma_numero FROM turmas_disciplinas WHERE disciplina_id = ? LIMIT 1");
+    $turmaQuery->bind_param("i", $selected_discipline_id);
+    $turmaQuery->execute();
+    $turmaQuery->bind_result($turma_numero);
+    $turmaQuery->fetch();
+    $turmaQuery->close();
+
+    if (!$turma_numero) {
+        echo "Erro: Turma não encontrada para a disciplina selecionada.";
+        exit();
+    }
+
     // Atualizar notas dos alunos
     foreach ($_POST['notas'] as $matricula => $nota_data) {
         $matricula = intval($matricula);
@@ -78,12 +91,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['disciplina_id'])) {
         } else {
             // Inserir nova nota
             $stmt = $conn->prepare("
-                INSERT INTO notas (discente_id, disciplina_id, parcial_1, nota_semestre_1, parcial_2, nota_semestre_2, 
+                INSERT INTO notas (discente_id, disciplina_id, turma_numero, parcial_1, nota_semestre_1, parcial_2, nota_semestre_2, 
                                    nota_final, nota_exame, faltas, observacoes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
-            $stmt->bind_param("iiddddddis", 
-                $matricula, $selected_discipline_id, $parcial_1, $nota_semestre_1, 
+            $stmt->bind_param("iiiddddddis", 
+                $matricula, $selected_discipline_id, $turma_numero, $parcial_1, $nota_semestre_1, 
                 $parcial_2, $nota_semestre_2, $nota_final, $nota_exame, $faltas, $observacoes);
         }
 

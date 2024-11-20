@@ -18,28 +18,43 @@ $stmt->fetch();
 $stmt->close();
 
 // Mensagens
-$mensagem = '';
+$_SESSION['mensagem'] = 'Disciplina excluída com sucesso!';
+
 $erro = '';
 
+// Excluir disciplina
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     $deleteId = $_POST['delete_id'];
 
-    // Primeiro, exclua as dependências na tabela turmas_disciplinas
-    $stmt = $conn->prepare("DELETE FROM turmas_disciplinas WHERE disciplina_id = ?");
+    // Verificar se a disciplina possui notas associadas
+    $stmt = $conn->prepare("SELECT COUNT(*) AS total FROM notas WHERE disciplina_id = ?");
     $stmt->bind_param("i", $deleteId);
     $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
 
-    // Depois, exclua a disciplina
-    $stmt = $conn->prepare("DELETE FROM disciplinas WHERE id = ?");
-    $stmt->bind_param("i", $deleteId);
-    $stmt->execute();
+    if ($row['total'] > 0) {
+        $_SESSION['mensagem'] = 'Não é possível excluir esta disciplina. Existem notas associadas.';
+        header("Location: listar_disciplinas.php");
+        exit;
+    } else {
+        // Excluir dependências e a disciplina
+        $stmt = $conn->prepare("DELETE FROM turmas_disciplinas WHERE disciplina_id = ?");
+        $stmt->bind_param("i", $deleteId);
+        $stmt->execute();
 
-    header("Location: listar_disciplinas.php");
-    exit;
+        $stmt = $conn->prepare("DELETE FROM disciplinas WHERE id = ?");
+        $stmt->bind_param("i", $deleteId);
+        $stmt->execute();
+
+        $_SESSION['mensagem'] = 'Disciplina excluída com sucesso!';
+        header("Location: listar_disciplinas.php");
+        exit;
+    }
 }
 
 
-// Atualizar disciplina, turma e docentes
+// Atualizar disciplina
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_id'])) {
     $editarId = $_POST['editar_id'];
     $novoNome = $_POST['novo_nome'];
@@ -56,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_id'])) {
     $row = $result->fetch_assoc();
 
     if ($row['total'] > 0) {
-        $erro = 'Já existe uma disciplina com esse nome na mesma turma. Escolha um nome diferente ou outra turma.';
+        $erro = "Já existe uma disciplina com esse nome na mesma turma. Escolha um nome diferente ou outra turma.";
     } else {
         // Atualizar nome da disciplina
         $stmt = $conn->prepare("UPDATE disciplinas SET nome = ? WHERE id = ?");
@@ -69,18 +84,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_id'])) {
         $stmt->execute();
 
         // Atualizar os docentes associados
-        $conn->query("DELETE FROM docentes_disciplinas WHERE disciplina_id = $editarId"); // Remove docentes antigos
+        $conn->query("DELETE FROM docentes_disciplinas WHERE disciplina_id = $editarId");
         foreach ($docentesSelecionados as $docenteId) {
             $stmt = $conn->prepare("INSERT INTO docentes_disciplinas (disciplina_id, docente_id, turma_numero) VALUES (?, ?, ?)");
             $stmt->bind_param("iii", $editarId, $docenteId, $novaTurma);
             $stmt->execute();
         }
-        
-         // Definir mensagem de sucesso
-         $_SESSION['mensagem'] = 'Disciplina atualizada com sucesso!';
 
-         header("Location: listar_disciplinas.php");
-         exit;
+        $_SESSION['mensagem'] = "Disciplina atualizada com sucesso!";
+        header("Location: listar_disciplinas.php");
+        exit;
     }
 }
 
@@ -111,6 +124,7 @@ $disciplinas = $conn->query($query)->fetch_all(MYSQLI_ASSOC);
 $turmas = $conn->query("SELECT numero, ano FROM turmas")->fetch_all(MYSQLI_ASSOC);
 $docentes = $conn->query("SELECT id, nome FROM docentes")->fetch_all(MYSQLI_ASSOC);
 ?>
+
 
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -222,130 +236,170 @@ $docentes = $conn->query("SELECT id, nome FROM docentes")->fetch_all(MYSQLI_ASSO
                     </div>
                 </div>
                 <div class="container mt-4">
-                   <!-- Exibir mensagens de sucesso e erro -->
-                    <?php if (isset($_SESSION['mensagem'])): ?>
-                        <div class="alert alert-success" role="alert">
-                            <?php
-                                echo htmlspecialchars($_SESSION['mensagem']);
-                                unset($_SESSION['mensagem']); // Limpar a mensagem após exibição
-                            ?>
-                        </div>
-                    <?php endif; ?>
+                   <!-- Mensagens de sucesso e erro -->
+<?php if (isset($_SESSION['mensagem'])): ?>
+    <div id="mensagem-sucesso" class="alert alert-success" role="alert">
+        <?php
+            echo htmlspecialchars($_SESSION['mensagem']);
+            unset($_SESSION['mensagem']); // Limpa a mensagem após exibição
+        ?>
+    </div>
+<?php endif; ?>
 
+<?php if (!empty($erro)): ?>
+    <div id="mensagem-erro" class="alert alert-danger" role="alert">
+        <?php echo htmlspecialchars($erro); ?>
+    </div>
+<?php endif; ?>
+
+
+<!-- Campo de Pesquisa -->
+<div class="mb-3">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar...">
+                    </div>
 
                     <div class="card shadow">
-                        <div class="card-body">
-                            <?php if (!empty($disciplinas)): ?>
-                                <table class="table table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Nome da Disciplina</th>
-                                            <th>Turma</th>
-                                            <th>Docentes</th>
-                                            <th>Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($disciplinas as $disciplina): ?>
-                                            <tr>
-                                                <td><?php echo htmlspecialchars($disciplina['id']); ?></td>
-                                                <td><?php echo htmlspecialchars($disciplina['disciplina_nome']); ?></td>
-                                                <td><?php echo htmlspecialchars($disciplina['turma_numero']); ?> - <?php echo htmlspecialchars($disciplina['turma_ano']); ?></td>
-                                                <td><?php echo htmlspecialchars($disciplina['docentes_nomes']); ?></td>
-                                                <td>
-                                                    <!-- Botões de ação -->
-                                                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $disciplina['id']; ?>">
-                                                        <i class="fas fa-edit"></i> Editar
-                                                    </button>
-                                                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#excluirModal<?php echo $disciplina['id']; ?>">
-                                                        <i class="fas fa-trash-alt"></i> Excluir
-                                                    </button>
-                                                </td>
-                                            </tr>
+                        
+    <div class="card-body">
+        <?php if (!empty($disciplinas)): ?>
+            <div class="table-responsive">
+                
+                <table class="table table-bordered table-hover table-sm align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome da Disciplina</th>
+                            <th>Turma</th>
+                            <th>Docentes</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($disciplinas as $disciplina): ?>
+                            <tr>
+                                <td class="text-center"><?php echo htmlspecialchars($disciplina['id']); ?></td>
+                                <td><?php echo htmlspecialchars($disciplina['disciplina_nome']); ?></td>
+                                <td><?php echo htmlspecialchars($disciplina['turma_numero']); ?> - <?php echo htmlspecialchars($disciplina['turma_ano']); ?></td>
+                                <td>
+                                    <?php echo htmlspecialchars($disciplina['docentes_nomes']); ?>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $disciplina['id']; ?>">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#excluirModal<?php echo $disciplina['id']; ?>">
+                                        <i class="fas fa-trash-alt"></i> Excluir
+                                    </button>
+                                </td>
+                            </tr>
 
-                                            <!-- Modal Editar -->
-                                            <div class="modal fade" id="editarModal<?php echo $disciplina['id']; ?>" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
-                                                <div class="modal-dialog modal-lg">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header bg-warning text-white">
-                                                            <h5 class="modal-title" id="editarModalLabel"><i class="fas fa-edit"></i> Editar Disciplina</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                        </div>
-                                                        <form action="" method="POST">
-                                                            <div class="modal-body">
-                                                                <input type="hidden" name="editar_id" value="<?php echo $disciplina['id']; ?>">
-                                                                <div class="mb-3">
-                                                                    <label for="novo_nome" class="form-label">Nome da Disciplina</label>
-                                                                    <input type="text" name="novo_nome" class="form-control" value="<?php echo htmlspecialchars($disciplina['disciplina_nome']); ?>" required>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <label for="nova_turma" class="form-label">Turma</label>
-                                                                    <select name="nova_turma" class="form-select" required>
-                                                                        <option value="">Selecione uma turma</option>
-                                                                        <?php foreach ($turmas as $turma): ?>
-                                                                            <option value="<?php echo htmlspecialchars($turma['numero']); ?>" <?php echo ($turma['numero'] === $disciplina['turma_numero']) ? 'selected' : ''; ?>>
-                                                                                <?php echo htmlspecialchars($turma['numero']); ?> - <?php echo htmlspecialchars($turma['ano']); ?>
-                                                                            </option>
-                                                                        <?php endforeach; ?>
-                                                                    </select>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <label for="docentes" class="form-label">Docentes</label>
-                                                                    <select name="docentes[]" class="form-select" multiple required>
-                                                                        <?php foreach ($docentes as $docente): ?>
-                                                                            <option value="<?php echo htmlspecialchars($docente['id']); ?>"
-                                                                                <?php echo (strpos($disciplina['docentes_nomes'], htmlspecialchars($docente['nome'])) !== false) ? 'selected' : ''; ?>>
-                                                                                <?php echo htmlspecialchars($docente['nome']); ?>
-                                                                            </option>
-                                                                        <?php endforeach; ?>
-                                                                    </select>
-                                                                    <small>Segure Ctrl para selecionar múltiplos docentes</small>
-                                                                </div>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                                <button type="submit" class="btn btn-success">Salvar Alterações</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
+                            <!-- Modal Editar -->
+                            <div class="modal fade" id="editarModal<?php echo $disciplina['id']; ?>" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-warning text-white">
+                                            <h5 class="modal-title" id="editarModalLabel"><i class="fas fa-edit"></i> Editar Disciplina</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form action="" method="POST">
+                                            <div class="modal-body">
+                                                <input type="hidden" name="editar_id" value="<?php echo $disciplina['id']; ?>">
+                                                <div class="mb-3">
+                                                    <label for="novo_nome" class="form-label">Nome da Disciplina</label>
+                                                    <input type="text" name="novo_nome" class="form-control" value="<?php echo htmlspecialchars($disciplina['disciplina_nome']); ?>" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="nova_turma" class="form-label">Turma</label>
+                                                    <select name="nova_turma" class="form-select" required>
+                                                        <option value="">Selecione uma turma</option>
+                                                        <?php foreach ($turmas as $turma): ?>
+                                                            <option value="<?php echo htmlspecialchars($turma['numero']); ?>" <?php echo ($turma['numero'] === $disciplina['turma_numero']) ? 'selected' : ''; ?>>
+                                                                <?php echo htmlspecialchars($turma['numero']); ?> - <?php echo htmlspecialchars($turma['ano']); ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="docentes" class="form-label">Docentes</label>
+                                                    <select name="docentes[]" class="form-select" multiple required>
+                                                        <?php foreach ($docentes as $docente): ?>
+                                                            <option value="<?php echo htmlspecialchars($docente['id']); ?>"
+                                                                <?php echo (strpos($disciplina['docentes_nomes'], htmlspecialchars($docente['nome'])) !== false) ? 'selected' : ''; ?>>
+                                                                <?php echo htmlspecialchars($docente['nome']); ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                    <small>Segure Ctrl para selecionar múltiplos docentes</small>
                                                 </div>
                                             </div>
-
-                                            <!-- Modal Excluir -->
-                                            <div class="modal fade" id="excluirModal<?php echo $disciplina['id']; ?>" tabindex="-1" aria-labelledby="excluirModalLabel" aria-hidden="true">
-                                                <div class="modal-dialog modal-md">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header bg-danger text-white">
-                                                            <h5 class="modal-title" id="excluirModalLabel"><i class="fas fa-trash-alt"></i> Excluir Disciplina</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                        </div>
-                                                        <form action="" method="POST">
-                                                            <div class="modal-body">
-                                                                <input type="hidden" name="delete_id" value="<?php echo $disciplina['id']; ?>">
-                                                                <p>Tem certeza que deseja excluir a disciplina "<strong><?php echo htmlspecialchars($disciplina['disciplina_nome']); ?></strong>"?</p>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                                <button type="submit" class="btn btn-danger">Excluir</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                <button type="submit" class="btn btn-success">Salvar Alterações</button>
                                             </div>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            <?php else: ?>
-                                <p>Nenhuma disciplina encontrada.</p>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Modal Excluir -->
+                            <div class="modal fade" id="excluirModal<?php echo $disciplina['id']; ?>" tabindex="-1" aria-labelledby="excluirModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-md">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-danger text-white">
+                                            <h5 class="modal-title" id="excluirModalLabel"><i class="fas fa-trash-alt"></i> Excluir Disciplina</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form action="" method="POST">
+                                            <div class="modal-body">
+                                                <input type="hidden" name="delete_id" value="<?php echo $disciplina['id']; ?>">
+                                                <p>Tem certeza que deseja excluir a disciplina "<strong><?php echo htmlspecialchars($disciplina['disciplina_nome']); ?></strong>"?</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                <button type="submit" class="btn btn-danger">Excluir</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php else: ?>
+            <p class="text-center text-muted">Nenhuma disciplina encontrada.</p>
+        <?php endif; ?>
+    </div>
+</div>
+
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+     <!-- Scripts -->
+     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+     <script>
+    // Função de pesquisa
+    document.getElementById('searchInput').addEventListener('keyup', function () {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#disciplinasTable tbody tr');
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const match = Array.from(cells).some(cell => cell.textContent.toLowerCase().includes(filter));
+                row.style.display = match ? '' : 'none';
+            });
+        });
+
+
+    // Ocultar mensagens automaticamente após 5 segundos
+    setTimeout(() => {
+        const sucesso = document.getElementById('mensagem-sucesso');
+        const erro = document.getElementById('mensagem-erro');
+        if (sucesso) sucesso.style.display = 'none';
+        if (erro) erro.style.display = 'none';
+    }, 5000); // 5 segundos
+    </script>
 </body>
 </html>

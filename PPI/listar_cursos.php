@@ -222,99 +222,125 @@ $conn->close();
                     <?php endif; ?>
 
                     <div class="card shadow">
-                        <div class="card-body">
-                            <?php if ($result->num_rows > 0): ?>
-                                <table class="table table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Nome do Curso</th>
-                                            <th>Coordenador</th>
-                                            <th>Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php while ($row = $result->fetch_assoc()): ?>
-                                            <tr>
-                                                <td><?php echo htmlspecialchars($row['id']); ?></td>
-                                                <td><?php echo htmlspecialchars($row['curso_nome']); ?></td>
-                                                <td><?php echo htmlspecialchars($row['coordenador_nome']); ?></td>
-                                                <td>
-                                                    <!-- Botões de ação -->
-                                                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $row['id']; ?>">
-                                                        <i class="fas fa-edit"></i> Editar
-                                                    </button>
-                                                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#excluirModal<?php echo $row['id']; ?>">
-                                                        <i class="fas fa-trash-alt"></i> Excluir
-                                                    </button>
-                                                </td>
-                                            </tr>
-
-                                            <!-- Modal Editar -->
-                                            <div class="modal fade" id="editarModal<?php echo $row['id']; ?>" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
-                                                <div class="modal-dialog modal-lg">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header bg-warning text-white">
-                                                            <h5 class="modal-title" id="editarModalLabel"><i class="fas fa-edit"></i> Editar Curso</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                        </div>
-                                                        <form action="" method="POST">
-                                                            <div class="modal-body">
-                                                                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                                                                <div class="mb-3">
-                                                                    <label for="nome" class="form-label">Nome do Curso</label>
-                                                                    <input type="text" name="nome" class="form-control" value="<?php echo htmlspecialchars($row['curso_nome']); ?>" required>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <label for="coordenador" class="form-label">Coordenador</label>
-                                                                    <select name="coordenador" class="form-select" required>
-                                                                        <option value="">Selecione um coordenador</option>
-                                                                        <?php foreach ($docentes as $docente): ?>
-                                                                            <option value="<?php echo htmlspecialchars($docente['email']); ?>" <?php echo ($docente['email'] === $row['coordenador_email']) ? 'selected' : ''; ?>>
-                                                                                <?php echo htmlspecialchars($docente['username']); ?>
-                                                                            </option>
-                                                                        <?php endforeach; ?>
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                                <button type="submit" name="update_curso" class="btn btn-success">Salvar Alterações</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Modal Excluir -->
-                                            <div class="modal fade" id="excluirModal<?php echo $row['id']; ?>" tabindex="-1" aria-labelledby="excluirModalLabel" aria-hidden="true">
-                                                <div class="modal-dialog modal-md">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header bg-danger text-white">
-                                                            <h5 class="modal-title" id="excluirModalLabel"><i class="fas fa-trash-alt"></i> Excluir Curso</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                        </div>
-                                                        <form action="" method="POST">
-                                                            <div class="modal-body">
-                                                                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                                                                <p>Tem certeza que deseja excluir o curso "<strong><?php echo htmlspecialchars($row['curso_nome']); ?></strong>"?</p>
-                                                            </div>
-                                                                <div class="modal-footer">
-                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                                    <button type="submit" name="delete_curso" class="btn btn-danger">Excluir</button>
-                                                                </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        <?php endwhile; ?>
-                                    </tbody>
-                                </table>
-                            <?php else: ?>
-                                <p>Nenhum curso encontrado.</p>
-                            <?php endif; ?>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        
                         </div>
+                        
+                        <?php if ($result->num_rows > 0): ?>
+                            <table class="table table-bordered table-hover table-sm" style="border-radius: 4px; overflow: hidden;">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nome do Curso</th>
+                                        <th>Coordenador</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="courseTableBody">
+                                    <?php while ($row = $result->fetch_assoc()): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($row['id']); ?></td>
+                                            <td><?php echo htmlspecialchars($row['curso_nome']); ?></td>
+                                            <td><?php echo htmlspecialchars($row['coordenador_nome']); ?></td>
+                                            <td>
+                                                <!-- Botões de ação com ícones estilizados -->
+                                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $row['id']; ?>">
+                                                    <i class="fas fa-edit"></i> Editar
+                                                </button>
+                                                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#excluirModal<?php echo $row['id']; ?>">
+                                                    <i class="fas fa-trash-alt"></i> Excluir
+                                                </button>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Modal Editar -->
+                                        <div class="modal fade" id="editarModal<?php echo $row['id']; ?>" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-warning text-white">
+                                                        <h5 class="modal-title" id="editarModalLabel"><i class="fas fa-edit"></i> Editar Curso</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <form action="" method="POST">
+                                                        <div class="modal-body">
+                                                            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                                            <div class="mb-3">
+                                                                <label for="nome" class="form-label">Nome do Curso</label>
+                                                                <input type="text" name="nome" class="form-control" value="<?php echo htmlspecialchars($row['curso_nome']); ?>" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label for="coordenador" class="form-label">Coordenador</label>
+                                                                <select name="coordenador" class="form-select" required>
+                                                                    <option value="">Selecione um coordenador</option>
+                                                                    <?php foreach ($docentes as $docente): ?>
+                                                                        <option value="<?php echo htmlspecialchars($docente['email']); ?>" <?php echo ($docente['email'] === $row['coordenador_email']) ? 'selected' : ''; ?>>
+                                                                            <?php echo htmlspecialchars($docente['username']); ?>
+                                                                        </option>
+                                                                    <?php endforeach; ?>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                            <button type="submit" name="update_curso" class="btn btn-success">Salvar Alterações</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Modal Excluir -->
+                                        <div class="modal fade" id="excluirModal<?php echo $row['id']; ?>" tabindex="-1" aria-labelledby="excluirModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog modal-md">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-danger text-white">
+                                                        <h5 class="modal-title" id="excluirModalLabel"><i class="fas fa-trash-alt"></i> Excluir Curso</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <form action="" method="POST">
+                                                        <div class="modal-body">
+                                                            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                                            <p>Tem certeza que deseja excluir o curso "<strong><?php echo htmlspecialchars($row['curso_nome']); ?></strong>"?</p>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                            <button type="submit" name="delete_curso" class="btn btn-danger">Excluir</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endwhile; ?>
+                                </tbody>
+                            </table>
+                        
+                        <?php else: ?>
+                            <p>Nenhum curso encontrado.</p>
+                        <?php endif; ?>
                     </div>
+                </div>
+
+
+<!-- Script para o filtro de busca -->
+<script>
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        var input = document.getElementById('searchInput').value.toLowerCase();
+        var rows = document.getElementById('courseTableBody').getElementsByTagName('tr');
+        
+        Array.from(rows).forEach(function(row) {
+            var cells = row.getElementsByTagName('td');
+            var courseName = cells[1].textContent.toLowerCase();
+            
+            if (courseName.indexOf(input) > -1) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+</script>
+
                 </div>
             </div>
         </div>

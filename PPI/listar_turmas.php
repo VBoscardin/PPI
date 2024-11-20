@@ -2,76 +2,61 @@
 // Inclui o arquivo de configuração para conexão com o banco de dados
 include 'config.php';
 
-
-
-
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Verifica se o campo 'numero_atual' existe no POST
     if (isset($_POST['numero_atual'])) {
-        // Captura os dados do formulário
-        $numero_atual = $_POST['numero_atual']; // Número da turma a ser atualizado
-        $novo_numero = $_POST['numero']; // Novo número da turma
+        $numero_atual = $_POST['numero_atual'];
+        $novo_numero = $_POST['numero'];
         $ano = $_POST['ano'];
         $ano_ingresso = $_POST['ano_ingresso'];
         $ano_oferta = $_POST['ano_oferta'];
         $curso_id = $_POST['curso_id'];
         $professor_regente = $_POST['professor_regente'];
-        $presidente = $_POST['presidente'];
+        $presidente = !empty($_POST['presidente']) ? $_POST['presidente'] : null;
 
-        // Verificar se o novo número da turma já está vinculado a outra turma
-        $verificar_numero_query = "SELECT COUNT(*) FROM turmas WHERE numero = ?";
-        $stmt_verificar_numero = $conn->prepare($verificar_numero_query);
-        $stmt_verificar_numero->bind_param('i', $novo_numero);
-        $stmt_verificar_numero->execute();
-        $stmt_verificar_numero->bind_result($count);
-        $stmt_verificar_numero->fetch();
-        $stmt_verificar_numero->close();
+        // Transação para garantir consistência entre tabelas
+        $conn->begin_transaction();
+        try {
+            // Atualiza a tabela `notas`
+            $update_notas = "UPDATE notas SET turma_numero = ? WHERE turma_numero = ?";
+            $stmt1 = $conn->prepare($update_notas);
+            $stmt1->bind_param('ii', $novo_numero, $numero_atual);
+            $stmt1->execute();
 
-        if ($count == 0) {
-            echo "<script>alert('Erro: Este número de turma não existe na tabela de turmas!');</script>";
-        } else {
-            // Verificar se o novo número de turma já está vinculado a discentes
-            $verificar_discente_query = "SELECT COUNT(*) FROM discentes_turmas WHERE turma_numero = ?";
-            $stmt_verificar_discente = $conn->prepare($verificar_discente_query);
-            $stmt_verificar_discente->bind_param('i', $novo_numero);
-            $stmt_verificar_discente->execute();
-            $stmt_verificar_discente->bind_result($count_discente);
-            $stmt_verificar_discente->fetch();
-            $stmt_verificar_discente->close();
+            // Atualiza a tabela `discentes_turmas`
+            $update_discentes = "UPDATE discentes_turmas SET turma_numero = ? WHERE turma_numero = ?";
+            $stmt2 = $conn->prepare($update_discentes);
+            $stmt2->bind_param('ii', $novo_numero, $numero_atual);
+            $stmt2->execute();
 
-            // Se já houver discentes na turma, podemos atualizar a tabela discentes_turmas
-            if ($count_discente > 0) {
-                $update_discente_turma_query = "
-                    UPDATE discentes_turmas 
-                    SET turma_numero = ? 
-                    WHERE turma_numero = ?
-                ";
-                $stmt_discente_turma = $conn->prepare($update_discente_turma_query);
-                $stmt_discente_turma->bind_param('ii', $novo_numero, $numero_atual);
-                $stmt_discente_turma->execute();
-                $stmt_discente_turma->close();
-            }
-
-            // Atualiza a tabela 'turmas'
-            $update_numero_query = "
+            // Atualiza a tabela `turmas`
+            $update_turmas = "
                 UPDATE turmas 
                 SET numero = ?, ano = ?, ano_ingresso = ?, ano_oferta = ?, curso_id = ?, professor_regente = ?, presidente_id = ? 
-                WHERE numero = ?
-            ";
-            $stmt_numero = $conn->prepare($update_numero_query);
-            $stmt_numero->bind_param('iiiiiiii', $novo_numero, $ano, $ano_ingresso, $ano_oferta, $curso_id, $professor_regente, $presidente, $numero_atual);
-            if ($stmt_numero->execute()) {
-                echo "<script>alert('Turma atualizada com sucesso!');</script>";
-            } else {
-                echo "<script>alert('Erro ao atualizar a turma: " . $stmt_numero->error . "');</script>";
-            }
-            $stmt_numero->close();
+                WHERE numero = ?";
+            $stmt3 = $conn->prepare($update_turmas);
+            $stmt3->bind_param(
+                'iiiiiiii',
+                $novo_numero,
+                $ano,
+                $ano_ingresso,
+                $ano_oferta,
+                $curso_id,
+                $professor_regente,
+                $presidente,
+                $numero_atual
+            );
+            $stmt3->execute();
+
+            $conn->commit();
+            echo "<script>alert('Turma atualizada com sucesso!');</script>";
+        } catch (Exception $e) {
+            $conn->rollback();
+            die("Erro ao atualizar a turma: " . $e->getMessage());
         }
     } else {
         echo "<script>alert('Campo numero_atual não encontrado!');</script>";
     }
 }
-
 
 
 
@@ -158,19 +143,15 @@ $disciplinas_result = $conn->query($disciplinas_query);
                     <td><?php echo htmlspecialchars($row['ano_oferta']); ?></td>
                     <td><?php echo htmlspecialchars($row['curso_nome']); ?></td>
                     <td><?php 
-                        // Nome do professor regente
                         $professor_query = "SELECT nome FROM docentes WHERE id = " . $row['professor_regente_id'];
                         $professor_result = $conn->query($professor_query);
                         $professor = $professor_result->fetch_assoc();
                         echo htmlspecialchars($professor['nome']);
                     ?></td>
                     <td><?php echo htmlspecialchars($row['presidente_nome'] ?: 'N/A'); ?></td>
-                    
-                    <!-- Exibindo as disciplinas da turma -->
                     <td>
                         <?php
-                        // Reseta o ponteiro para as disciplinas e exibe apenas as associadas à turma
-                        $disciplinas_result->data_seek(0); // Reseta o ponteiro da consulta de disciplinas
+                        $disciplinas_result->data_seek(0);
                         while ($disciplina = $disciplinas_result->fetch_assoc()) {
                             if ($disciplina['turma_numero'] == $row['numero']) {
                                 echo "<p>" . htmlspecialchars($disciplina['disciplina_nome']) . " - " . htmlspecialchars($disciplina['docente_nome']) . "</p>";
@@ -178,11 +159,8 @@ $disciplinas_result = $conn->query($disciplinas_query);
                         }
                         ?>
                     </td>
-                    
-                    <!-- Exibindo os discentes da turma -->
                     <td>
                         <?php
-                        // Consulta para pegar os discentes dessa turma específica
                         $discentes_turma_query = "
                         SELECT 
                             discentes.nome 
@@ -215,13 +193,11 @@ $disciplinas_result = $conn->query($disciplinas_query);
         <p>Nenhuma turma encontrada.</p>
     <?php endif; ?>
 
-    <!-- Modais para Edição -->
     <?php 
-    $result->data_seek(0); // Reset the result pointer
+    $result->data_seek(0);
     while($row = $result->fetch_assoc()):
         $turmaNumero = $row['numero'];
     ?>
-    <!-- Modal de Edição -->
     <div class="modal fade" id="editarModal<?php echo $row['numero']; ?>" tabindex="-1" aria-labelledby="editarModalLabel<?php echo $row['numero']; ?>" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -231,16 +207,13 @@ $disciplinas_result = $conn->query($disciplinas_query);
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
+                        <input type="hidden" name="numero_atual" value="<?php echo $turmaNumero; ?>">
+                        <!-- Campos do formulário com valores pré-preenchidos -->
+                        <div class="form-group">
+                            <label for="numero">Número</label>
+                            <input type="text" name="numero" id="numero" class="form-control" value="<?php echo htmlspecialchars($row['numero']); ?>" required>
+                        </div>
 
-                        <!-- Campo oculto para passar o número atual -->
-                        <input type="hidden" name="numero_atual" value="<?php echo $row['numero']; ?>">
-
-                        <!-- Número da Turma -->
-                        <input type="hidden" name="numero_atual" value="<?php echo $row['numero']; ?>">
-                                    <div class="mb-3">
-                                        <label for="numero_<?php echo $row['numero']; ?>" class="form-label">Número da Turma</label>
-                                        <input type="number" class="form-control" id="numero_<?php echo $row['numero']; ?>" name="numero" value="<?php echo $row['numero']?>" s step="10" required>
-                                        </div>
 
                         <!-- Ano -->
                         <div class="mb-3">
@@ -300,7 +273,9 @@ $disciplinas_result = $conn->query($disciplinas_query);
                         <!-- Presidente -->
 <div class="mb-3">
     <label for="presidente_<?php echo $row['numero']; ?>" class="form-label">Presidente</label>
-    <select class="form-select" id="presidente_<?php echo $row['numero']; ?>" name="presidente" required>
+    <select class="form-select" id="presidente_<?php echo $row['numero']; ?>" name="presidente" >
+    <option value="" <?php echo is_null($row['presidente_id']) ? 'selected' : ''; ?>>Sem Presidente</option>
+
         <?php
         // Consulta para obter os discentes dessa turma específica
         $discentes_turma_query = "

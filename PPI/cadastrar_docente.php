@@ -140,9 +140,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) 
 }
 
 // Obter lista de disciplinas para checkboxes
-$query = 'SELECT disciplinas.id, disciplinas.nome AS disciplina_nome, cursos.nome AS curso_nome
+$query = 'SELECT disciplinas.id, disciplinas.nome AS disciplina_nome, cursos.nome AS curso_nome,
+          turmas_disciplinas.turma_numero
           FROM disciplinas
-          JOIN cursos ON disciplinas.curso_id = cursos.id';
+          JOIN cursos ON disciplinas.curso_id = cursos.id
+          LEFT JOIN turmas_disciplinas ON turmas_disciplinas.disciplina_id = disciplinas.id';
+$disciplinas_result = $mysqli->query($query);
+$disciplinas = [];
+if ($disciplinas_result) {
+    while ($row = $disciplinas_result->fetch_assoc()) {
+        $disciplinas[] = $row;
+    }
+}
+
+
 $disciplinas_result = $mysqli->query($query);
 $disciplinas = [];
 if ($disciplinas_result) {
@@ -189,9 +200,6 @@ $mysqli->close();
                         <button onclick="location.href='cadastrar_curso.php'">
                             <i class="fas fa-plus"></i> Cadastrar Curso
                         </button>
-                        <button onclick="location.href='listar_discentes.php'">
-                            <i class="fas fa-list"></i> Discentes
-                        </button>
                         <button onclick="location.href='cadastrar_disciplina.php'">
                             <i class="fas fa-plus"></i> Cadastrar Disciplina
                         </button>
@@ -226,6 +234,9 @@ $mysqli->close();
                         </button>
                         <button onclick="location.href='listar_cursos.php'">
                             <i class="fas fa-list"></i> Cursos
+                        </button>
+                        <button onclick="location.href='listar_discentes.php'">
+                            <i class="fas fa-list"></i> Discentes
                         </button>
                         <button onclick="location.href='listar_disciplinas.php'">
                             <i class="fas fa-list"></i> Disciplinas
@@ -304,20 +315,24 @@ $mysqli->close();
                                 </div>
                                 <hr>                       
                                 <fieldset class="mb-3">
-                                    <legend>Disciplinas Associadas</legend>
-                                    <div class="row">
-                                        <?php foreach ($disciplinas as $disciplina): ?>
-                                            <div class="col-md-6">
-                                                <div class="form-check">
-                                                    <input type="checkbox" id="disciplina-<?php echo $disciplina['id']; ?>" name="disciplinas[]" value="<?php echo $disciplina['id']; ?>" class="form-check-input">
-                                                    <label for="disciplina-<?php echo $disciplina['id']; ?>" class="form-check-label">
-                                                        <?php echo htmlspecialchars($disciplina['disciplina_nome']); ?> (<?php echo htmlspecialchars($disciplina['curso_nome']); ?>)
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </fieldset>
+    <legend>Disciplinas Associadas</legend>
+    <div class="row">
+        <?php foreach ($disciplinas as $disciplina): ?>
+            <div class="col-md-6">
+                <div class="form-check">
+                    <input type="checkbox" id="disciplina-<?php echo $disciplina['id']; ?>" name="disciplinas[]" value="<?php echo $disciplina['id']; ?>" class="form-check-input">
+                    <label for="disciplina-<?php echo $disciplina['id']; ?>" class="form-check-label">
+                        <?php echo htmlspecialchars($disciplina['disciplina_nome']); ?> 
+                        (<?php echo htmlspecialchars($disciplina['curso_nome']); ?>) - 
+                        Turma: <?php echo htmlspecialchars($disciplina['turma_numero']) ? htmlspecialchars($disciplina['turma_numero']) : 'Sem turma'; ?>
+                    </label>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</fieldset>
+
+
                                 <hr>                   
                                 <button type="submit" name="cadastrar_docente" class="btn btn-light">Cadastrar Docente</button>
 
