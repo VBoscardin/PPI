@@ -270,6 +270,7 @@ $conn->close();
             <div class="card shadow mb-4">
                 <div class="card-body">
                     <h3 class="card-title">Escolha a Turma para Verificar os Discentes</h3>
+                    <hr>
                     <div class="row">
                         <?php if ($result_cursos->num_rows > 0): ?>
                             <?php while ($curso = $result_cursos->fetch_assoc()): ?>
@@ -305,7 +306,7 @@ $conn->close();
             <div class="card shadow mb-4">
             <div class="card-body">
     <h3 class="card-title mb-4">Discentes da Turma <?php echo htmlspecialchars($turma_numero); ?> - Ano <?php echo htmlspecialchars($turma_ano); ?></h3>
-    
+    <hr>
     <?php if ($result_discentes->num_rows > 0): ?>
         <!-- Início da lista de discentes -->
         <div class="row">
@@ -343,11 +344,12 @@ $conn->close();
             <div class="card shadow mb-4">
                 <div class="card-body">
                     <h3 class="card-title">Informações de <?php echo htmlspecialchars($discente_info['discente_nome']); ?></h3>
+                    <hr>
                     <!-- Botão de Voltar para a Turma -->
                     <button class="btn btn-primary mb-4" onclick="voltarParaTurma()">
                         <i class="fas fa-arrow-left"></i> Voltar para a Turma
                     </button>
-
+                    <hr>
                     <table class="table table-bordered table-hover table-sm" style="border-radius: 4px; overflow: hidden;">
                                 <thead class="table-dark">
                         <tbody>

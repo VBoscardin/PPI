@@ -18,9 +18,12 @@ $stmt->fetch();
 $stmt->close();
 
 // Mensagens
-$_SESSION['mensagem'] = 'Disciplina excluída com sucesso!';
+// Mensagens (capturando e limpando)
+$sucesso = isset($_SESSION['mensagem']) ? $_SESSION['mensagem'] : '';
+$erro = isset($_SESSION['erro']) ? $_SESSION['erro'] : '';
+unset($_SESSION['mensagem']);
+unset($_SESSION['erro']);
 
-$erro = '';
 
 // Excluir disciplina
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
@@ -34,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     $row = $result->fetch_assoc();
 
     if ($row['total'] > 0) {
-        $_SESSION['mensagem'] = 'Não é possível excluir esta disciplina. Existem notas associadas.';
+        $_SESSION['erro'] = 'Não é possível excluir esta disciplina. Existem notas associadas.';
         header("Location: listar_disciplinas.php");
         exit;
     } else {
@@ -236,13 +239,10 @@ $docentes = $conn->query("SELECT id, nome FROM docentes")->fetch_all(MYSQLI_ASSO
                     </div>
                 </div>
                 <div class="container mt-4">
-                   <!-- Mensagens de sucesso e erro -->
-<?php if (isset($_SESSION['mensagem'])): ?>
+                  <!-- Mensagens de sucesso e erro -->
+                  <?php if (!empty($sucesso)): ?>
     <div id="mensagem-sucesso" class="alert alert-success" role="alert">
-        <?php
-            echo htmlspecialchars($_SESSION['mensagem']);
-            unset($_SESSION['mensagem']); // Limpa a mensagem após exibição
-        ?>
+        <?php echo htmlspecialchars($sucesso); ?>
     </div>
 <?php endif; ?>
 
@@ -253,18 +253,23 @@ $docentes = $conn->query("SELECT id, nome FROM docentes")->fetch_all(MYSQLI_ASSO
 <?php endif; ?>
 
 
-<!-- Campo de Pesquisa -->
-<div class="mb-3">
-                        <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar...">
-                    </div>
+
+
+
+
+
 
                     <div class="card shadow">
                         
     <div class="card-body">
+        <!-- Campo de Pesquisa -->
+<div class="mb-3">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar...">
+                    </div>
         <?php if (!empty($disciplinas)): ?>
             <div class="table-responsive">
                 
-                <table class="table table-bordered table-hover table-sm align-middle">
+                <table id="disciplinasTable"class="table table-bordered table-hover table-sm align-middle">
                     <thead class="table-dark">
                         <tr>
                             <th>ID</th>
