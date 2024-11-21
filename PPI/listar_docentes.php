@@ -190,7 +190,7 @@ foreach ($disciplinas_options as $disciplina) {
         FROM 
             turmas_disciplinas td
         JOIN 
-            turmas t ON td.turma_numero = t.numero AND td.turma_ano = t.ano
+            turmas t ON td.turma_numero = t.numero
         WHERE 
             td.disciplina_id = ?
     ";
@@ -200,18 +200,11 @@ foreach ($disciplinas_options as $disciplina) {
     $result_turma = $stmt_turma->get_result();
 
     // Exibir a disciplina com a turma e ano
-    
     if ($result_turma->num_rows > 0) {
-        $turmas = [];
         while ($turma_row = $result_turma->fetch_assoc()) {
-            $turmas[] = 'Turma ' . htmlspecialchars($turma_row['turma_numero']) . ' - ' . htmlspecialchars($turma_row['turma_ano']);
+            echo "<input type='checkbox' name='disciplinas[]' value='" . $disciplina['id'] . "' $checked> " . $disciplina['nome'] . " (Turma " . $turma_row['turma_numero'] . " - " . $turma_row['turma_ano'] . ")<br>";
         }
-        $turma_info = implode(', ', $turmas);
     }
-
-    // Exibe o checkbox com o nome da disciplina, número da turma e ano
-    echo '<input type="checkbox" name="disciplinas[]" value="' . $disciplina['id'] . '" ' . $checked . '> ';
-    echo htmlspecialchars($disciplina['nome']) . ' (' . $turma_info . ')<br>';
 }
 ?>
 

@@ -42,32 +42,27 @@ $conn->close();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Forum:wght@700&display=swap" rel="stylesheet">
-    <link href="css_inicio.css" rel="stylesheet" type="text/css">
+    <link href="style.css" rel="stylesheet" type="text/css">
 </head>
-<body>
-    <div class="container-fluid">
+<div class="container-fluid">
         <div class="row">
             <!-- Barra lateral -->
             <div class="col-md-3 sidebar">
                 <div class="separator mb-3"></div>
                 <div class="signe-text">SIGNE</div>
                 <div class="separator mt-3 mb-3"></div>
-                <button onclick="location.href='inicio.php'">
+                <button onclick="location.href='f_pagina_setor.php'">
                     <i class="fas fa-home"></i> Início
                 </button>
-                <button onclick="location.href='turmas.php'">
-                    <i class="fas fa-users"></i> Turmas
-                </button>
-                <button onclick="location.href='disciplinas.php'">
-                    <i class="fas fa-book"></i> Disciplinas
-                </button>
                 <button onclick="location.href='cadastrar_notas.php'">
-                    <i class="fas fa-pencil-alt"></i> Cadastrar Notas
+                <i id="toggle-icon" class="fas fa-plus"></i> Cadastrar Notas
                 </button>
+                
+            
                 <button onclick="location.href='meu_perfil.php'">
                     <i class="fas fa-user"></i> Meu Perfil
                 </button>
-                <button onclick="location.href='logout.php'">
+                <button class="btn btn-danger" onclick="location.href='sair.php'">
                     <i class="fas fa-sign-out-alt"></i> Sair
                 </button>
             </div>
@@ -75,20 +70,22 @@ $conn->close();
             <!-- Conteúdo principal -->
             <div class="col-md-9 main-content">
                 <div class="container">
-                    <div class="header-container d-flex justify-content-between align-items-center">
-                        <h1>Bem-vindo, <?php echo htmlspecialchars($nome); ?>!</h1>
-                        <div class="profile-info d-flex align-items-center">
-                            <div class="profile-details me-2">
-                                <span><?php echo htmlspecialchars($nome); ?></span>
+                    <div class="header-container">
+                        <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
+                        <div class="title ms-3">Página do Docente</div>
+                        <div class="ms-auto d-flex align-items-center">
+                            <div class="profile-info d-flex align-items-center">
+                                <div class="profile-details me-2">
+                                    <span><?php echo htmlspecialchars($nome); ?></span>
+                                </div>
+                                <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
+                                    <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador">
+                                <?php else: ?>
+                                    <img src="imgs/setor-photo.png" alt="Foto do Setor">
+                                <?php endif; ?>
                             </div>
-                            <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
-                                <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Docente" style="width: 50px; height: 50px;">
-                            <?php else: ?>
-                                <img src="imgs/docente-photo.png" alt="Foto do Docente" style="width: 50px; height: 50px;">
-                            <?php endif; ?>
                         </div>
                     </div>
-                    <p>Esta é a página inicial.</p>
                 </div>
             </div>
         </div>
