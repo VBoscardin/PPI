@@ -117,72 +117,85 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
 <head>
     <meta charset="UTF-8">
     <title>Cadastro de Notas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Forum:wght@700&display=swap" rel="stylesheet">
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <style>
+        h3{
+            font-family: "Forum", "serif";
+        }
+        
+    </style>
 </head>
 <body>
-<h1>Cadastrar Notas</h1>
+    <div class="container">
+        <h1>Cadastrar Notas</h1>
 
-<h2>Disciplinas que você leciona:</h2>
-<ul>
-    <?php while ($discipline = $disciplinesResult->fetch_assoc()): ?>
-        <li>
-            <a href="cadastrar_notas.php?disciplina_id=<?= $discipline['id'] ?>">
-                <?= htmlspecialchars($discipline['nome']) ?> (Turma: <?= $discipline['turma_numero'] ?> - Ano: <?= $discipline['turma_ano'] ?>)
-            </a>
-        </li>
-    <?php endwhile; ?>
-</ul>
-
-<?php if ($selected_discipline_id): ?>
-    <h2>Alunos na disciplina</h2>
-    <?php
-    $studentsQuery = $conn->prepare("
-        SELECT dt.numero_matricula, ds.nome, 
-               MAX(n.parcial_1) AS parcial_1, MAX(n.nota_semestre_1) AS nota_semestre_1,
-               MAX(n.parcial_2) AS parcial_2, MAX(n.nota_semestre_2) AS nota_semestre_2,
-               MAX(n.nota_final) AS nota_final, MAX(n.nota_exame) AS nota_exame,
-               MAX(n.faltas) AS faltas, MAX(n.observacoes) AS observacoes
-        FROM discentes_turmas dt
-        JOIN discentes ds ON dt.numero_matricula = ds.numero_matricula
-        LEFT JOIN notas n ON n.discente_id = dt.numero_matricula AND n.disciplina_id = ?
-        WHERE dt.turma_numero = (SELECT turma_numero FROM turmas_disciplinas WHERE disciplina_id = ? LIMIT 1)
-        GROUP BY dt.numero_matricula
-    ");
-    $studentsQuery->bind_param("ii", $selected_discipline_id, $selected_discipline_id);
-    $studentsQuery->execute();
-    $studentsResult = $studentsQuery->get_result();
-    ?>
-
-    <form method="POST">
-        <input type="hidden" name="disciplina_id" value="<?= $selected_discipline_id ?>">
-        <table>
-            <tr>
-                <th>Aluno</th>
-                <th>Parcial 1</th>
-                <th>Semestre 1</th>
-                <th>Parcial 2</th>
-                <th>Semestre 2</th>
-                <th>Nota Final</th>
-                <th>Nota Exame</th>
-                <th>Faltas</th>
-                <th>Observações</th>
-            </tr>
-            <?php while ($student = $studentsResult->fetch_assoc()): ?>
-                <tr>
-                    <td><?= htmlspecialchars($student['nome']) ?></td>
-                    <td><input type="number" name="notas[<?= $student['numero_matricula'] ?>][parcial_1]" value="<?= $student['parcial_1'] ?>"></td>
-                    <td><input type="number" name="notas[<?= $student['numero_matricula'] ?>][nota_semestre_1]" value="<?= $student['nota_semestre_1'] ?>"></td>
-                    <td><input type="number" name="notas[<?= $student['numero_matricula'] ?>][parcial_2]" value="<?= $student['parcial_2'] ?>"></td>
-                    <td><input type="number" name="notas[<?= $student['numero_matricula'] ?>][nota_semestre_2]" value="<?= $student['nota_semestre_2'] ?>"></td>
-                    <td><input type="number" name="notas[<?= $student['numero_matricula'] ?>][nota_final]" value="<?= $student['nota_final'] ?>"></td>
-                    <td><input type="number" name="notas[<?= $student['numero_matricula'] ?>][nota_exame]" value="<?= $student['nota_exame'] ?>"></td>
-                    <td><input type="number" name="notas[<?= $student['numero_matricula'] ?>][faltas]" value="<?= $student['faltas'] ?>"></td>
-                    <td><textarea name="notas[<?= $student['numero_matricula'] ?>][observacoes]"><?= htmlspecialchars($student['observacoes']) ?></textarea></td>
-                </tr>
+        <h2>Disciplinas que você leciona:</h2>
+        <ul class="discipline-list">
+            <?php while ($discipline = $disciplinesResult->fetch_assoc()): ?>
+                <li>
+                    <a href="cadastrar_notas.php?disciplina_id=<?= $discipline['id'] ?>">
+                        <?= htmlspecialchars($discipline['nome']) ?> 
+                        (Turma: <?= $discipline['turma_numero'] ?> - Ano: <?= $discipline['turma_ano'] ?>)
+                    </a>
+                </li>
             <?php endwhile; ?>
-        </table>
-        <button type="submit">Salvar Notas</button>
-    </form>
-<?php endif; ?>
+        </ul>
 
+        <?php if ($selected_discipline_id): ?>
+            <h2>Alunos na disciplina</h2>
+            <?php
+            $studentsQuery = $conn->prepare("
+                SELECT dt.numero_matricula, ds.nome, 
+                       MAX(n.parcial_1) AS parcial_1, MAX(n.nota_semestre_1) AS nota_semestre_1,
+                       MAX(n.parcial_2) AS parcial_2, MAX(n.nota_semestre_2) AS nota_semestre_2,
+                       MAX(n.nota_final) AS nota_final, MAX(n.nota_exame) AS nota_exame,
+                       MAX(n.faltas) AS faltas, MAX(n.observacoes) AS observacoes
+                FROM discentes_turmas dt
+                JOIN discentes ds ON dt.numero_matricula = ds.numero_matricula
+                LEFT JOIN notas n ON n.discente_id = dt.numero_matricula AND n.disciplina_id = ?
+                WHERE dt.turma_numero = (SELECT turma_numero FROM turmas_disciplinas WHERE disciplina_id = ? LIMIT 1)
+                GROUP BY dt.numero_matricula
+            ");
+            $studentsQuery->bind_param("ii", $selected_discipline_id, $selected_discipline_id);
+            $studentsQuery->execute();
+            $studentsResult = $studentsQuery->get_result();
+            ?>
+
+            <form method="POST">
+                <input type="hidden" name="disciplina_id" value="<?= $selected_discipline_id ?>">
+                <table class="table table-bordered table-hover table-sm" style="border-radius: 4px; overflow: hidden;">
+                                <thead class="table-dark">
+                    <tr>
+                        <th>Aluno</th>
+                        <th>Parcial 1</th>
+                        <th>Semestre 1</th>
+                        <th>Parcial 2</th>
+                        <th>Semestre 2</th>
+                        <th>Nota Final</th>
+                        <th>Nota Exame</th>
+                        <th>Faltas</th>
+                        <th>Observações</th>
+                    </tr>
+                    <?php while ($student = $studentsResult->fetch_assoc()): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($student['nome']) ?></td>
+                            <td><input type="text" name="notas[<?= $student['numero_matricula'] ?>][parcial_1]" value="<?= $student['parcial_1'] ?>"></td>
+                            <td><input type="text" name="notas[<?= $student['numero_matricula'] ?>][nota_semestre_1]" value="<?= $student['nota_semestre_1'] ?>"></td>
+                            <td><input type="text" name="notas[<?= $student['numero_matricula'] ?>][parcial_2]" value="<?= $student['parcial_2'] ?>"></td>
+                            <td><input type="text" name="notas[<?= $student['numero_matricula'] ?>][nota_semestre_2]" value="<?= $student['nota_semestre_2'] ?>"></td>
+                            <td><input type="text" name="notas[<?= $student['numero_matricula'] ?>][nota_final]" value="<?= $student['nota_final'] ?>"></td>
+                            <td><input type="text" name="notas[<?= $student['numero_matricula'] ?>][nota_exame]" value="<?= $student['nota_exame'] ?>"></td>
+                            <td><input type="text" name="notas[<?= $student['numero_matricula'] ?>][faltas]" value="<?= $student['faltas'] ?>"></td>
+                            <td><textarea name="notas[<?= $student['numero_matricula'] ?>][observacoes]"><?= htmlspecialchars($student['observacoes']) ?></textarea></td>
+                        </tr>
+                    <?php endwhile; ?>
+                </table>
+                <button type="submit" class="btn">Salvar Notas</button>
+            </form>
+        <?php endif; ?>
+    </div>
 </body>
 </html>

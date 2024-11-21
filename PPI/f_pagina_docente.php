@@ -44,6 +44,7 @@ $conn->close();
     <link href="https://fonts.googleapis.com/css2?family=Forum:wght@700&display=swap" rel="stylesheet">
     <link href="style.css" rel="stylesheet" type="text/css">
 </head>
+<body>
 <div class="container-fluid">
         <div class="row">
             <!-- Barra lateral -->

@@ -244,95 +244,95 @@ $conn->close();
                 </div>
 
                 <!-- Melhorando a disposição das informações -->
-<div class="container mt-4">
-    <!-- Exibir mensagens de sucesso e erro -->
-    <?php if (isset($_SESSION['mensagem'])): ?>
-        <div class="alert alert-success" role="alert">
-            <?php
-                echo htmlspecialchars($_SESSION['mensagem']);
-                unset($_SESSION['mensagem']); // Limpar a mensagem após exibição
-            ?>
-        </div>
-    <?php endif; ?>
+                <div class="container mt-4">
+                    <!-- Exibir mensagens de sucesso e erro -->
+                    <?php if (isset($_SESSION['mensagem'])): ?>
+                        <div class="alert alert-success" role="alert">
+                            <?php
+                                echo htmlspecialchars($_SESSION['mensagem']);
+                                unset($_SESSION['mensagem']); // Limpar a mensagem após exibição
+                            ?>
+                        </div>
+                    <?php endif; ?>
 
-    <?php if (!empty($erro)): ?>
-        <div class="alert alert-danger" role="alert">
-            <?php
-                echo htmlspecialchars($erro);
-            ?>
-        </div>
-    <?php endif; ?>
+                    <?php if (!empty($erro)): ?>
+                        <div class="alert alert-danger" role="alert">
+                            <?php
+                                echo htmlspecialchars($erro);
+                            ?>
+                        </div>
+                    <?php endif; ?>
 
-    <div class="row">
-        <!-- Seção de Escolher Turma -->
-        <?php if ($displayTurmas): ?>
-        <div class="col-12">
-            <div class="card shadow mb-4">
-                <div class="card-body">
-                    <h3 class="card-title">Escolha a Turma para Verificar os Discentes</h3>
-                    <hr>
                     <div class="row">
-                        <?php if ($result_cursos->num_rows > 0): ?>
-                            <?php while ($curso = $result_cursos->fetch_assoc()): ?>
-                                <div class="col-md-4 mb-3">
-                                    <div class="card text-center">
-                                        <div class="card-header">
-                                            <h4 class="card-title"><?php echo htmlspecialchars($curso['nome']); ?></h4>
-                                        </div>
+                        <!-- Seção de Escolher Turma -->
+                        <?php if ($displayTurmas): ?>
+                        <div class="col-12">
+                            <div class="card shadow mb-4">
+                                <div class="card-body">
+                                    <h3 class="card-title">Escolha a Turma para Verificar os Discentes</h3>
+                                    <hr>
+                                    <div class="row">
+                                        <?php if ($result_cursos->num_rows > 0): ?>
+                                            <?php while ($curso = $result_cursos->fetch_assoc()): ?>
+                                                <div class="col-md-4 mb-3">
+                                                    <div class="card text-center">
+                                                        <div class="card-header">
+                                                            <h4 class="card-title"><?php echo htmlspecialchars($curso['nome']); ?></h4>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <?php if (isset($turmas_por_curso[$curso['nome']])): ?>
+                                                                <?php foreach ($turmas_por_curso[$curso['nome']] as $turma): ?>
+                                                                    <button class="btn btn-success mb-2" onclick='listarDiscentes(<?php echo htmlspecialchars($turma['numero']); ?>, <?php echo htmlspecialchars($turma['ano']); ?>)'>
+                                                                        Turma <?php echo htmlspecialchars($turma['numero']); ?> - Ano <?php echo htmlspecialchars($turma['ano']); ?>
+                                                                    </button><br>
+                                                                <?php endforeach; ?>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <?php endwhile; ?>
+                                        <?php else: ?>
+                                            <p>Nenhum curso encontrado.</p>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- Seção de Discentes -->
+                        <?php if (!$displayTurmas && isset($result_discentes)): ?>
+                        <div class="col-12">
+                            <div class="card shadow mb-4">
+                            <div class="card-body">
+                    <h3 class="card-title mb-4">Discentes da Turma <?php echo htmlspecialchars($turma_numero); ?> - Ano <?php echo htmlspecialchars($turma_ano); ?></h3>
+                    <hr>
+                    <?php if ($result_discentes->num_rows > 0): ?>
+                        <!-- Início da lista de discentes -->
+                        <div class="row">
+                            <?php while ($row = $result_discentes->fetch_assoc()): ?>
+                                <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+                                    <div class="card shadow-sm">
                                         <div class="card-body">
-                                            <?php if (isset($turmas_por_curso[$curso['nome']])): ?>
-                                                <?php foreach ($turmas_por_curso[$curso['nome']] as $turma): ?>
-                                                    <button class="btn btn-success mb-2" onclick='listarDiscentes(<?php echo htmlspecialchars($turma['numero']); ?>, <?php echo htmlspecialchars($turma['ano']); ?>)'>
-                                                        Turma <?php echo htmlspecialchars($turma['numero']); ?> - Ano <?php echo htmlspecialchars($turma['ano']); ?>
-                                                    </button><br>
-                                                <?php endforeach; ?>
-                                            <?php endif; ?>
+                                            <h5 class="card-title"><?php echo htmlspecialchars($row['discente_nome']); ?></h5>
+                                            <button class="btn btn-primary btn-block" onclick='exibirInformacoes(<?php echo htmlspecialchars($row['numero_matricula']); ?>)'>
+                                                Ver Informações
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             <?php endwhile; ?>
-                        <?php else: ?>
-                            <p>Nenhum curso encontrado.</p>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <!-- Seção de Discentes -->
-        <?php if (!$displayTurmas && isset($result_discentes)): ?>
-        <div class="col-12">
-            <div class="card shadow mb-4">
-            <div class="card-body">
-    <h3 class="card-title mb-4">Discentes da Turma <?php echo htmlspecialchars($turma_numero); ?> - Ano <?php echo htmlspecialchars($turma_ano); ?></h3>
-    <hr>
-    <?php if ($result_discentes->num_rows > 0): ?>
-        <!-- Início da lista de discentes -->
-        <div class="row">
-            <?php while ($row = $result_discentes->fetch_assoc()): ?>
-                <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title"><?php echo htmlspecialchars($row['discente_nome']); ?></h5>
-                            <button class="btn btn-primary btn-block" onclick='exibirInformacoes(<?php echo htmlspecialchars($row['numero_matricula']); ?>)'>
-                                Ver Informações
-                            </button>
                         </div>
-                    </div>
+                        <!-- Fim da lista de discentes -->
+                    <?php else: ?>
+                        <!-- Mensagem caso não existam discentes -->
+                        <!-- Botão de Voltar para a Turma -->
+                        <button class="btn btn-primary mb-4" onclick="window.location.href='listar_discentes.php';">
+                                        <i class="fas fa-arrow-left"></i> Voltar para a lista de turmas
+                                    </button>
+                        <p class="text-center">Não há discentes cadastrados para esta turma.</p>
+                    <?php endif; ?>
                 </div>
-            <?php endwhile; ?>
-        </div>
-        <!-- Fim da lista de discentes -->
-    <?php else: ?>
-        <!-- Mensagem caso não existam discentes -->
-         <!-- Botão de Voltar para a Turma -->
-         <button class="btn btn-primary mb-4" onclick="window.location.href='listar_discentes.php';">
-                        <i class="fas fa-arrow-left"></i> Voltar para a lista de turmas
-                    </button>
-        <p class="text-center">Não há discentes cadastrados para esta turma.</p>
-    <?php endif; ?>
-</div>
 
             </div>
         </div>
