@@ -16,25 +16,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Transação para garantir consistência entre tabelas
         $conn->begin_transaction();
         try {
-            // Atualiza a tabela `notas`
+            // Atualiza as tabelas dependentes primeiro
             $update_notas = "UPDATE notas SET turma_numero = ? WHERE turma_numero = ?";
             $stmt1 = $conn->prepare($update_notas);
             $stmt1->bind_param('ii', $novo_numero, $numero_atual);
             $stmt1->execute();
-
-            // Atualiza a tabela `discentes_turmas`
+        
             $update_discentes = "UPDATE discentes_turmas SET turma_numero = ? WHERE turma_numero = ?";
             $stmt2 = $conn->prepare($update_discentes);
             $stmt2->bind_param('ii', $novo_numero, $numero_atual);
             $stmt2->execute();
-
-            // Atualiza a tabela `turmas`
+        
+            $update_turmas_disciplinas = "UPDATE turmas_disciplinas SET turma_numero = ? WHERE turma_numero = ?";
+            $stmt3 = $conn->prepare($update_turmas_disciplinas);
+            $stmt3->bind_param('ii', $novo_numero, $numero_atual);
+            $stmt3->execute();
+        
+            // Atualiza a tabela `turmas` por último
             $update_turmas = "
                 UPDATE turmas 
                 SET numero = ?, ano = ?, ano_ingresso = ?, ano_oferta = ?, curso_id = ?, professor_regente = ?, presidente_id = ? 
                 WHERE numero = ?";
-            $stmt3 = $conn->prepare($update_turmas);
-            $stmt3->bind_param(
+            $stmt4 = $conn->prepare($update_turmas);
+            $stmt4->bind_param(
                 'iiiiiiii',
                 $novo_numero,
                 $ano,
@@ -45,18 +49,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $presidente,
                 $numero_atual
             );
-            $stmt3->execute();
-
+            $stmt4->execute();
+        
             $conn->commit();
             echo "<script>alert('Turma atualizada com sucesso!');</script>";
         } catch (Exception $e) {
             $conn->rollback();
             die("Erro ao atualizar a turma: " . $e->getMessage());
         }
+        
+        
     } else {
         echo "<script>alert('Campo numero_atual não encontrado!');</script>";
     }
 }
+
 
 
 
