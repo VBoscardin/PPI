@@ -244,3 +244,12 @@ table tr:hover {
 h4{
     font-family: "Forum";
 }
+
+.fa-eye {
+    transition: all 0.3s ease; /* Transição suave */
+}
+
+.fa-eye-slash {
+    transform: scale(0); /* Diminui o ícone para simular que ele desaparece */
+    opacity: 0; /* Torna o ícone invisível */
+}

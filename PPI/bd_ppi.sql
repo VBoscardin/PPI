@@ -90,7 +90,7 @@ CREATE TABLE `turmas` (
   `ano` YEAR NOT NULL,
   `ano_ingresso` YEAR NOT NULL,
   `ano_oferta` YEAR NOT NULL,
-  `professor_regente` INT NOT NULL,
+  `professor_regente` INT NULL,
   `curso_id` INT NOT NULL,
   PRIMARY KEY (`numero`),
   FOREIGN KEY (`professor_regente`) REFERENCES `docentes` (`id`),
@@ -227,3 +227,8 @@ FOREIGN KEY (turma_numero)
 REFERENCES turmas(numero) 
 ON DELETE CASCADE 
 ON UPDATE CASCADE;
+
+ALTER TABLE turmas DROP FOREIGN KEY turmas_ibfk_1;
+
+ALTER TABLE turmas ADD CONSTRAINT turmas_ibfk_1 
+FOREIGN KEY (professor_regente) REFERENCES docentes(id) ON DELETE SET NULL;

@@ -223,7 +223,7 @@ while ($disciplina = $disciplinas_result->fetch_assoc()) {
     <div class="table-responsive">
                 
     <table id="docentesTable" class="table table-bordered table-hover table-sm align-middle">
-                    <thead class="table-dark">
+    <thead class="table-dark">
             <tr>
                 <th>ID</th>
                 <th>Foto</th>
@@ -400,30 +400,31 @@ while ($disciplina = $disciplinas_result->fetch_assoc()) {
 
 </body>
 </html>
-<script 
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"> </script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
         // Função de pesquisa
         document.getElementById('searchInput').addEventListener('keyup', function () {
-    const filter = this.value.toLowerCase();
-    const rows = document.querySelectorAll('#docentesTable tbody tr'); // Selecione as linhas da tabela corretamente
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#docentesTable tbody tr'); // Seleciona todas as linhas do corpo da tabela
 
-    rows.forEach(row => {
-        const cells = row.querySelectorAll('td'); // Selecione as células de cada linha
-        const match = Array.from(cells).some(cell => cell.textContent.toLowerCase().includes(filter)); // Verifique se algum texto da célula inclui o filtro
-        row.style.display = match ? '' : 'none'; // Exibe ou esconde a linha conforme a correspondência
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td'); // Todas as células da linha
+                const match = Array.from(cells).some(cell =>
+                    cell.textContent.toLowerCase().includes(filter) // Verifica se o texto da célula inclui o filtro
+                );
+                row.style.display = match ? '' : 'none'; // Exibe a linha se houver correspondência
+            });
+        });
+
+        // Ocultar mensagens automaticamente após 5 segundos
+        setTimeout(() => {
+            const sucesso = document.getElementById('mensagem-sucesso');
+            const erro = document.getElementById('mensagem-erro');
+            if (sucesso) sucesso.style.display = 'none';
+            if (erro) erro.style.display = 'none';
+        }, 5000); // 5 segundos
     });
-});
-
-
-
-    // Ocultar mensagens automaticamente após 5 segundos
-    setTimeout(() => {
-        const sucesso = document.getElementById('mensagem-sucesso');
-        const erro = document.getElementById('mensagem-erro');
-        if (sucesso) sucesso.style.display = 'none';
-        if (erro) erro.style.display = 'none';
-    }, 5000); // 5 segundos
 </script>
 
 <?php

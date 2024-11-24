@@ -137,7 +137,7 @@ $conn->close();
                                 <?php else: ?>
                                     <img src="imgs/admin-photo.png" alt="Foto do Administrador">
                                 <?php endif; ?>
-                            </div>
+                            </div>s
                         </div>
                     </div>
                 </div>

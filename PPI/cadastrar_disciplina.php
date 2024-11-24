@@ -227,7 +227,7 @@ $mysqli->close();
                 <div class="container">
                     <div class="header-container">
                         <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
-                        <div class="title ms-3">Cadastrar Docente</div>
+                        <div class="title ms-3">Cadastrar Disciplina</div>
                         <div class="ms-auto d-flex align-items-center">
                             <div class="profile-info d-flex align-items-center">
                                 <div class="profile-details me-2">
@@ -300,7 +300,7 @@ $mysqli->close();
             if (mensagemErro) {
                 mensagemErro.style.display = 'none';
             }
-        }, 5000); // 5 segundos
+        }, 1000); // 5 segundos
     </script>
 </body>
 </html>

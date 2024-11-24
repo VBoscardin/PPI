@@ -138,6 +138,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['matricula'])) {
     $projeto_extensao = isset($_POST['projeto_extensao']) && $_POST['projeto_extensao'] === 'Sim' ? 1 : 0;
     $projeto_ensino = isset($_POST['projeto_ensino']) && $_POST['projeto_ensino'] === 'Sim' ? 1 : 0;
 
+    if (isset($_POST['nova_turma'])) {
+        // Dividir o valor da turma em número e ano
+        list($nova_turma_numero, $nova_turma_ano) = explode("|", $_POST['nova_turma']);
+        $nova_turma_numero = intval($nova_turma_numero);
+        $nova_turma_ano = intval($nova_turma_ano);
+    
+        // Atualizar a turma do discente
+        $update_turma_query = "
+            UPDATE discentes_turmas 
+            SET turma_numero = ?, turma_ano = ?
+            WHERE numero_matricula = ?
+        ";
+        $stmt_turma = $conn->prepare($update_turma_query);
+        $stmt_turma->bind_param("iii", $nova_turma_numero, $nova_turma_ano, $matricula);
+    
+        if ($stmt_turma->execute()) {
+            echo "<script>alert('Turma alterada com sucesso!');</script>";
+        } else {
+            echo "<script>alert('Erro ao alterar a turma.');</script>";
+        }
+    }
+    
+
     // Atualizar os dados no banco de dados
     $update_query = "
         UPDATE discentes SET 
@@ -235,6 +258,20 @@ if ($displayDiscenteInfo && isset($discente_info)) {
     echo "<tr><td><strong>Gênero:</strong></td><td><input type='text' name='genero' value='" . htmlspecialchars($discente_info['genero']) . "'></td></tr>";
     echo "<tr><td><strong>Data de Nascimento:</strong></td><td><input type='date' name='data_nascimento' value='" . htmlspecialchars($discente_info['data_nascimento']) . "' required></td></tr>";
     echo "<tr><td><strong>Observações:</strong></td><td><textarea name='observacoes'>" . htmlspecialchars($discente_info['observacoes']) . "</textarea></td></tr>";
+    
+// Consultar todas as turmas disponíveis
+$query_turmas_disponiveis = "SELECT numero, ano, curso_id FROM turmas";
+$result_turmas_disponiveis = $conn->query($query_turmas_disponiveis);
+
+// Adicione o campo de seleção de turma no formulário
+echo "<tr><td><strong>Turma:</strong></td><td><select name='nova_turma'>";
+while ($turma = $result_turmas_disponiveis->fetch_assoc()) {
+    $turma_identificacao = "Turma " . $turma['numero'] . " - Ano " . $turma['ano'];
+    $turma_value = $turma['numero'] . "|" . $turma['ano']; // Combinação de número e ano
+    $selected = ($turma['numero'] == $discente_info['numero_turma'] && $turma['ano'] == $discente_info['ano_turma']) ? "selected" : ""; // Verifica se é a turma atual
+    echo "<option value='$turma_value' $selected>$turma_identificacao</option>";
+}
+echo "</select></td></tr>";
 
     // Exibindo as opções de "Sim" ou "Não"
     $opcoes = [

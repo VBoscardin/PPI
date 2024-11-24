@@ -1,19 +1,9 @@
 <?php
 // Inclui o arquivo de configuração para conexão com o banco de dados
 include 'config.php';
-session_start(); // Iniciar sessão
-// Obter o nome e a foto do perfil do administrador
-$stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
-$stmt->bind_param("s", $_SESSION['email']);
-$stmt->execute();
-$stmt->bind_result($nome, $foto_perfil);
-$stmt->fetch();
-$stmt->close();
-
-
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
- 
+    session_start(); // Inicia a sessão para usar $_SESSION
     if (isset($_POST['numero_atual'])) {
         $numero_atual = $_POST['numero_atual'];
         $novo_numero = $_POST['numero'];
@@ -145,12 +135,8 @@ $disciplinas_result = $conn->query($disciplinas_query);
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Forum:wght@700&display=swap" rel="stylesheet">
     <link href="style.css" rel="stylesheet" type="text/css">
-    
-    
 </head>
-
 <body>
-  
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-3 sidebar">
@@ -236,150 +222,129 @@ $disciplinas_result = $conn->query($disciplinas_query);
                         <div class="title ms-3">Listar e Editar Disciplinas</div>
                         <div class="ms-auto d-flex align-items-center">
                             <div class="profile-info d-flex align-items-center">
-                            <div class="profile-details me-2">
+                                <div class="profile-details me-2">
                                     <span><?php echo htmlspecialchars($nome); ?></span>
                                 </div>
                                 <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
-                                    <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador">
+                                    <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador" width="50">
                                 <?php else: ?>
-                                    <img src="imgs/admin-photo.png" alt="Foto do Administrador">
+                                    <img src="imgs/admin-photo.png" alt="Foto do Administrador" width="50">
                                 <?php endif; ?>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="container mt-4">
                 <!-- Mensagens de Sucesso e Erro -->
-                <?php if (isset($_SESSION['mensagem'])): ?>
+                <?php
+   
+                if (isset($_SESSION['mensagem'])): ?>
                     <div class="alert alert-<?php echo htmlspecialchars($_SESSION['tipo_mensagem']); ?> alert-dismissible fade show" role="alert" id="alertaMensagem">
                         <?php echo htmlspecialchars($_SESSION['mensagem']); ?>
-                        
                     </div>
                     <?php unset($_SESSION['mensagem'], $_SESSION['tipo_mensagem']); ?>
                 <?php endif; ?>
 
-
                 <div class="card shadow">
                     <div class="card-body">
-                        <!-- Tabela de Turmas -->
+                    <!-- Campo de Pesquisa -->
+                    <div class="mb-3">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar...">
+                    </div>
+                    <div class="table-responsive">
 
-                        <div class="table-responsive">
-                            <table id="turmasTable" class="table table-striped table-bordered table-hover table-sm align-middle rounded">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Número</th>
-                                        <th>Ano</th>
-                                        <th>Curso</th>
-                                        <th>Professor Regente</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+
+                    <?php if ($result->num_rows > 0): ?>
+                    <table id="turmasTable" class="table table-bordered table-hover table-sm align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Número</th>
+                                <th>Ano</th>
+                                <th>Ano de Ingresso</th>
+                                <th>Ano de Oferta</th>
+                                <th>Curso</th>
+                                <th>Professor Regente</th>
+                                <th>Presidente da Turma</th>
+                                <th>Disciplinas</th>
+                                <th>Discentes</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php while ($row = $result->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($row['numero']); ?></td>
+                                <td><?php echo htmlspecialchars($row['ano']); ?></td>
+                                <td><?php echo htmlspecialchars($row['ano_ingresso']); ?></td>
+                                <td><?php echo htmlspecialchars($row['ano_oferta']); ?></td>
+                                <td><?php echo htmlspecialchars($row['curso_nome']); ?></td>
+                                <td>
                                     <?php 
-                                    while ($row = $result->fetch_assoc()) { 
+                                    if (!empty($row['professor_regente_id'])) {
+                                        $professor_query = "SELECT nome FROM docentes WHERE id = ?";
+                                        $stmt_prof = $conn->prepare($professor_query);
+                                        $stmt_prof->bind_param('i', $row['professor_regente_id']);
+                                        $stmt_prof->execute();
+                                        $professor_result = $stmt_prof->get_result();
+                                        $professor = $professor_result->fetch_assoc();
+                                        echo htmlspecialchars($professor['nome']);
+                                    } else {
+                                        echo "Sem Regente";
+                                    }
                                     ?>
-                                        <tr class="turma" id="turma-<?php echo $row['numero']; ?>">
-                                            <td><?php echo htmlspecialchars($row['numero']); ?></td>
-                                            <td><?php echo htmlspecialchars($row['ano']); ?></td>
-                                            <td><?php echo htmlspecialchars($row['curso_nome']); ?></td>
-                                            <td>
-                                                <?php
-                                                $professor_regente_id = $row['professor_regente'];
-                                                if ($professor_regente_id) {
-                                                    $professor_query = "SELECT nome FROM docentes WHERE id = $professor_regente_id";
-                                                    $professor_result = $conn->query($professor_query);
-                                                    $professor_row = $professor_result->fetch_assoc();
-                                                    echo htmlspecialchars($professor_row['nome']);
-                                                } else {
-                                                    echo "N/A";
-                                                }
-                                                ?>
-                                            </td>
-                                            <td>
+                                </td>
 
-                                            <button class="btn btn-info btn-sm" onclick="toggleDetalhes(<?php echo $row['numero']; ?>)">
-                                                <i class="fas fa-eye" id="eye-icon-<?php echo $row['numero']; ?>"></i>
-                                                <span id="toggle-text-<?php echo $row['numero']; ?>">Ver Mais</span>
-                                            </button>
+                                <td><?php echo htmlspecialchars($row['presidente_nome'] ?: 'N/A'); ?></td>
+                                <td>
+                                    <?php
+                                    $disciplinas_result->data_seek(0);
+                                    while ($disciplina = $disciplinas_result->fetch_assoc()) {
+                                        if ($disciplina['turma_numero'] == $row['numero']) {
+                                            echo "<p>" . htmlspecialchars($disciplina['disciplina_nome']) . " - " . htmlspecialchars($disciplina['docente_nome']) . "</p>";
+                                        }
+                                    }
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    $discentes_turma_query = "
+                                    SELECT 
+                                        discentes.nome 
+                                    FROM 
+                                        discentes_turmas
+                                    INNER JOIN discentes ON discentes_turmas.numero_matricula = discentes.numero_matricula
+                                    WHERE 
+                                        discentes_turmas.turma_numero = " . $row['numero'];
+                                    
+                                    $discentes_turma_result = $conn->query($discentes_turma_query);
+                                    
+                                    if ($discentes_turma_result->num_rows > 0) {
+                                        while ($discente = $discentes_turma_result->fetch_assoc()) {
+                                            echo "<p>" . htmlspecialchars($discente['nome']) . "</p>";
+                                        }
+                                    } else {
+                                        echo "<p>Nenhum discente associado.</p>";
+                                    }
+                                    ?>
+                                </td>
 
+                                <td class="text-center">
+                                    <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#informacoesModal<?php echo $row['numero']; ?>">
+                                        <i class="fas fa-info-circle"></i> Mais Informações
+                                    </button>
+                                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $row['numero']; ?>">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                </td>
 
-                                            </td>
-                                        </tr>
+                                </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                        <?php else: ?>
+                            <p>Nenhuma turma encontrada.</p>
+                        <?php endif; ?>
 
-                                        <!-- Detalhes da Turma -->
-        
-                                        <tr class="detalhes-turma" id="detalhes-<?php echo $row['numero']; ?>" style="display: none;">
-                                            <td colspan="5">
-                                            <br>
-                                            <h5>Detalhes da Turma: <?php echo $row['numero'] . " ( ". $row['ano'] . " ) " . $row['curso_nome'] . "  "; ?></h5>
-                                                <table class="table table-bordered table-sm table-light">
-                                                <thead class="bg-danger text-light">
-                                                <tr>
-                                                    <thead class="bg-danger text-light">
-                                                        <tr>
-                                                            
-                                                            <th>Ano de Ingresso</th>
-                                                            <th>Ano de Oferta</th>
-                                                            
-                                                            <th>Presidente da Turma</th>
-                                                            <th>Disciplinas</th>
-                                                            <th>Discentes</th>
-                                                            <th>Ações</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr>
-                                                            
-                                                            <td><?php echo htmlspecialchars($row['ano_ingresso']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['ano_oferta']); ?></td>
-                                                            
-                                                            
-                                                            <td><?php echo htmlspecialchars($row['presidente_nome']) ?: "N/A"; ?></td>
-                                                            <td>
-                                                                <?php
-                                                                $disciplinas_result->data_seek(0);
-                                                                while ($disciplina = $disciplinas_result->fetch_assoc()) {
-                                                                    if ($disciplina['turma_numero'] == $row['numero']) {
-                                                                        echo "<p>" . htmlspecialchars($disciplina['disciplina_nome']) . " - " . htmlspecialchars($disciplina['docente_nome']) . "</p>";
-                                                                    }
-                                                                }
-                                                                ?>
-                                                            </td>
-                                                            <td>
-                                                                <?php
-                                                                $discentes_turma_query = "
-                                                                SELECT 
-                                                                    discentes.nome 
-                                                                FROM 
-                                                                    discentes_turmas
-                                                                INNER JOIN discentes ON discentes_turmas.numero_matricula = discentes.numero_matricula
-                                                                WHERE 
-                                                                    discentes_turmas.turma_numero = " . $row['numero'];
-                                                                
-                                                                $discentes_turma_result = $conn->query($discentes_turma_query);
-                                                                
-                                                                if ($discentes_turma_result->num_rows > 0) {
-                                                                    while ($discente = $discentes_turma_result->fetch_assoc()) {
-                                                                        echo "<p>" . htmlspecialchars($discente['nome']) . "</p>";
-                                                                    }
-                                                                } else {
-                                                                    echo "<p>Nenhum discente associado.</p>";
-                                                                }
-                                                                ?>
-                                                            </td>
-                                                            <td>
-                                                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $row['numero']; ?>">
-                                                                    <i class="fas fa-edit"></i> Editar
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                                
-                                            </td>
-                                        </tr>
-                                    <?php } ?>
-                                    <?php 
+                        <?php 
                         $result->data_seek(0);
                         while($row = $result->fetch_assoc()):
                             $turmaNumero = $row['numero'];
@@ -494,66 +459,130 @@ $disciplinas_result = $conn->query($disciplinas_query);
                         </div>
                     
                         <?php endwhile; ?>
-                                </tbody>
-                            </table>
-                            
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+                        <?php while($row = $result->fetch_assoc()): ?>
+                        <div class="modal fade" id="informacoesModal<?php echo $row['numero']; ?>" tabindex="-1" aria-labelledby="informacoesModalLabel<?php echo $row['numero']; ?>" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-info text-white">
+                                        <h5 class="modal-title" id="informacoesModalLabel<?php echo $row['numero']; ?>"><i class="fas fa-info-circle"></i> Mais Informações - Turma <?php echo htmlspecialchars($row['numero']); ?></h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                <div class="modal-body"><div class="modal fade" id="informacoesModal<?php echo $row['numero']; ?>" tabindex="-1" aria-labelledby="informacoesModalLabel<?php echo $row['numero']; ?>" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-info text-white">
+                                            <h5 class="modal-title" id="informacoesModalLabel<?php echo $row['numero']; ?>"><i class="fas fa-info-circle"></i> Mais Informações da Turma</h5>
+                                                <p><strong>Ano:</strong> <?php echo htmlspecialchars($row['ano']); ?></p>
+                                                <p><strong>Ano de Ingresso:</strong> <?php echo htmlspecialchars($row['ano_ingresso']); ?></p>
+                                                <p><strong>Ano de Oferta:</strong> <?php echo htmlspecialchars($row['ano_oferta']); ?></p>
+                                                <p><strong>Curso:</strong> <?php echo htmlspecialchars($row['curso_nome']); ?></p>
+                                                <p><strong>Professor Regente:</strong> 
+                                                    <?php 
+                                                        if (!empty($row['professor_regente_id'])) {
+                                                            $professor_query = "SELECT nome FROM docentes WHERE id = ?";
+                                                            $stmt_prof = $conn->prepare($professor_query);
+                                                            $stmt_prof->bind_param('i', $row['professor_regente_id']);
+                                                            $stmt_prof->execute();
+                                                            $professor_result = $stmt_prof->get_result();
+                                                            $professor = $professor_result->fetch_assoc();
+                                                            echo htmlspecialchars($professor['nome']);
+                                                        } else {
+                                                            echo "Sem Regente";
+                                                        }
+                                                    ?>
+                                                </p>
+                                                <p><strong>Presidente da Turma:</strong> <?php echo htmlspecialchars($row['presidente_nome'] ?: 'N/A'); ?></p>
+                                                <p><strong>Disciplinas:</strong></p>
+                                                <ul>
+                                                    <?php
+                                                        $disciplinas_result->data_seek(0);
+                                                        while ($disciplina = $disciplinas_result->fetch_assoc()) {
+                                                            if ($disciplina['turma_numero'] == $row['numero']) {
+                                                                echo "<li>" . htmlspecialchars($disciplina['disciplina_nome']) . " - " . htmlspecialchars($disciplina['docente_nome']) . "</li>";
+                                                            }
+                                                        }
+                                                    ?>
+                                                </ul>
+                                                <p><strong>Discentes:</strong></p>
+                                                <ul>
+                                                    <?php
+                                                        $discentes_turma_query = "
+                                                        SELECT 
+                                                            discentes.nome 
+                                                        FROM 
+                                                            discentes_turmas
+                                                        INNER JOIN discentes ON discentes_turmas.numero_matricula = discentes.numero_matricula
+                                                        WHERE 
+                                                            discentes_turmas.turma_numero = " . $row['numero'];
 
-    <script>
-    function toggleDetalhes(numero) {
-        var detalhes = document.getElementById('detalhes-' + numero);
-        var toggleText = document.getElementById('toggle-text-' + numero);
-        var eyeIcon = document.getElementById('eye-icon-' + numero);
+                                                        $discentes_turma_result = $conn->query($discentes_turma_query);
 
-        // Fechar todas as outras turmas antes de abrir a atual
-        var todasAsTurmas = document.querySelectorAll('.detalhes-turma');
-        todasAsTurmas.forEach(function(turma) {
-            if (turma.id !== 'detalhes-' + numero) {
-                turma.style.display = 'none';  // Esconde as turmas que não foram clicadas
-                var otherToggleText = turma.querySelector('.toggle-text');
-                if (otherToggleText) {
-                    otherToggleText.innerText = 'Ver Mais';
-                }
-                var otherEyeIcon = turma.querySelector('.fa-eye');
-                if (otherEyeIcon) {
-                    otherEyeIcon.classList.remove('fa-eye-slash');  // Reseta o ícone de olho cortado
-                }
-            }
-        });
-
-        // Alterna a visibilidade da turma clicada
-        if (detalhes.style.display === 'none' || detalhes.style.display === '') {
-            detalhes.style.display = 'table-row';  // Exibe a linha de detalhes
-            toggleText.innerText = 'Ver Menos';    // Muda o texto para "Ver Menos"
-            eyeIcon.classList.add('fa-eye-slash'); // Aplica o estilo de "olho cortado"
-        } else {
-            detalhes.style.display = 'none';       // Esconde a linha de detalhes
-            toggleText.innerText = 'Ver Mais';     // Muda o texto para "Ver Mais"
-            eyeIcon.classList.remove('fa-eye-slash'); // Remove o "olho cortado"
-        }
-    }
-</script>
-
-<script>
-        // Seleciona o alerta
-        const alerta = document.getElementById('alertaMensagem');
-        if (alerta) {
-            // Define o tempo para ocultar (5000ms = 5 segundos)
-            setTimeout(() => {
-                alerta.classList.remove('show'); // Remove a classe que mantém o alerta visível
-                alerta.classList.add('fade'); // Adiciona uma classe para a animação de fade
-                setTimeout(() => alerta.remove(), 500); // Remove o elemento após a animação
-            }, 2000); // 5 segundos
-        }
-    </script>
+                                                        if ($discentes_turma_result->num_rows > 0) {
+                                                            while ($discente = $discentes_turma_result->fetch_assoc()) {
+                                                                echo "<li>" . htmlspecialchars($discente['nome']) . "</li>";
+                                                            }
+                                                        } else {
+                                                            echo "<li>Nenhum discente associado.</li>";
+                                                        }
+                                                    ?>
+                                                </ul>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endwhile; ?>
 
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+                            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+                            <script>
+                            document.addEventListener("DOMContentLoaded", function () {
+                                const searchInput = document.getElementById("searchInput");
+                                const table = document.getElementById("turmasTable");
+                                const rows = table.getElementsByTagName("tr");
+
+                                searchInput.addEventListener("keyup", function () {
+                                    const filter = searchInput.value.toLowerCase();
+
+                                    // Itera pelas linhas da tabela, exceto o cabeçalho
+                                    for (let i = 1; i < rows.length; i++) {
+                                        const cells = rows[i].getElementsByTagName("td");
+                                        let rowContainsText = false;
+
+                                        // Itera pelas células da linha
+                                        for (let j = 0; j < cells.length; j++) {
+                                            // Normaliza o texto, incluindo números, para comparação
+                                            const cellText = cells[j].textContent || cells[j].innerText;
+
+                                            // Permite a pesquisa por texto e números
+                                            if (cellText.toLowerCase().includes(filter)) {
+                                                rowContainsText = true;
+                                                break;
+                                            }
+                                        }
+
+                                        // Exibe ou oculta a linha com base na pesquisa
+                                        rows[i].style.display = rowContainsText ? "" : "none";
+                                    }
+                                });
+                            });
+                        </script>
+                        <script>
+                            document.addEventListener("DOMContentLoaded", function() {
+                                // Verifica se existe a mensagem
+                                var alerta = document.getElementById('alertaMensagem');
+                                if (alerta) {
+                                    // Define o tempo para a mensagem desaparecer
+                                    setTimeout(function() {
+                                        alerta.classList.remove('show');  // Remove a classe "show"
+                                        alerta.classList.add('fade');     // Adiciona a classe "fade"
+                                    }, 3000);  // 3000 milissegundos = 3 segundos
+                                }
+                            });
+                        </script>
+
+
 </body>
-
 </html>
