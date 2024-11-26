@@ -44,12 +44,12 @@ if ($mysqli->connect_error) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) {
     $nome = $_POST['nome'];
     $email = $_POST['email'];
-    $cpf = $_POST['cpf'];
+    $siape = $_POST['siape'];
     $senha = $_POST['senha'];
     $disciplinas = isset($_POST['disciplinas']) ? $_POST['disciplinas'] : [];
 
     // Verificar se os campos não estão vazios
-    if (!empty($nome) && !empty($email) && !empty($cpf) && !empty($senha)) {
+    if (!empty($nome) && !empty($email) && !empty($siape) && !empty($senha)) {
         // Hash da senha
         $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
 
@@ -90,8 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_docente'])) 
                 $_SESSION['mensagem_erro'] = 'O email já está registrado como usuário!';
             } else {
                 // Inserir o docente na tabela docentes
-                $stmt_docente = $mysqli->prepare('INSERT INTO docentes (nome, email, cpf, senha) VALUES (?, ?, ?, ?)');
-                $stmt_docente->bind_param('ssss', $nome, $email, $cpf, $senha_hash);
+                $stmt_docente = $mysqli->prepare('INSERT INTO docentes (nome, email, siape, senha) VALUES (?, ?, ?, ?)');
+                $stmt_docente->bind_param('ssss', $nome, $email, $siape, $senha_hash);
 
                 if ($stmt_docente->execute()) {
                     $docente_id = $stmt_docente->insert_id;
@@ -298,8 +298,8 @@ $mysqli->close();
 
                                 <div class="row mb-3">
                                     <div class="col-md-6">
-                                        <label for="cpf" class="form-label">CPF:</label>
-                                        <input type="text" id="cpf" name="cpf" class="form-control" required>
+                                        <label for="siape" class="form-label">Siape:</label>
+                                        <input type="text" id="siape" name="siape" class="form-control" required>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="senha" class="form-label">Senha:</label>

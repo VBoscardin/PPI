@@ -37,12 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_setor'])) {
     $local = trim($_POST['local']);
     $nome = trim($_POST['nome']);
     $email = trim($_POST['email']);
-    $cpf = trim($_POST['cpf']);
+
     $senha = trim($_POST['senha']);
     $photo = $_FILES['photo'];
 
     // Verificação de todos os campos obrigatórios
-    if (!empty($local) && !empty($nome) && !empty($email) && !empty($cpf) && !empty($senha) && !empty($photo['name'])) {
+    if (!empty($local) && !empty($nome) && !empty($email)  && !empty($senha) && !empty($photo['name'])) {
         // Verificar se o email já está registrado
         $stmt = $mysqli->prepare('SELECT COUNT(*) FROM setores WHERE email = ?');
         $stmt->bind_param('s', $email);
@@ -88,8 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cadastrar_setor'])) {
 
                 if (!isset($_SESSION['mensagem_erro'])) {
                     // Inserir o setor na tabela setores
-                    $stmt = $mysqli->prepare('INSERT INTO setores (local, nome, email, cpf, senha) VALUES (?, ?, ?, ?, ?)');
-                    $stmt->bind_param('sssss', $local, $nome, $email, $cpf, $senha_hash);
+                    $stmt = $mysqli->prepare('INSERT INTO setores (local, nome, email, senha) VALUES (?, ?, ?, ?)');
+                    $stmt->bind_param('ssss', $local, $nome, $email, $senha_hash);
 
                     if ($stmt->execute()) {
                         $setor_id = $stmt->insert_id;
@@ -252,10 +252,7 @@ $mysqli->close();
                                 </div>
 
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="cpf" class="form-label">CPF:</label>
-                                        <input type="text" id="cpf" name="cpf" class="form-control" required>
-                                    </div>
+                                    
                                     <div class="col-md-6">
                                         <label for="email" class="form-label">E-mail:</label>
                                         <input type="email" id="email" name="email" class="form-control" required>

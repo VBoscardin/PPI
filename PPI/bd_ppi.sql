@@ -55,25 +55,25 @@ CREATE TABLE `setores` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `local` varchar(100) NOT NULL,
   `nome` varchar(100) NOT NULL,
-  `cpf` varchar(14) NOT NULL,
+  
   `senha` varchar(255) NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `cpf` (`cpf`)
+  PRIMARY KEY (`id`)
+  
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `docentes` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `nome` varchar(100) NOT NULL,
   `email` varchar(100) NOT NULL UNIQUE,
-  `cpf` varchar(14) NOT NULL UNIQUE,
+  `siape` varchar(14) NOT NULL UNIQUE,
   `senha` varchar(255) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO   `docentes` (`id`, `nome`, `email`, `cpf`, `senha`)
+INSERT INTO   `docentes` (`id`, `nome`, `email`, `siape`, `senha`)
 VALUES
 (0, 'João', 'joao@gmail.com', '12345678901', '1234');
-INSERT INTO   `docentes` (`id`, `nome`, `email`, `cpf`, `senha`)
+INSERT INTO   `docentes` (`id`, `nome`, `email`, `siape`, `senha`)
 VALUES
 (0, 'César', 'cesar@gmail.com', '12345678902', '1234');
 
@@ -130,7 +130,7 @@ CREATE TABLE discentes (
 
 ALTER TABLE discentes
 ADD COLUMN uf VARCHAR(2) NOT NULL,
-ADD COLUMN cpf VARCHAR(14) NOT NULL,
+
 ADD COLUMN reprovacoes INT(11) DEFAULT 0,
 ADD COLUMN acompanhamento ENUM('Sim', 'Não') NOT NULL,
 ADD COLUMN apoio_psicologico ENUM('Sim', 'Não') NOT NULL,

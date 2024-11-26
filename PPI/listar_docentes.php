@@ -17,13 +17,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['edit_docente'])) {
     $docente_id = $_POST['docente_id'];
     $nome = $_POST['nome'];
     $email = $_POST['email'];
-    $cpf = $_POST['cpf'];
+    $siapef = $_POST['siape'];
     $disciplinas = isset($_POST['disciplinas']) ? $_POST['disciplinas'] : [];
 
     // Atualizar dados do docente
-    $sql_edit = "UPDATE docentes SET nome = ?, email = ?, cpf = ? WHERE id = ?";
+    $sql_edit = "UPDATE docentes SET nome = ?, email = ?, siape = ? WHERE id = ?";
     $stmt_edit = $conn->prepare($sql_edit);
-    $stmt_edit->bind_param("sssi", $nome, $email, $cpf, $docente_id);
+    $stmt_edit->bind_param("sssi", $nome, $email, $siape, $docente_id);
     if ($stmt_edit->execute()) {
         // Atualizar disciplinas associadas
         $conn->query("DELETE FROM docentes_disciplinas WHERE docente_id = $docente_id");
@@ -59,7 +59,7 @@ $sql = "
         d.id AS docente_id,
         d.nome AS docente_nome,
         d.email AS docente_email,
-        d.cpf AS docente_cpf,
+        d.siape AS docente_siape,
         u.foto_perfil,
         GROUP_CONCAT(DISTINCT CONCAT(di.nome, ' (', t.numero, '/', t.ano, ')') SEPARATOR ', ') AS disciplinas_turmas
     FROM 
@@ -229,7 +229,7 @@ while ($disciplina = $disciplinas_result->fetch_assoc()) {
                 <th>Foto</th>
                 <th>Nome</th>
                 <th>Email</th>
-                <th>CPF</th>
+                <th>Siape</th>
                 <th>Disciplinas e Turmas</th>
                 <th>Ações</th>
             </tr>
@@ -248,7 +248,7 @@ while ($disciplina = $disciplinas_result->fetch_assoc()) {
                 </td>
                 <td><?php echo $row['docente_nome']; ?></td>
                 <td><?php echo $row['docente_email']; ?></td>
-                <td><?php echo $row['docente_cpf']; ?></td>
+                <td><?php echo $row['docente_siape']; ?></td>
                 <td>
                     <?php
                     $docente_id = $row['docente_id'];
@@ -317,8 +317,8 @@ while ($disciplina = $disciplinas_result->fetch_assoc()) {
                         <input type="email" name="email" class="form-control" value="<?php echo $row['docente_email']; ?>" required>
                     </div>
                     <div class="mb-3">
-                        <label for="cpf" class="form-label">CPF</label>
-                        <input type="text" name="cpf" class="form-control" value="<?php echo $row['docente_cpf']; ?>" required>
+                        <label for="siape" class="form-label">Siape</label>
+                        <input type="text" name="siape" class="form-control" value="<?php echo $row['docente_siape']; ?>" required>
                     </div>
                     <div class="mb-3">
                         <label for="disciplinas" class="form-label">Disciplinas e Turmas</label><br>

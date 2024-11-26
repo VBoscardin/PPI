@@ -79,7 +79,7 @@ if (isset($_GET['matricula'])) {
         SELECT 
             d.numero_matricula, d.nome AS discente_nome, 
             d.cidade, d.email, d.genero, d.data_nascimento, d.observacoes,
-            d.uf, d.cpf, d.reprovacoes, d.acompanhamento, 
+            d.uf, d.reprovacoes, d.acompanhamento, 
             d.apoio_psicologico, d.auxilio_permanencia, d.cotista, 
             d.estagio, d.acompanhamento_saude, d.projeto_pesquisa, 
             d.projeto_extensao, d.projeto_ensino, d.foto

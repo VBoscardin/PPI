@@ -63,7 +63,7 @@ if (isset($_GET['matricula'])) {
         SELECT 
             d.numero_matricula, d.nome AS discente_nome, 
             d.cidade, d.email, d.genero, d.data_nascimento, d.observacoes,
-            d.uf, d.cpf, d.reprovacoes, d.acompanhamento, 
+            d.uf, d.reprovacoes, d.acompanhamento, 
             d.apoio_psicologico, d.auxilio_permanencia, d.cotista, 
             d.estagio, d.acompanhamento_saude, d.projeto_pesquisa, 
             d.projeto_extensao, d.projeto_ensino, d.foto
@@ -358,10 +358,15 @@ $conn->close();
                             <tr><td><strong>Cidade:</strong></td><td><?php echo htmlspecialchars($discente_info['cidade']); ?></td></tr>
                             <tr><td><strong>Email:</strong></td><td><?php echo htmlspecialchars($discente_info['email']); ?></td></tr>
                             <tr><td><strong>Gênero:</strong></td><td><?php echo htmlspecialchars($discente_info['genero']); ?></td></tr>
-                            <tr><td><strong>Data de Nascimento:</strong></td><td><?php echo htmlspecialchars($discente_info['data_nascimento']); ?></td></tr>
+                            <tr><td><strong>Data de Nascimento:</strong></td>
+                            <td>
+                                <?php 
+                                    $data_nascimento = new DateTime($discente_info['data_nascimento']);
+                                    echo htmlspecialchars($data_nascimento->format('d/m/Y')); 
+                                ?>
+                            </td></tr>
                             <tr><td><strong>Observações:</strong></td><td><?php echo htmlspecialchars($discente_info['observacoes']); ?></td></tr>
                             <tr><td><strong>UF:</strong></td><td><?php echo htmlspecialchars($discente_info['uf']); ?></td></tr>
-                            <tr><td><strong>CPF:</strong></td><td><?php echo htmlspecialchars($discente_info['cpf']); ?></td></tr>
                             <tr><td><strong>Reprovações:</strong></td><td><?php echo htmlspecialchars($discente_info['reprovacoes']); ?></td></tr>
                             <tr><td><strong>Acompanhamento:</strong></td><td><?php echo (htmlspecialchars($discente_info['acompanhamento']) ? 'Sim' : 'Não'); ?></td></tr>
                             <tr><td><strong>Apoio Psicológico:</strong></td><td><?php echo (htmlspecialchars($discente_info['apoio_psicologico']) ? 'Sim' : 'Não'); ?></td></tr>
