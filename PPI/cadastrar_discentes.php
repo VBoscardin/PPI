@@ -245,8 +245,8 @@ $conn->close();
                                         <textarea id="observacoes" name="observacoes" class="form-control" rows="3"></textarea>
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="turma">Turma:</label>
-                                        <select id="turma" name="turma_numero">
+                                        <label for="turma" class="form-label">Turma:</label>
+                                        <select id="turma" name="turma_numero" class="form-select">
                                         <?php
                                         // Conectar ao banco de dados e buscar as turmas e seus respectivos cursos
                                         include 'config.php';

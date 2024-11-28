@@ -291,7 +291,7 @@ $disciplinas_result = $conn->query($disciplinas_query);
                                                     $professor_row = $professor_result->fetch_assoc();
                                                     echo htmlspecialchars($professor_row['nome']);
                                                 } else {
-                                                    echo "N/A";
+                                                    echo "Sem Professor Regente";
                                                 }
                                                 ?>
                                             </td>
@@ -334,17 +334,25 @@ $disciplinas_result = $conn->query($disciplinas_query);
                                                             <td><?php echo htmlspecialchars($row['ano_oferta']); ?></td>
                                                             
                                                             
-                                                            <td><?php echo htmlspecialchars($row['presidente_nome']) ?: "N/A"; ?></td>
+                                                            <td><?php echo htmlspecialchars($row['presidente_nome']) ?: "Sem Presidente"; ?></td>
                                                             <td>
-                                                                <?php
-                                                                $disciplinas_result->data_seek(0);
-                                                                while ($disciplina = $disciplinas_result->fetch_assoc()) {
-                                                                    if ($disciplina['turma_numero'] == $row['numero']) {
-                                                                        echo "<p>" . htmlspecialchars($disciplina['disciplina_nome']) . " - " . htmlspecialchars($disciplina['docente_nome']) . "</p>";
-                                                                    }
-                                                                }
-                                                                ?>
-                                                            </td>
+    <?php
+    $disciplinas_result->data_seek(0); // Reiniciar o ponteiro do resultado
+    $tem_disciplina = false; // Variável para controlar se disciplinas foram encontradas
+
+    while ($disciplina = $disciplinas_result->fetch_assoc()) {
+        if ($disciplina['turma_numero'] == $row['numero']) {
+            echo "<p>" . htmlspecialchars($disciplina['disciplina_nome']) . " - " . htmlspecialchars($disciplina['docente_nome']) . "</p>";
+            $tem_disciplina = true; // Disciplinas encontradas
+        }
+    }
+
+    // Exibir mensagem caso não haja disciplinas
+    if (!$tem_disciplina) {
+        echo "<p>Sem disciplinas</p>";
+    }
+    ?>
+</td>
                                                             <td>
                                                                 <?php
                                                                 $discentes_turma_query = "

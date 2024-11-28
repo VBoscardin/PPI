@@ -136,15 +136,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['matricula'])) {
     $observacoes = $_POST['observacoes'];
     $reprovacoes = $_POST['reprovacoes'];
     // Valores de "Sim" ou "Não"
-    $acompanhamento = (isset($_POST['acompanhamento']) && $_POST['acompanhamento'] === 'Sim') ? 1 : 0;
-    $apoio_psicologico = (isset($_POST['apoio_psicologico']) && $_POST['apoio_psicologico'] === 'Sim') ? 1 : 0;
-    $auxilio_permanencia = (isset($_POST['auxilio_permanencia']) && $_POST['auxilio_permanencia'] === 'Sim') ? 1 : 0;
-    $cotista = (isset($_POST['cotista']) && $_POST['cotista'] === 'Sim') ? 1 : 0;
-    $estagio = (isset($_POST['estagio']) && $_POST['estagio'] === 'Sim') ? 1 : 0;
-    $acompanhamento_saude = (isset($_POST['acompanhamento_saude']) && $_POST['acompanhamento_saude'] === 'Sim') ? 1 : 0;
-    $projeto_pesquisa = (isset($_POST['projeto_pesquisa']) && $_POST['projeto_pesquisa'] === 'Sim') ? 1 : 0;
-    $projeto_extensao = (isset($_POST['projeto_extensao']) && $_POST['projeto_extensao'] === 'Sim') ? 1 : 0;
-    $projeto_ensino = (isset($_POST['projeto_ensino']) && $_POST['projeto_ensino'] === 'Sim') ? 1 : 0;
+    $acompanhamento = $_POST['acompanhamento'] ?? 'Não';
+    $apoio_psicologico = $_POST['apoio_psicologico'] ?? 'Não';
+    $auxilio_permanencia = $_POST['auxilio_permanencia'] ?? 'Não';
+    $cotista = $_POST['cotista'] ?? 'Não';
+    $estagio = $_POST['estagio'] ?? 'Não';
+    $acompanhamento_saude = $_POST['acompanhamento_saude'] ?? 'Não';
+    $projeto_pesquisa = $_POST['projeto_pesquisa'] ?? 'Não';
+    $projeto_extensao = $_POST['projeto_extensao'] ?? 'Não';
+    $projeto_ensino = $_POST['projeto_ensino'] ?? 'Não';
+
     
 
     if (isset($_POST['nova_turma'])) {
@@ -173,38 +174,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['matricula'])) {
     // Atualizar os dados no banco de dados
     $update_query = "
     UPDATE discentes SET 
-        nome = ?, cidade = ?, uf = ?, email = ?, genero = ?, data_nascimento = ?, observacoes = ?, 
-        reprovacoes = ?, acompanhamento = ?, apoio_psicologico = ?, auxilio_permanencia = ?, 
-        cotista = ?, estagio = ?, acompanhamento_saude = ?, projeto_pesquisa = ?, 
-        projeto_extensao = ?, projeto_ensino = ?
+        acompanhamento = ?, apoio_psicologico = ?, auxilio_permanencia = ?, 
+        cotista = ?, estagio = ?, acompanhamento_saude = ?, 
+        projeto_pesquisa = ?, projeto_extensao = ?, projeto_ensino = ?
     WHERE numero_matricula = ?;
-";
+    ";
 
-$stmt = $conn->prepare($update_query);
-$stmt->bind_param("sssssssiisiiiiiiis", $nome, $cidade, $uf, $email, $genero, $data_nascimento, $observacoes, 
-                  $reprovacoes, $acompanhamento, $apoio_psicologico, $auxilio_permanencia, 
-                  $cotista, $estagio, $acompanhamento_saude, $projeto_pesquisa, $projeto_extensao, 
-                  $projeto_ensino, $matricula);
+    $stmt = $conn->prepare($update_query);
 
-    
-                      if ($stmt->execute()) {
-                        // Verificar se os parâmetros "turma_numero" e "turma_ano" estão na URL
-                        if (isset($_GET['turma_numero']) && isset($_GET['turma_ano'])) {
-                            $turma_numero = $_GET['turma_numero'];  // Pega o número da turma
-                            $turma_ano = $_GET['turma_ano'];  // Pega o ano da turma
-                
-                            // Redirecionar para a mesma página com os parâmetros da URL
-                            header("Location: " . $_SERVER['PHP_SELF'] . "?turma_numero=$turma_numero&turma_ano=$turma_ano");
-                            exit();  // Para garantir que o script pare aqui após o redirecionamento
-                        } else {
-                            // Se não houver os parâmetros, redireciona para a página padrão
-                            header("Location: editar_discente.php");
-                            exit();
-                        }
-                    } else {
-                        echo "<script>alert('Erro ao atualizar as informações.');</script>";
-                    }
-                }
+    if (!$stmt) {
+        die("Erro na preparação da query: " . $conn->error);
+    }
+
+    $stmt->bind_param(
+        "sssssssssi", 
+        $acompanhamento, $apoio_psicologico, $auxilio_permanencia, 
+        $cotista, $estagio, $acompanhamento_saude, 
+        $projeto_pesquisa, $projeto_extensao, $projeto_ensino, $matricula
+    );
+
+    if (!$stmt->execute()) {
+        die("Erro ao executar a query: " . $stmt->error);
+    }
+     // Após salvar as alterações, redireciona para a página com os parâmetros da turma
+     $turma_numero = $discente_info['turma_numero']; // Número da turma
+     $turma_ano = $discente_info['turma_ano']; // Ano da turma
+ 
+     // Redirecionamento para editar_discente.php com os parâmetros turma_numero e turma_ano
+     header("Location: editar_discente.php");
+     exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -267,9 +266,9 @@ $stmt->bind_param("sssssssiisiiiiiiis", $nome, $cidade, $uf, $email, $genero, $d
                 <div class="container">
                     <div class="header-container">
                         <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
-                        <div class="title ms-3">Página do Setor</div>
-                        <div class="ms-auto d-flex align-items-center">
-                            <div class="profile-info d-flex align-items-center">
+                        <div class="title ms-3">Editar Discentes</div>
+                            <div class="ms-auto d-flex align-items-center">
+                                <div class="profile-info d-flex align-items-center">
                                 <div class="profile-details me-2">
                                     <span><?php echo htmlspecialchars($nome); ?></span>
                                 </div>
@@ -280,289 +279,298 @@ $stmt->bind_param("sssssssiisiiiiiiis", $nome, $cidade, $uf, $email, $genero, $d
                                 <?php endif; ?>
                             </div>
                         </div>
-                    </div>
-                </div>    
-                                    
-            <div class="row">  
-                <div class="col-12">
-                    <div class="card shadow mb-4">
-                        <div class="card-body"> 
-                            
-                       
-                        <!-- Seção de Escolher Turma -->
-                        <?php if ($displayTurmas): ?>
-                            <div class="col-12">
-                                <div class="card shadow mb-4">
-                                    <div class="card-body">
-                                        <h3 class="card-title">Escolha a Turma para Verificar os Discentes</h3>
-                                        <hr>
-                                        <div class="row">
-                                            <?php if ($result_cursos->num_rows > 0): ?>
-                                                <?php while ($curso = $result_cursos->fetch_assoc()): ?>
-                                                    <div class="col-md-4 mb-3">
-                                                        <div class="card text-center">
-                                                            <div class="card-header">
-                                                                <h4 class="card-title"><?php echo htmlspecialchars($curso['nome']); ?></h4>
+                    </div>     
+                </div>
+                    
+                <div class="container mt-4">                 
+                    <div class="row">  
+                        <div class="col-12">
+                            <div class="card shadow mb-4">
+                                <div class="card-body"> 
+                                <!-- Seção de Escolher Turma -->
+                                <?php if ($displayTurmas): ?>
+                                    <div class="col-12">
+                                        <div class="card shadow mb-4">
+                                            <div class="card-body">
+                                                <h3 class="card-title">Escolha a Turma para Verificar os Discentes</h3>
+                                                <hr>
+                                                <div class="row">
+                                                    <?php if ($result_cursos->num_rows > 0): ?>
+                                                        <?php while ($curso = $result_cursos->fetch_assoc()): ?>
+                                                            <div class="col-md-4 mb-3">
+                                                                <div class="card text-center">
+                                                                    <div class="card-header">
+                                                                        <h4 class="card-title"><?php echo htmlspecialchars($curso['nome']); ?></h4>
+                                                                    </div>
+                                                                    <div class="card-body">
+                                                                        <?php if (isset($turmas_por_curso[$curso['nome']])): ?>
+                                                                            <?php foreach ($turmas_por_curso[$curso['nome']] as $turma): ?>
+                                                                                <button class="btn btn-success mb-2" onclick='listarDiscentes(<?php echo htmlspecialchars($turma['numero']); ?>, <?php echo htmlspecialchars($turma['ano']); ?>)'>
+                                                                                    Turma <?php echo htmlspecialchars($turma['numero']); ?> - Ano <?php echo htmlspecialchars($turma['ano']); ?>
+                                                                                </button><br>
+                                                                            <?php endforeach; ?>
+                                                                        <?php else: ?>
+                                                                            <p>Sem turmas cadastradas.</p>
+                                                                        <?php endif; ?>
+                                                                    </div>
+                                                                </div>
                                                             </div>
-                                                            <div class="card-body">
-                                                                <?php if (isset($turmas_por_curso[$curso['nome']])): ?>
-                                                                    <?php foreach ($turmas_por_curso[$curso['nome']] as $turma): ?>
-                                                                        <button class="btn btn-success mb-2" onclick='listarDiscentes(<?php echo htmlspecialchars($turma['numero']); ?>, <?php echo htmlspecialchars($turma['ano']); ?>)'>
-                                                                            Turma <?php echo htmlspecialchars($turma['numero']); ?> - Ano <?php echo htmlspecialchars($turma['ano']); ?>
-                                                                        </button><br>
-                                                                    <?php endforeach; ?>
-                                                                <?php else: ?>
-                                                                    <p>Sem turmas cadastradas.</p>
-                                                                <?php endif; ?>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                <?php endwhile; ?>
-                                            <?php else: ?>
-                                                <p class="text-center">Nenhum curso encontrado.</p>
-                                            <?php endif; ?>
+                                                        <?php endwhile; ?>
+                                                    <?php else: ?>
+                                                        <p class="text-center">Nenhum curso encontrado.</p>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        <?php endif; ?>
+                                <?php endif; ?>
 
-                        <!-- Seção de Discentes -->
-                        <?php if (!$displayTurmas && isset($result_discentes)): ?>
-                            <div class="col-12">
-                                <div class="card shadow mb-4">
-                                    <div class="card-body">
-                                        <h3 class="card-title mb-4">Discentes da Turma <?php echo htmlspecialchars($turma_numero); ?> - Ano <?php echo htmlspecialchars($turma_ano); ?></h3>
-                                        <hr>
-                                        <?php if ($result_discentes->num_rows > 0): ?>
-                                            <div class="row">
-                                                <?php while ($row = $result_discentes->fetch_assoc()): ?>
-                                                    <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
-                                                        <div class="card shadow-sm">
+                                <!-- Seção de Discentes -->
+                                <?php if (!$displayTurmas && isset($result_discentes)): ?>
+                                    <div class="col-12">
+                                        <div class="card shadow mb-4">
+                                            <div class="card-body">
+                                                <h3 class="card-title mb-4">Discentes da Turma <?php echo htmlspecialchars($turma_numero); ?> - Ano <?php echo htmlspecialchars($turma_ano); ?></h3>
+                                                <hr>
+                                                <?php if ($result_discentes->num_rows > 0): ?>
+                                                    <div class="row">
+                                                        <?php while ($row = $result_discentes->fetch_assoc()): ?>
+                                                            <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+                                                                <div class="card shadow-sm">
+                                                                    <div class="card-body">
+                                                                        <h5 class="card-title"><?php echo htmlspecialchars($row['discente_nome']); ?></h5>
+                                                                        <button class="btn btn-primary btn-block" onclick='exibirInformacoes(<?php echo htmlspecialchars($row['numero_matricula']); ?>)'>
+                                                                            Ver Informações
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        <?php endwhile; ?>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <button class="btn btn-primary mb-4" onclick="window.location.href='listar_discentes.php';">
+                                                        <i class="fas fa-arrow-left"></i> Voltar para a lista de turmas
+                                                    </button>
+                                                    <p class="text-center">Não há discentes cadastrados para esta turma.</p>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
+                                <!-- Seção de Informações do Discente -->
+                                <?php if ($displayDiscenteInfo && isset($discente_info)): ?>
+                                    <div class="col-12">
+                                        <div class="card shadow mb-4">
+                                            <div class="card-body">
+                                                <h3 class="card-title">Informações do Discente</h3>
+                                                <hr>
+                                                <form method="POST" action="">
+                                                    <input type="hidden" name="matricula" value="<?php echo htmlspecialchars($discente_info['numero_matricula']); ?>">
+                                                    
+                                                    <!-- Primeira linha de tabelas -->
+                                                    <div class="row mb-3">
+                                                        <!-- Coluna da primeira tabela -->
+                                                        <div class="col-md-6">
                                                             <div class="card-body">
-                                                                <h5 class="card-title"><?php echo htmlspecialchars($row['discente_nome']); ?></h5>
-                                                                <button class="btn btn-primary btn-block" onclick='exibirInformacoes(<?php echo htmlspecialchars($row['numero_matricula']); ?>)'>
-                                                                    Ver Informações
-                                                                </button>
+                                                                <div class="table-container">
+                                                                    <table class="table table-bordered">
+                                                                        <tr>
+                                                                            <td><strong>Matrícula:</strong></td>
+                                                                            <td><input type="text" class="form-control" name="numero_matricula" value="<?php echo htmlspecialchars($discente_info['numero_matricula']); ?>" readonly></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td><strong>Nome:</strong></td>
+                                                                            <td><input type="text" class="form-control" name="nome" value="<?php echo htmlspecialchars($discente_info['discente_nome']); ?>" required></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td><strong>Cidade:</strong></td>
+                                                                            <td><input type="text" class="form-control" name="cidade" value="<?php echo htmlspecialchars($discente_info['cidade']); ?>"></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td><strong>UF:</strong></td>
+                                                                            <td><input type="text" class="form-control" name="uf" value="<?php echo htmlspecialchars($discente_info['uf']); ?>"></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td><strong>Email:</strong></td>
+                                                                            <td><input type="email" class="form-control" name="email" value="<?php echo htmlspecialchars($discente_info['email']); ?>" required></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td><strong>Gênero:</strong></td>
+                                                                            <td><input type="text" class="form-control" name="genero" value="<?php echo htmlspecialchars($discente_info['genero']); ?>"></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td><strong>Data de Nascimento:</strong></td>
+                                                                            <td><input type="date" class="form-control" name="data_nascimento" value="<?php echo htmlspecialchars($discente_info['data_nascimento']); ?>" required></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td><strong>Observações:</strong></td>
+                                                                            <td><input type="text" class="form-control" name="observacoes" value="<?php echo htmlspecialchars($discente_info['observacoes']); ?>" ></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                        <td><strong>Reprovações?</strong></td>
+                                                                        <td><input type="text" class="form-control" name="reprovacoes" value="<?php echo htmlspecialchars($discente_info['reprovacoes']); ?>" required></td>
+
+                                                                    </tr>
+                                                                    </table>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                <?php endwhile; ?>
-                                            </div>
-                                        <?php else: ?>
-                                            <button class="btn btn-primary mb-4" onclick="window.location.href='listar_discentes.php';">
-                                                <i class="fas fa-arrow-left"></i> Voltar para a lista de turmas
-                                            </button>
-                                            <p class="text-center">Não há discentes cadastrados para esta turma.</p>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endif; ?>
+                                                        
+                                                        <!-- Coluna da segunda tabela -->
+                                                        <div class="col-md-6">
+                                                            <div class="card-body">
+                                                                <table class="table table-bordered">
+                                                                    
+                                                                <tr>
+                                                                    <td><strong>Acompanhamento?</strong></td>
+                                                                    <td>
+                                                                        <select class="form-select" name="acompanhamento">
+                                                                            <option value="Sim" <?php echo ($discente_info['acompanhamento'] == 'Sim' ? 'selected' : ''); ?>>Sim</option>
+                                                                            <option value="Não" <?php echo ($discente_info['acompanhamento'] == 'Não' ? 'selected' : ''); ?>>Não</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><strong>Apoio Psicológico?</strong></td>
+                                                                    <td>
+                                                                        <select class="form-select" name="apoio_psicologico">
+                                                                            <option value="Sim" <?php echo ($discente_info['apoio_psicologico'] == 'Sim' ? 'selected' : ''); ?>>Sim</option>
+                                                                            <option value="Não" <?php echo ($discente_info['apoio_psicologico'] == 'Não' ? 'selected' : ''); ?>>Não</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><strong>Auxílio Permanência?</strong></td>
+                                                                    <td>
+                                                                        <select class="form-select" name="auxilio_permanencia">
+                                                                            <option value="Sim" <?php echo ($discente_info['auxilio_permanencia'] == 'Sim' ? 'selected' : ''); ?>>Sim</option>
+                                                                            <option value="Não" <?php echo ($discente_info['auxilio_permanencia'] == 'Não' ? 'selected' : ''); ?>>Não</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><strong>Cotista?</strong></td>
+                                                                    <td>
+                                                                        <select class="form-select" name="cotista">
+                                                                            <option value="Sim" <?php echo ($discente_info['cotista'] == 'Sim' ? 'selected' : ''); ?>>Sim</option>
+                                                                            <option value="Não" <?php echo ($discente_info['cotista'] == 'Não' ? 'selected' : ''); ?>>Não</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><strong>Estágio?</strong></td>
+                                                                    <td>
+                                                                        <select class="form-select" name="estagio">
+                                                                            <option value="Sim" <?php echo ($discente_info['estagio'] == 'Sim' ? 'selected' : ''); ?>>Sim</option>
+                                                                            <option value="Não" <?php echo ($discente_info['estagio'] == 'Não' ? 'selected' : ''); ?>>Não</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><strong>Acompanhamento de Saúde?</strong></td>
+                                                                    <td>
+                                                                        <select class="form-select" name="acompanhamento_saude">
+                                                                            <option value="Sim" <?php echo ($discente_info['acompanhamento_saude'] == 'Sim' ? 'selected' : ''); ?>>Sim</option>
+                                                                            <option value="Não" <?php echo ($discente_info['acompanhamento_saude'] == 'Não' ? 'selected' : ''); ?>>Não</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><strong>Projeto de Pesquisa?</strong></td>
+                                                                    <td>
+                                                                        <select class="form-select" name="projeto_pesquisa">
+                                                                            <option value="Sim" <?php echo ($discente_info['projeto_pesquisa'] == 'Sim' ? 'selected' : ''); ?>>Sim</option>
+                                                                            <option value="Não" <?php echo ($discente_info['projeto_pesquisa'] == 'Não' ? 'selected' : ''); ?>>Não</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><strong>Projeto de Extensão?</strong></td>
+                                                                    <td>
+                                                                        <select class="form-select" name="projeto_extensao">
+                                                                            <option value="Sim" <?php echo ($discente_info['projeto_extensao'] == 'Sim' ? 'selected' : ''); ?>>Sim</option>
+                                                                            <option value="Não" <?php echo ($discente_info['projeto_extensao'] == 'Não' ? 'selected' : ''); ?>>Não</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><strong>Projeto de Ensino?</strong></td>
+                                                                    <td>
+                                                                        <select class="form-select" name="projeto_ensino">
+                                                                            <option value="Sim" <?php echo ($discente_info['projeto_ensino'] == 'Sim' ? 'selected' : ''); ?>>Sim</option>
+                                                                            <option value="Não" <?php echo ($discente_info['projeto_ensino'] == 'Não' ? 'selected' : ''); ?>>Não</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
 
-                        <!-- Seção de Informações do Discente -->
-                        <?php if ($displayDiscenteInfo && isset($discente_info)): ?>
-                            <div class="col-12">
-                                <div class="card shadow mb-4">
-                                    <div class="card-body">
-                                        <h3 class="card-title">Informações do Discente</h3>
-                                        <hr>
-                                        <form method="POST" action="">
-                                            <input type="hidden" name="matricula" value="<?php echo htmlspecialchars($discente_info['numero_matricula']); ?>">
-                                            
-                                            <!-- Primeira linha de tabelas -->
-                                            <div class="row mb-3">
-                                                <!-- Coluna da primeira tabela -->
-                                                <div class="col-md-6">
-                                                    <div class="card-body">
-                                                        <div class="table-container">
-                                                            <table class="table table-bordered">
-                                                                <tr>
-                                                                    <td><strong>Matrícula:</strong></td>
-                                                                    <td><input type="text" class="form-control" name="numero_matricula" value="<?php echo htmlspecialchars($discente_info['numero_matricula']); ?>" readonly></td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><strong>Nome:</strong></td>
-                                                                    <td><input type="text" class="form-control" name="nome" value="<?php echo htmlspecialchars($discente_info['discente_nome']); ?>" required></td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><strong>Cidade:</strong></td>
-                                                                    <td><input type="text" class="form-control" name="cidade" value="<?php echo htmlspecialchars($discente_info['cidade']); ?>"></td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><strong>UF:</strong></td>
-                                                                    <td><input type="text" class="form-control" name="uf" value="<?php echo htmlspecialchars($discente_info['uf']); ?>"></td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><strong>Email:</strong></td>
-                                                                    <td><input type="email" class="form-control" name="email" value="<?php echo htmlspecialchars($discente_info['email']); ?>" required></td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><strong>Gênero:</strong></td>
-                                                                    <td><input type="text" class="form-control" name="genero" value="<?php echo htmlspecialchars($discente_info['genero']); ?>"></td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><strong>Data de Nascimento:</strong></td>
-                                                                    <td><input type="date" class="form-control" name="data_nascimento" value="<?php echo htmlspecialchars($discente_info['data_nascimento']); ?>" required></td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><strong>Observações:</strong></td>
-                                                                    <td><input type="text" class="form-control" name="observacoes" value="<?php echo htmlspecialchars($discente_info['observacoes']); ?>" required></td>
-                                                                </tr>
-                                                                <tr>
-                                                                <td><strong>Reprovações?</strong></td>
-                                                                <td><input type="text" class="form-control" name="reprovacoes" value="<?php echo htmlspecialchars($discente_info['reprovacoes']); ?>" required></td>
-
-                                                            </tr>
-                                                            </table>
+                                                                </table>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </div>
-                                                
-                                                <!-- Coluna da segunda tabela -->
-                                                <div class="col-md-6">
+                                                        
+                                                        </div> <!-- Fim da primeira linha -->
+                                                        
+                                                        <div class="text-end mt-3">
+    <button type="submit" class="btn btn-success btn-block">
+        <i class="fas fa-save"></i> Salvar Alterações
+    </button>
+</div>
+
+                                                    
+                                                    </form>
+
                                                     <div class="card-body">
-                                                        <table class="table table-bordered">
-                                                            
-                                                            <tr>
-                                                                <td><strong>Acompanhamento?</strong></td>
-                                                                <td>
-                                                                    <select class="form-select" name="acompanhamento">
-                                                                        <option value="Sim" <?php echo ($discente_info['acompanhamento'] == 1 ? 'selected' : ''); ?>>Sim</option>
-                                                                        <option value="Não" <?php echo ($discente_info['acompanhamento'] == 0 ? 'selected' : ''); ?>>Não</option>
-                                                                    </select>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><strong>Apoio Psicológico?</strong></td>
-                                                                <td>
-                                                                    <select class="form-select" name="apoio_psicologico">
-                                                                        <option value="Sim" <?php echo ($discente_info['apoio_psicologico'] == 1 ? 'selected' : ''); ?>>Sim</option>
-                                                                        <option value="Não" <?php echo ($discente_info['apoio_psicologico'] == 0 ? 'selected' : ''); ?>>Não</option>
-                                                                    </select>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><strong>Auxílio Permanência?</strong></td>
-                                                                <td>
-                                                                    <select class="form-select" name="auxilio_permanencia">
-                                                                        <option value="Sim" <?php echo ($discente_info['auxilio_permanencia'] == 1 ? 'selected' : ''); ?>>Sim</option>
-                                                                        <option value="Não" <?php echo ($discente_info['auxilio_permanencia'] == 0 ? 'selected' : ''); ?>>Não</option>
-                                                                    </select>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><strong>Cotista?</strong></td>
-                                                                <td>
-                                                                    <select class="form-select" name="cotista">
-                                                                        <option value="Sim" <?php echo ($discente_info['cotista'] == 1 ? 'selected' : ''); ?>>Sim</option>
-                                                                        <option value="Não" <?php echo ($discente_info['cotista'] == 0 ? 'selected' : ''); ?>>Não</option>
-                                                                    </select>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><strong>Estágio?</strong></td>
-                                                                <td>
-                                                                    <select class="form-select" name="estagio">
-                                                                        <option value="Sim" <?php echo ($discente_info['estagio'] == 1 ? 'selected' : ''); ?>>Sim</option>
-                                                                        <option value="Não" <?php echo ($discente_info['estagio'] == 0 ? 'selected' : ''); ?>>Não</option>
-                                                                    </select>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><strong>Acompanhamento de Saúde?</strong></td>
-                                                                <td>
-                                                                    <select class="form-select" name="acompanhamento_saude">
-                                                                        <option value="Sim" <?php echo ($discente_info['acompanhamento_saude'] == 1 ? 'selected' : ''); ?>>Sim</option>
-                                                                        <option value="Não" <?php echo ($discente_info['acompanhamento_saude'] == 0 ? 'selected' : ''); ?>>Não</option>
-                                                                    </select>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><strong>Projeto de Pesquisa?</strong></td>
-                                                                <td>
-                                                                    <select class="form-select" name="projeto_pesquisa">
-                                                                        <option value="Sim" <?php echo ($discente_info['projeto_pesquisa'] == 1 ? 'selected' : ''); ?>>Sim</option>
-                                                                        <option value="Não" <?php echo ($discente_info['projeto_pesquisa'] == 0 ? 'selected' : ''); ?>>Não</option>
-                                                                    </select>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><strong>Projeto de Extensão?</strong></td>
-                                                                <td>
-                                                                    <select class="form-select" name="projeto_extensao">
-                                                                        <option value="Sim" <?php echo ($discente_info['projeto_extensao'] == 1 ? 'selected' : ''); ?>>Sim</option>
-                                                                        <option value="Não" <?php echo ($discente_info['projeto_extensao'] == 0 ? 'selected' : ''); ?>>Não</option>
-                                                                    </select>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><strong>Projeto de Ensino?</strong></td>
-                                                                <td>
-                                                                    <select class="form-select" name="projeto_ensino">
-                                                                        <option value="Sim" <?php echo ($discente_info['projeto_ensino'] == 1 ? 'selected' : ''); ?>>Sim</option>
-                                                                        <option value="Não" <?php echo ($discente_info['projeto_ensino'] == 0 ? 'selected' : ''); ?>>Não</option>
-                                                                    </select>
-                                                                </td>
-                                                            </tr>
+                                                        <hr>
+                                                        <h3 class="mt-4">Notas de <?php echo htmlspecialchars($discente_info['discente_nome']); ?></h3>
+                                                        <table class="table table-bordered table-hover table-sm" style="border-radius: 4px; overflow: hidden;">
+                                                            <thead class="table-dark">
+                                                                <tr>
+                                                                    <th>Disciplina</th>
+                                                                    <th>1º Parcial</th>
+                                                                    <th>1º Semestre</th>
+                                                                    <th>2º Parcial</th>
+                                                                    <th>2º Semestre</th>
+                                                                    <th>Nota Final</th>
+                                                                    <th>Exame</th>
+                                                                    <th>Faltas</th>
+                                                                    <th>Observações</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <?php while ($nota = $result_notas->fetch_assoc()): ?>
+                                                                    <tr>
+                                                                        <td><?php echo htmlspecialchars($nota['disciplina_nome']); ?></td>
+                                                                        <td><?php echo htmlspecialchars($nota['parcial_1']); ?></td>
+                                                                        <td><?php echo htmlspecialchars($nota['nota_semestre_1']); ?></td>
+                                                                        <td><?php echo htmlspecialchars($nota['parcial_2']); ?></td>
+                                                                        <td><?php echo htmlspecialchars($nota['nota_semestre_2']); ?></td>
+                                                                        <td><?php echo htmlspecialchars($nota['nota_final']); ?></td>
+                                                                        <td><?php echo isset($nota['exame']) ? htmlspecialchars($nota['exame']) : 'N/A'; ?></td>
+                                                                        <td><?php echo htmlspecialchars($nota['faltas']); ?></td>
+                                                                        <td><?php echo htmlspecialchars($nota['observacoes']); ?></td>
+                                                                    </tr>
+                                                                <?php endwhile; ?>
+                                                            </tbody>
                                                         </table>
                                                     </div>
                                                 </div>
-                                                
-                                                </div> <!-- Fim da primeira linha -->
-                                                
-                                                <div class="text-end mt-3">
-                                                    <button type="submit" class="btn btn-success btn-block">
-                                                        <i class="fas fa-save"></i> Salvar Alterações 
-                                                    </button>
-                                                </div>
-                                            
-                                            </form>
-
-                                            <div class="card-body">
-                                                <hr>
-                                                <h3 class="mt-4">Notas de <?php echo htmlspecialchars($discente_info['discente_nome']); ?></h3>
-                                                <table class="table table-bordered table-hover table-sm" style="border-radius: 4px; overflow: hidden;">
-                                                    <thead class="table-dark">
-                                                        <tr>
-                                                            <th>Disciplina</th>
-                                                            <th>1º Parcial</th>
-                                                            <th>1º Semestre</th>
-                                                            <th>2º Parcial</th>
-                                                            <th>2º Semestre</th>
-                                                            <th>Nota Final</th>
-                                                            <th>Exame</th>
-                                                            <th>Faltas</th>
-                                                            <th>Observações</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <?php while ($nota = $result_notas->fetch_assoc()): ?>
-                                                            <tr>
-                                                                <td><?php echo htmlspecialchars($nota['disciplina_nome']); ?></td>
-                                                                <td><?php echo htmlspecialchars($nota['parcial_1']); ?></td>
-                                                                <td><?php echo htmlspecialchars($nota['nota_semestre_1']); ?></td>
-                                                                <td><?php echo htmlspecialchars($nota['parcial_2']); ?></td>
-                                                                <td><?php echo htmlspecialchars($nota['nota_semestre_2']); ?></td>
-                                                                <td><?php echo htmlspecialchars($nota['nota_final']); ?></td>
-                                                                <td><?php echo isset($nota['exame']) ? htmlspecialchars($nota['exame']) : 'N/A'; ?></td>
-                                                                <td><?php echo htmlspecialchars($nota['faltas']); ?></td>
-                                                                <td><?php echo htmlspecialchars($nota['observacoes']); ?></td>
-                                                            </tr>
-                                                        <?php endwhile; ?>
-                                                    </tbody>
-                                                </table>
                                             </div>
                                         </div>
                                     </div>
-                                    </div>
-                                    </div>
+                                    </div>                
+                    </div>
+                </div>
             </div>
         </div>
-    <?php endif; ?>
-</div>
+    </div>
+<?php endif; ?>
 
-                                        </body>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
 <script>
 // Função para listar os discentes de uma turma
 function listarDiscentes(turma_numero, turma_ano) {
@@ -574,3 +582,5 @@ function exibirInformacoes(matricula) {
     window.location.href = `?matricula=${matricula}`;
 }
 </script>
+</body>
+</html>

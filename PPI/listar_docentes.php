@@ -1,5 +1,6 @@
 <?php
 require 'config.php';
+session_start();
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
@@ -11,6 +12,13 @@ $erro = "";
 // Mensagens de sucesso e erro
 $sucesso = "";
 $erro = "";
+
+$stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
+$stmt->bind_param("s", $_SESSION['email']);
+$stmt->execute();
+$stmt->bind_result($nome, $foto_perfil);
+$stmt->fetch();
+$stmt->close();
 
 // Verificando se o método de requisição é POST e se o formulário foi enviado para editar um docente
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['edit_docente'])) {
@@ -192,16 +200,16 @@ while ($disciplina = $disciplinas_result->fetch_assoc()) {
             <div class="container">
                     <div class="header-container">
                         <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
-                        <div class="title ms-3">Listar e Editar Disciplinas</div>
+                        <div class="title ms-3">Listar e Editar Docentes</div>
                         <div class="ms-auto d-flex align-items-center">
                             <div class="profile-info d-flex align-items-center">
-                                <div class="profile-details me-2">
+                            <div class="profile-details me-2">
                                     <span><?php echo htmlspecialchars($nome); ?></span>
                                 </div>
                                 <?php if (!empty($foto_perfil) && file_exists('uploads/' . basename($foto_perfil))): ?>
-                                    <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador" width="50">
+                                    <img src="uploads/<?php echo htmlspecialchars(basename($foto_perfil)); ?>" alt="Foto do Administrador">
                                 <?php else: ?>
-                                    <img src="imgs/admin-photo.png" alt="Foto do Administrador" width="50">
+                                    <img src="imgs/admin-photo.png" alt="Foto do Administrador">
                                 <?php endif; ?>
                             </div>
                         </div>
