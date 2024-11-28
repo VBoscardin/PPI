@@ -15,8 +15,10 @@ if ($conn->connect_error) {
 }
 
 // Mensagens
-$mensagem = '';
-$erro = '';
+$sucesso = isset($_SESSION['mensagem']) ? $_SESSION['mensagem'] : '';
+$erro = isset($_SESSION['erro']) ? $_SESSION['erro'] : '';
+unset($_SESSION['mensagem']);
+unset($_SESSION['erro']);
 
 // Editar curso
 if (isset($_POST['update_curso'])) {
@@ -204,22 +206,17 @@ $conn->close();
 
                 <div class="container mt-4">
                     <!-- Exibir mensagens de sucesso e erro -->
-                    <?php if (isset($_SESSION['mensagem'])): ?>
-                        <div class="alert alert-success" role="alert">
-                            <?php
-                                echo htmlspecialchars($_SESSION['mensagem']);
-                                unset($_SESSION['mensagem']); // Limpar a mensagem após exibição
-                            ?>
-                        </div>
-                    <?php endif; ?>
+                    <?php if (!empty($sucesso)): ?>
+    <div id="mensagem-sucesso" class="alert alert-success" role="alert">
+        <?php echo htmlspecialchars($sucesso); ?>
+    </div>
+<?php endif; ?>
 
-                    <?php if (!empty($erro)): ?>
-                        <div class="alert alert-danger" role="alert">
-                            <?php
-                                echo htmlspecialchars($erro);
-                            ?>
-                        </div>
-                    <?php endif; ?>
+<?php if (!empty($erro)): ?>
+    <div id="mensagem-erro" class="alert alert-danger" role="alert">
+        <?php echo htmlspecialchars($erro); ?>
+    </div>
+<?php endif; ?>
 
                     <div class="card shadow">
                     <div class="card-body">
@@ -324,21 +321,13 @@ $conn->close();
 
 <!-- Script para o filtro de busca -->
 <script>
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        var input = document.getElementById('searchInput').value.toLowerCase();
-        var rows = document.getElementById('courseTableBody').getElementsByTagName('tr');
-        
-        Array.from(rows).forEach(function(row) {
-            var cells = row.getElementsByTagName('td');
-            var courseName = cells[1].textContent.toLowerCase();
-            
-            if (courseName.indexOf(input) > -1) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    });
+    // Ocultar mensagens automaticamente após 5 segundos
+    setTimeout(() => {
+        const sucesso = document.getElementById('mensagem-sucesso');
+        const erro = document.getElementById('mensagem-erro');
+        if (sucesso) sucesso.style.display = 'none';
+        if (erro) erro.style.display = 'none';
+    }, 2000); // 5 segundos
 </script>
 
                 </div>

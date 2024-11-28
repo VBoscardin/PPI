@@ -41,7 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $cidade = isset($_POST['cidade']) ? $_POST['cidade'] : '';
     $uf = isset($_POST['uf']) ? $_POST['uf'] : '';
     $email = isset($_POST['email']) ? $_POST['email'] : '';
-    $cpf = isset($_POST['cpf']) ? $_POST['cpf'] : '';
     $genero = isset($_POST['genero']) ? $_POST['genero'] : '';
     $data_nascimento = isset($_POST['data_nascimento']) ? $_POST['data_nascimento'] : '';
     $observacoes = isset($_POST['observacoes']) ? $_POST['observacoes'] : '';
@@ -73,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     // Verificar se os campos obrigatórios estão preenchidos
-    if (empty($nome) || empty($cidade) || empty($uf) || empty($email) || empty($cpf) || empty($genero) || empty($data_nascimento) || empty($acompanhamento) || empty($apoio_psicologico) || empty($auxilio_permanencia) || empty($cotista) || empty($estagio) || empty($acompanhamento_saude) || empty($projeto_pesquisa) || empty($projeto_extensao) || empty($projeto_ensino) || empty($turma)) {
+    if (empty($nome) || empty($cidade) || empty($uf) || empty($email)  || empty($genero) || empty($data_nascimento) || empty($acompanhamento) || empty($apoio_psicologico) || empty($auxilio_permanencia) || empty($cotista) || empty($estagio) || empty($acompanhamento_saude) || empty($projeto_pesquisa) || empty($projeto_extensao) || empty($projeto_ensino) || empty($turma)) {
         $_SESSION['mensagem_erro'] = 'Por favor, preencha todos os campos obrigatórios.';
     } else {
         // Iniciar uma transação
@@ -81,8 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         try {
             // Inserir na tabela 'discentes'
-            $stmt = $conn->prepare('INSERT INTO discentes (numero_matricula, nome, cidade, uf, email, cpf, genero, data_nascimento, observacoes, reprovacoes, acompanhamento, apoio_psicologico, auxilio_permanencia, cotista, estagio, acompanhamento_saude, projeto_pesquisa, projeto_extensao, projeto_ensino, foto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-            $stmt->bind_param('isssssssssssssssssss', $numero_matricula, $nome, $cidade, $uf, $email, $cpf, $genero, $data_nascimento, $observacoes, $reprovacoes, $acompanhamento, $apoio_psicologico, $auxilio_permanencia, $cotista, $estagio, $acompanhamento_saude, $projeto_pesquisa, $projeto_extensao, $projeto_ensino, $foto_path);
+            $stmt = $conn->prepare('INSERT INTO discentes (numero_matricula, nome, cidade, uf, email, genero, data_nascimento, observacoes, reprovacoes, acompanhamento, apoio_psicologico, auxilio_permanencia, cotista, estagio, acompanhamento_saude, projeto_pesquisa, projeto_extensao, projeto_ensino, foto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+            $stmt->bind_param('issssssssssssssssss', $numero_matricula, $nome, $cidade, $uf, $email, $genero, $data_nascimento, $observacoes, $reprovacoes, $acompanhamento, $apoio_psicologico, $auxilio_permanencia, $cotista, $estagio, $acompanhamento_saude, $projeto_pesquisa, $projeto_extensao, $projeto_ensino, $foto_path);
 
             if (!$stmt->execute()) {
                 throw new Exception('Erro ao cadastrar discente: ' . $stmt->error);
@@ -112,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         // Fechar a declaração
-        $stmt->close();
+        
     }
 
     // Redirecionar para a mesma página para exibir mensagens
@@ -222,10 +221,7 @@ $conn->close();
                                         <label for="email" class="form-label">E-mail:</label>
                                         <input type="email" id="email" name="email" class="form-control" required>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label for="cpf" class="form-label">CPF:</label>
-                                        <input type="text" id="cpf" name="cpf" class="form-control" required>
-                                    </div>
+                                    
                                 </div>
 
                                 <div class="row mb-3">

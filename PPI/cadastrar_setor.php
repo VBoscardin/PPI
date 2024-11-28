@@ -256,17 +256,17 @@ $mysqli->close();
                                     <div class="col-md-6">
                                         <label for="email" class="form-label">E-mail:</label>
                                         <input type="email" id="email" name="email" class="form-control" required>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
+                                    </div>                                
                                     <div class="col-md-6">
                                         <label for="senha" class="form-label">Senha:</label>
                                         <input type="password" id="senha" name="senha" class="form-control" required>
                                     </div>
-                                    <div class="col-md-6">
+                                    
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
                                         <label for="photo" class="form-label">Foto de Perfil:</label>
                                         <input type="file" id="photo" name="photo" accept="image/*" class="form-control" required>
+                                    </div>
                                     </div>
                                 </div>
                                                         

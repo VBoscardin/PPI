@@ -315,22 +315,22 @@ $mysqli->close();
                                 </div>
                                 <hr>                       
                                 <fieldset class="mb-3">
-    <legend>Disciplinas Associadas</legend>
-    <div class="row">
-        <?php foreach ($disciplinas as $disciplina): ?>
-            <div class="col-md-6">
-                <div class="form-check">
-                    <input type="checkbox" id="disciplina-<?php echo $disciplina['id']; ?>" name="disciplinas[]" value="<?php echo $disciplina['id']; ?>" class="form-check-input">
-                    <label for="disciplina-<?php echo $disciplina['id']; ?>" class="form-check-label">
-                        <?php echo htmlspecialchars($disciplina['disciplina_nome']); ?> 
-                        (<?php echo htmlspecialchars($disciplina['curso_nome']); ?>) - 
-                        Turma: <?php echo htmlspecialchars($disciplina['turma_numero']) ? htmlspecialchars($disciplina['turma_numero']) : 'Sem turma'; ?>
-                    </label>
-                </div>
-            </div>
-        <?php endforeach; ?>
-    </div>
-</fieldset>
+                                    <legend>Disciplinas Associadas</legend>
+                                    <div class="row">
+                                        <?php foreach ($disciplinas as $disciplina): ?>
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input type="checkbox" id="disciplina-<?php echo $disciplina['id']; ?>" name="disciplinas[]" value="<?php echo $disciplina['id']; ?>" class="form-check-input">
+                                                    <label for="disciplina-<?php echo $disciplina['id']; ?>" class="form-check-label">
+                                                        <?php echo htmlspecialchars($disciplina['disciplina_nome']); ?> 
+                                                        (<?php echo htmlspecialchars($disciplina['curso_nome']); ?>) - 
+                                                        Turma: <?php echo htmlspecialchars($disciplina['turma_numero']) ? htmlspecialchars($disciplina['turma_numero']) : 'Sem turma'; ?>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </fieldset>
 
 
                                 <hr>                   

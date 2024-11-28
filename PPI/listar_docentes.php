@@ -12,31 +12,41 @@ $erro = "";
 $sucesso = "";
 $erro = "";
 
-// Editar Docente e suas Disciplinas
+// Verificando se o método de requisição é POST e se o formulário foi enviado para editar um docente
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['edit_docente'])) {
+    // Pegando os dados do formulário
     $docente_id = $_POST['docente_id'];
     $nome = $_POST['nome'];
     $email = $_POST['email'];
-    $siapef = $_POST['siape'];
+    $siape = $_POST['siape'];  // Verifique se este campo está sendo enviado corretamente
     $disciplinas = isset($_POST['disciplinas']) ? $_POST['disciplinas'] : [];
 
-    // Atualizar dados do docente
+    // Atualizando os dados do docente (incluindo o SIAPE)
     $sql_edit = "UPDATE docentes SET nome = ?, email = ?, siape = ? WHERE id = ?";
     $stmt_edit = $conn->prepare($sql_edit);
-    $stmt_edit->bind_param("sssi", $nome, $email, $siape, $docente_id);
-    if ($stmt_edit->execute()) {
-        // Atualizar disciplinas associadas
-        $conn->query("DELETE FROM docentes_disciplinas WHERE docente_id = $docente_id");
-        $stmt_disciplinas = $conn->prepare("INSERT INTO docentes_disciplinas (docente_id, disciplina_id) VALUES (?, ?)");
-        foreach ($disciplinas as $disciplina_id) {
-            $stmt_disciplinas->bind_param("ii", $docente_id, $disciplina_id);
-            $stmt_disciplinas->execute();
+
+    // Verifique se a consulta de atualização foi preparada corretamente
+    if ($stmt_edit) {
+        $stmt_edit->bind_param("sssi", $nome, $email, $siape, $docente_id);
+        if ($stmt_edit->execute()) {
+            // Se a atualização foi bem-sucedida, atualize as disciplinas associadas
+            $conn->query("DELETE FROM docentes_disciplinas WHERE docente_id = $docente_id");
+            $stmt_disciplinas = $conn->prepare("INSERT INTO docentes_disciplinas (docente_id, disciplina_id) VALUES (?, ?)");
+            foreach ($disciplinas as $disciplina_id) {
+                $stmt_disciplinas->bind_param("ii", $docente_id, $disciplina_id);
+                $stmt_disciplinas->execute();
+            }
+            $sucesso = "Docente atualizado com sucesso!";
+        } else {
+            // Se ocorrer um erro na atualização
+            $erro = "Erro ao atualizar docente.";
         }
-        $sucesso = "Docente atualizado com sucesso!";
     } else {
-        $erro = "Erro ao atualizar docente.";
+        // Se não conseguir preparar a consulta SQL
+        $erro = "Erro ao preparar consulta para atualizar docente.";
     }
 }
+
 
 // Excluir Docente
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['delete_docente'])) {
