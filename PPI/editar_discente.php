@@ -410,6 +410,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['matricula'])) {
                                                                         <tr>
                                                                         <td><strong>Reprovações?</strong></td>
                                                                         <td><input type="text" class="form-control" name="reprovacoes" value="<?php echo htmlspecialchars($discente_info['reprovacoes']); ?>" required></td>
+                                                                        
+                                                                        <tr>
+                                                                    <td><strong>Acompanhamento?</strong></td>
+                                                                    <td>
+                                                                        <select class="form-select" name="turma" id="turma">
+                                                                            <option value="">Selecione a turma</option>
+                                                                            <?php foreach ($turmas_por_curso as $curso_nome => $turmas): ?>
+                                                                                <optgroup label="<?php echo $curso_nome; ?>">
+                                                                                    <?php foreach ($turmas as $turma): ?>
+                                                                                        <?php 
+                                                                                            // Cria o valor do option com a combinação de número e ano da turma
+                                                                                            $turma_value = $turma['numero'] . "|" . $turma['ano'];
+
+                                                                                            // Verifica se o discente tem uma turma e compara com a turma atual
+                                                                                            $selected = '';
+                                                                                            if (isset($discente_info['turma_numero']) && isset($discente_info['turma_ano'])) {
+                                                                                                // Verifica se o número e ano da turma correspondem aos valores do discente
+                                                                                                if ($discente_info['turma_numero'] == $turma['numero'] && $discente_info['turma_ano'] == $turma['ano']) {
+                                                                                                    $selected = 'selected'; // Marca como selecionada
+                                                                                                }
+                                                                                            }
+                                                                                        ?>
+                                                                                        <option value="<?php echo $turma_value; ?>" <?php echo $selected; ?>>
+                                                                                            <?php echo $turma['numero'] . ' - ' . $turma['ano']; ?>
+                                                                                        </option>
+                                                                                    <?php endforeach; ?>
+                                                                                </optgroup>
+                                                                            <?php endforeach; ?>
+                                                                        </select>           
 
                                                                     </tr>
                                                                     </table>

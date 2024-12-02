@@ -336,23 +336,23 @@ $disciplinas_result = $conn->query($disciplinas_query);
                                                             
                                                             <td><?php echo htmlspecialchars($row['presidente_nome']) ?: "Sem Presidente"; ?></td>
                                                             <td>
-    <?php
-    $disciplinas_result->data_seek(0); // Reiniciar o ponteiro do resultado
-    $tem_disciplina = false; // Variável para controlar se disciplinas foram encontradas
+                                                                <?php
+                                                                $disciplinas_result->data_seek(0); // Reiniciar o ponteiro do resultado
+                                                                $tem_disciplina = false; // Variável para controlar se disciplinas foram encontradas
 
-    while ($disciplina = $disciplinas_result->fetch_assoc()) {
-        if ($disciplina['turma_numero'] == $row['numero']) {
-            echo "<p>" . htmlspecialchars($disciplina['disciplina_nome']) . " - " . htmlspecialchars($disciplina['docente_nome']) . "</p>";
-            $tem_disciplina = true; // Disciplinas encontradas
-        }
-    }
+                                                                while ($disciplina = $disciplinas_result->fetch_assoc()) {
+                                                                    if ($disciplina['turma_numero'] == $row['numero']) {
+                                                                        echo "<p>" . htmlspecialchars($disciplina['disciplina_nome']) . " - " . htmlspecialchars($disciplina['docente_nome']) . "</p>";
+                                                                        $tem_disciplina = true; // Disciplinas encontradas
+                                                                    }
+                                                                }
 
-    // Exibir mensagem caso não haja disciplinas
-    if (!$tem_disciplina) {
-        echo "<p>Sem disciplinas</p>";
-    }
-    ?>
-</td>
+                                                                // Exibir mensagem caso não haja disciplinas
+                                                                if (!$tem_disciplina) {
+                                                                    echo "<p>Sem disciplinas</p>";
+                                                                }
+                                                                ?>
+                                                            </td>
                                                             <td>
                                                                 <?php
                                                                 $discentes_turma_query = "

@@ -14,6 +14,7 @@ body {
     padding: 20px;
     width: 250px;
     min-height: 100vh;
+    
 }
 
 .separator {
@@ -70,10 +71,14 @@ body {
 
 .main-content {
     padding: 20px;
-    padding-left: 15vh;
-    padding-right: 0px;
+    padding-left: 5vh; /* Pode ser ajustado dependendo da largura da sidebar */
+    padding-right: 20px; /* Adiciona um espaço à direita */
+    width: calc(100% - 250px); /* O cálculo remove a largura da sidebar */
+    max-width: 1400px; /* Define uma largura máxima para telas grandes */
     box-sizing: border-box;
+    margin: 0 auto; /* Centraliza o conteúdo se necessário */
 }
+
 
 .header-container {
     background-color: white;

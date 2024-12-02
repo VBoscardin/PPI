@@ -323,7 +323,7 @@ $mysqli->close();
                                                     <input type="checkbox" id="disciplina-<?php echo $disciplina['id']; ?>" name="disciplinas[]" value="<?php echo $disciplina['id']; ?>" class="form-check-input">
                                                     <label for="disciplina-<?php echo $disciplina['id']; ?>" class="form-check-label">
                                                         <?php echo htmlspecialchars($disciplina['disciplina_nome']); ?> 
-                                                        (<?php echo htmlspecialchars($disciplina['curso_nome']); ?>) - 
+                                                         - 
                                                         Turma: <?php echo htmlspecialchars($disciplina['turma_numero']) ? htmlspecialchars($disciplina['turma_numero']) : 'Sem turma'; ?>
                                                     </label>
                                                 </div>

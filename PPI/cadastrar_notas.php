@@ -38,6 +38,7 @@ $disciplinesQuery = $conn->prepare("
     JOIN turmas_disciplinas td ON d.id = td.disciplina_id
     JOIN turmas t ON td.turma_numero = t.numero
     WHERE dd.docente_id = ?
+    ORDER BY d.nome ASC
 ");
 $disciplinesQuery->bind_param("i", $docente_id);
 $disciplinesQuery->execute();
@@ -136,8 +137,31 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
         h3{
             font-family: "Forum", "serif";
         }
+            /* Estilo customizado para o botão */
+        .custom-btn {
+            transition: all 0.3s ease;
+        }
+
+        /* Quando passar o mouse */
+        .custom-btn:hover {
+            background-color: #28a745;  /* Cor verde */
+            color: #000;  /* Texto preto */
+        }
+
+        .nota-vermelha {
+        color: red;
         
+        }
+        .nota-amarela {
+            color: orange;
+            
+        }
+        .nota-verde {
+            color: green;
+            
+        }
     </style>
+    
 </head>
 <body>
     <div class="container-fluid">
@@ -184,100 +208,301 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
                     </div>
                 </div>
             
-            <div class="container mt-4">
-                <div class="card shadow">
-                    <div class="card-body">
+                <div class="container-fluid mt-4"> <!-- Alterado para container-fluid para largura total -->
+    <div class="card shadow">
+        <div class="card-body">
 
-                        <h3>Disciplinas que você leciona:</h3>
-                        <div class="d-flex flex-wrap gap-3">
-                            <?php while ($discipline = $disciplinesResult->fetch_assoc()): ?>
-                            
-                                <button class="btn btn-success mb-2" onclick="window.location.href='cadastrar_notas.php?disciplina_id=<?= $discipline['id'] ?>'">
-                                <strong><?= htmlspecialchars($discipline['nome']) ?></strong><br>Turma: <?= htmlspecialchars($discipline['turma_numero']) ?> | Ano: <?= htmlspecialchars($discipline['turma_ano']) ?>
-                                </button><br>
+            <h3>Disciplinas que você leciona:</h3>
+            <div class="d-flex flex-wrap gap-2">
+                <?php while ($discipline = $disciplinesResult->fetch_assoc()): ?>
+                    <button class="btn btn-success mb-2" onclick="window.location.href='cadastrar_notas.php?disciplina_id=<?= $discipline['id'] ?>'">
+                        <strong><?= htmlspecialchars($discipline['nome']) ?></strong><br>Turma: <?= htmlspecialchars($discipline['turma_numero']) ?> | Ano: <?= htmlspecialchars($discipline['turma_ano']) ?>
+                    </button><br>
+                <?php endwhile; ?>
+            </div>
 
-                            <?php endwhile; ?>
-                        </div>
+            <?php if ($selected_discipline_id): ?>
+                <?php
+                $studentsQuery = $conn->prepare("
+                    SELECT 
+                        dt.numero_matricula, 
+                        ds.nome, 
+                        MAX(n.parcial_1) AS parcial_1, 
+                        MAX(n.nota_semestre_1) AS nota_semestre_1,
+                        MAX(n.ais) AS ais, 
+                        MAX(n.ppi) AS ppi, 
+                        MAX(n.mostra_ciencias) AS mostra_ciencias,
+                        MAX(n.parcial_2) AS parcial_2, 
+                        MAX(n.nota_semestre_2) AS nota_semestre_2,
+                        MAX(n.nota_final) AS nota_final, 
+                        MAX(n.nota_exame) AS nota_exame,
+                        MAX(n.faltas) AS faltas, 
+                        MAX(n.observacoes) AS observacoes
+                    FROM 
+                        discentes_turmas dt
+                    JOIN 
+                        discentes ds 
+                        ON dt.numero_matricula = ds.numero_matricula
+                    LEFT JOIN 
+                        notas n 
+                        ON n.discente_id = dt.numero_matricula 
+                        AND n.disciplina_id = ?
+                    WHERE 
+                        dt.turma_numero = (
+                            SELECT turma_numero 
+                            FROM turmas_disciplinas 
+                            WHERE disciplina_id = ? 
+                            LIMIT 1
+                        )
+                    GROUP BY 
+                        dt.numero_matricula
+                    ORDER BY 
+                        ds.nome ASC
+                ");
+            
+                $studentsQuery->bind_param("ii", $selected_discipline_id, $selected_discipline_id);
+                $studentsQuery->execute();
+                $studentsResult = $studentsQuery->get_result();
+                ?>
+                
+                        <form method="POST" class="mt-4">
+                            <input type="hidden" name="disciplina_id" value="<?= $selected_discipline_id ?>">
+                            <hr>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered table-hover "> <!-- Largura mínima ajustada -->
+                                    <thead class="table-dark text-center">
+                                        
+                                    <?php if ($selected_discipline_id): ?>
+                                        <?php
+                                        // Obter o nome da disciplina e o número da turma selecionada
+                                        $disciplineQuery = $conn->prepare("
+                                            SELECT d.nome, td.turma_numero
+                                            FROM disciplinas d
+                                            JOIN turmas_disciplinas td ON d.id = td.disciplina_id
+                                            WHERE d.id = ?
+                                            ORDER BY d.nome ASC
+                                        ");
+                                        $disciplineQuery->bind_param("i", $selected_discipline_id);
+                                        $disciplineQuery->execute();
+                                        $disciplineQuery->bind_result($discipline_name, $turma_numero);
+                                        $disciplineQuery->fetch();
+                                        $disciplineQuery->close();
+                                        ?>
 
-                        <?php if ($selected_discipline_id): ?>
-                            
-                            <?php
-                            $studentsQuery = $conn->prepare("
-                                SELECT dt.numero_matricula, ds.nome, 
-                                    MAX(n.parcial_1) AS parcial_1, MAX(n.nota_semestre_1) AS nota_semestre_1,
-                                    MAX(n.parcial_2) AS parcial_2, MAX(n.nota_semestre_2) AS nota_semestre_2,
-                                    MAX(n.nota_final) AS nota_final, MAX(n.nota_exame) AS nota_exame,
-                                    MAX(n.faltas) AS faltas, MAX(n.observacoes) AS observacoes
-                                FROM discentes_turmas dt
-                                JOIN discentes ds ON dt.numero_matricula = ds.numero_matricula
-                                LEFT JOIN notas n ON n.discente_id = dt.numero_matricula AND n.disciplina_id = ?
-                                WHERE dt.turma_numero = (SELECT turma_numero FROM turmas_disciplinas WHERE disciplina_id = ? LIMIT 1)
-                                GROUP BY dt.numero_matricula
-                            ");
-                            $studentsQuery->bind_param("ii", $selected_discipline_id, $selected_discipline_id);
-                            $studentsQuery->execute();
-                            $studentsResult = $studentsQuery->get_result();
-                            ?>
-                            <div class="card shadow">
-                                <div class="card-body">
-                                <form method="POST" class="mt-4">
-                                    <input type="hidden" name="disciplina_id" value="<?= $selected_discipline_id ?>">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-bordered table-hover align-middle">
-                                            <thead class="table-dark text-center">
-                                                <h3>Alunos na disciplina</h3>
-                                                <tr>
-                                                    <th>Aluno</th>
-                                                    <th>Parcial 1</th>
-                                                    <th>Semestre 1</th>
-                                                    <th>Parcial 2</th>
-                                                    <th>Semestre 2</th>
-                                                    <th>Nota Final</th>
-                                                    <th>Nota Exame</th>
-                                                    <th>Faltas</th>
-                                                    <th>Observações</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php while ($student = $studentsResult->fetch_assoc()): ?>
-                                                    <tr>
-                                                        <td><strong><?= htmlspecialchars($student['nome']) ?></strong></td>
-                                                        <td><input type="number" step="0.01" class="form-control" name="notas[<?= $student['numero_matricula'] ?>][parcial_1]" value="<?= $student['parcial_1'] ?>"></td>
-                                                        <td><input type="number" step="0.01" class="form-control" name="notas[<?= $student['numero_matricula'] ?>][nota_semestre_1]" value="<?= $student['nota_semestre_1'] ?>"></td>
-                                                        <td><input type="number" step="0.01" class="form-control" name="notas[<?= $student['numero_matricula'] ?>][parcial_2]" value="<?= $student['parcial_2'] ?>"></td>
-                                                        <td><input type="number" step="0.01" class="form-control" name="notas[<?= $student['numero_matricula'] ?>][nota_semestre_2]" value="<?= $student['nota_semestre_2'] ?>"></td>
-                                                        <td><input type="number" step="0.01" class="form-control" name="notas[<?= $student['numero_matricula'] ?>][nota_final]" value="<?= $student['nota_final'] ?>"></td>
-                                                        <td><input type="number" step="0.01" class="form-control" name="notas[<?= $student['numero_matricula'] ?>][nota_exame]" value="<?= $student['nota_exame'] ?>"></td>
-                                                        <td><input type="number" class="form-control" name="notas[<?= $student['numero_matricula'] ?>][faltas]" value="<?= $student['faltas'] ?>"></td>
-                                                        <td><textarea class="form-control" rows="2" name="notas[<?= $student['numero_matricula'] ?>][observacoes]"><?= htmlspecialchars($student['observacoes']) ?></textarea></td>
-                                                    </tr>
-                                                <?php endwhile; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div class="text-end mt-3">
-                                        <button type="submit" class="btn btn-success btn-sm">
-                                            <i class="fas fa-save"></i> Salvar Notas
-                                        </button>
-                                    </div>
+                                        <h3>Alunos na disciplina de <?= htmlspecialchars($discipline_name) ?> - Turma: <?= htmlspecialchars($turma_numero) ?></h3>
+                                    <?php endif; ?>
 
-                                </form>
-                            <?php endif; ?>
-         
+
+                                        <tr>
+                                            <th>Aluno</th>
+                                            <th>Parcial 1</th>
+                                            <th>AIS</th>
+                                            <th>Semestre 1</th>
+                                            <th>Parcial 2</th>
+                                            <th>MC</th>
+                                            <th>PPI</th>
+                                            <th>Semestre 2</th>
+                                            <th>Nota Final</th>
+                                            <th>Nota Exame</th>
+                                            <th>Faltas</th>
+                                            <th>Observações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php while ($student = $studentsResult->fetch_assoc()): ?>
+                                            <tr>
+                                                <td><strong><?= htmlspecialchars($student['nome']) ?></strong></td>
+
+                                                <!-- Parcial 1 -->
+                                                <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
+                                                        name="notas[<?= $student['numero_matricula'] ?>][parcial_1]" 
+                                                        value="<?= number_format($student['parcial_1'], 2, '.', '') ?>"></td>
+
+                                                <!-- AIS - Somente leitura -->
+                                                <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
+                                                        name="notas[<?= $student['numero_matricula'] ?>][ais]" 
+                                                        value="<?= htmlspecialchars($student['ais']) ?>" readonly></td>
+
+                                                <!-- Nota semestre 1 -->
+                                                <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
+                                                        name="notas[<?= $student['numero_matricula'] ?>][nota_semestre_1]" 
+                                                        value="<?= number_format($student['nota_semestre_1'], 2, '.', '') ?>"></td>
+
+                                                <!-- Parcial 2 -->
+                                                <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
+                                                        name="notas[<?= $student['numero_matricula'] ?>][parcial_2]" 
+                                                        value="<?= number_format($student['parcial_2'], 2, '.', '') ?>"></td>
+
+                                                <!-- Mostra de Ciências - Somente leitura -->
+                                                <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
+                                                        name="notas[<?= $student['numero_matricula'] ?>][mostra_ciencias]" 
+                                                        value="<?= htmlspecialchars($student['mostra_ciencias']) ?>" readonly></td>
+
+                                                <!-- PPI - Somente leitura -->
+                                                <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
+                                                        name="notas[<?= $student['numero_matricula'] ?>][ppi]" 
+                                                        value="<?= htmlspecialchars($student['ppi']) ?>" readonly></td>
+
+                                                <!-- Nota semestre 2 -->
+                                                <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
+                                                        name="notas[<?= $student['numero_matricula'] ?>][nota_semestre_2]" 
+                                                        value="<?= number_format($student['nota_semestre_2'], 2, '.', '') ?>"></td>
+
+                                                <!-- Nota final - Somente leitura -->
+                                                <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
+                                                        name="notas[<?= $student['numero_matricula'] ?>][nota_final]" 
+                                                        value="<?= number_format($student['nota_final'], 2, '.', '') ?>" readonly></td>
+
+                                                <!-- Nota exame -->
+                                                <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
+                                                        name="notas[<?= $student['numero_matricula'] ?>][nota_exame]" 
+                                                        value="<?= number_format($student['nota_exame'], 2, '.', '') ?>"></td>
+
+                                                <!-- Faltas -->
+                                                <td><input type="number" class="form-control" name="notas[<?= $student['numero_matricula'] ?>][faltas]" 
+                                                        value="<?= $student['faltas'] ?>"></td>
+
+                                                <!-- Observações -->
+                                                <td><textarea class="form-control" rows="2" name="notas[<?= $student['numero_matricula'] ?>][observacoes]"><?= htmlspecialchars($student['observacoes']) ?></textarea></td>
+                                            </tr>
+                                        <?php endwhile; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <hr>
+                            <div class="text-end mt-3">
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="fas fa-save"></i> Salvar Notas
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
+    </div>
+</div>
+
 </body>
 
-<style>
-    /* Estilo customizado para o botão */
-    .custom-btn {
-        transition: all 0.3s ease;
-    }
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tabela = document.querySelector("table");
 
-    /* Quando passar o mouse */
-    .custom-btn:hover {
-        background-color: #28a745;  /* Cor verde */
-        color: #000;  /* Texto preto */
-    }
-</style>
+        // Função para calcular a nota final
+        function calcularNotaFinal(row) {
+            const parcial1 = parseFloat(row.querySelector('[name*="[parcial_1]"]').value) || 0;
+            const parcial2 = parseFloat(row.querySelector('[name*="[parcial_2]"]').value) || 0;
+            const semestre1 = parseFloat(row.querySelector('[name*="[nota_semestre_1]"]').value) || 0;
+            const semestre2 = parseFloat(row.querySelector('[name*="[nota_semestre_2]"]').value) || 0;
+
+            // Fórmula do cálculo da nota final (exemplo: média ponderada)
+            const notaFinal = (((semestre1 * 0.4) + (semestre2 * 0.6))).toFixed(2);
+
+            return notaFinal;
+        }
+
+        // Atualizar notas e formatações ao alterar qualquer campo
+        tabela.addEventListener("input", function (event) {
+            const input = event.target;
+            const row = input.closest("tr"); // Obter a linha da tabela
+
+            if (row) {
+                const notaFinal = calcularNotaFinal(row);
+                const notaFinalField = row.querySelector('[name*="[nota_final]"]');
+                const notaExameField = row.querySelector('[name*="[nota_exame]"]');
+                const semestre1Field = row.querySelector('[name*="[nota_semestre_1]"]');
+                const semestre2Field = row.querySelector('[name*="[nota_semestre_2]"]');
+
+                // Atualiza o campo de Nota Final
+                notaFinalField.value = notaFinal;
+                formatarNotaFinal(notaFinalField); // Aplica estilos
+
+                // Formatação dos campos Semestre 1 e 2
+                formatarNota(semestre1Field);
+                formatarNota(semestre2Field);
+
+                // Lógica para o campo de Nota Exame
+                if (parseFloat(notaFinal) > 7) {
+                    notaExameField.value = "N/A";
+                    notaExameField.setAttribute('readonly', 'readonly'); // Desabilita o campo
+                    notaExameField.classList.remove("nota-vermelha", "nota-amarela");
+                    notaExameField.classList.add("nota-verde"); // Verde para "N/A"
+                } else {
+                    notaExameField.value = "";
+                    notaExameField.removeAttribute('readonly'); // Habilita o campo
+                    notaExameField.classList.remove("nota-verde");
+                }
+            }
+        });
+
+        // Função para aplicar estilos gerais (Semestre 1 e 2)
+        function formatarNota(input) {
+            const valor = parseFloat(input.value);
+            input.classList.remove("nota-vermelha", "nota-amarela", "nota-verde");
+
+            if (!isNaN(valor)) {
+                if (valor < 6) {
+                    input.classList.add("nota-vermelha");
+                } else if (valor >= 6 && valor < 7) {
+                    input.classList.add("nota-amarela");
+                } else if (valor >= 7) {
+                    input.classList.add("nota-verde");
+                }
+            }
+        }
+
+        // Função para aplicar estilos SOMENTE ao campo de Nota Final
+        function formatarNotaFinal(input) {
+            const valor = parseFloat(input.value);
+            const isNA = input.value === "N/A";
+
+            input.classList.remove("nota-vermelha", "nota-amarela", "nota-verde");
+
+            if (isNA || valor >= 7) {
+                input.classList.add("nota-verde"); // Verde para "N/A" ou maior que 7
+            } else if (!isNaN(valor)) {
+                if (valor < 6) {
+                    input.classList.add("nota-vermelha");
+                } else if (valor >= 6 && valor < 7) {
+                    input.classList.add("nota-amarela");
+                }
+            }
+        }
+
+        // Aplica estilos iniciais para todas as linhas
+        const rows = document.querySelectorAll('tr');
+        rows.forEach(row => {
+            const notaFinalField = row.querySelector('[name*="[nota_final]"]');
+            const notaExameField = row.querySelector('[name*="[nota_exame]"]');
+            const semestre1Field = row.querySelector('[name*="[nota_semestre_1]"]');
+            const semestre2Field = row.querySelector('[name*="[nota_semestre_2]"]');
+
+            if (notaFinalField) {
+                formatarNotaFinal(notaFinalField); // Apenas Nota Final recebe estilo
+            }
+
+            if (semestre1Field) {
+                formatarNota(semestre1Field); // Aplica estilo para Semestre 1
+            }
+
+            if (semestre2Field) {
+                formatarNota(semestre2Field); // Aplica estilo para Semestre 2
+            }
+
+            if (notaFinalField && notaExameField) {
+                const notaFinal = parseFloat(notaFinalField.value);
+                if (notaFinal >= 7) {
+                    notaExameField.value = "APR";
+                    notaExameField.setAttribute('readonly', 'readonly');
+                    notaExameField.classList.add("nota-verde");
+                }
+            }
+        });
+    });
+</script>
+
+
+
 
 </html>
