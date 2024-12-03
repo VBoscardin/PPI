@@ -385,60 +385,33 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
 
 </body>
 
+
+
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const tabela = document.querySelector("table");
 
-        // Função para calcular a nota final
-        function calcularNotaFinal(row) {
-            const parcial1 = parseFloat(row.querySelector('[name*="[parcial_1]"]').value) || 0;
-            const parcial2 = parseFloat(row.querySelector('[name*="[parcial_2]"]').value) || 0;
-            const semestre1 = parseFloat(row.querySelector('[name*="[nota_semestre_1]"]').value) || 0;
-            const semestre2 = parseFloat(row.querySelector('[name*="[nota_semestre_2]"]').value) || 0;
-
-            // Fórmula do cálculo da nota final (exemplo: média ponderada)
-            const notaFinal = (((semestre1 * 0.4) + (semestre2 * 0.6))).toFixed(2);
-
-            return notaFinal;
-        }
-
-        // Atualizar notas e formatações ao alterar qualquer campo
-        tabela.addEventListener("input", function (event) {
-            const input = event.target;
-            const row = input.closest("tr"); // Obter a linha da tabela
-
-            if (row) {
-                const notaFinal = calcularNotaFinal(row);
-                const notaFinalField = row.querySelector('[name*="[nota_final]"]');
-                const notaExameField = row.querySelector('[name*="[nota_exame]"]');
-                const semestre1Field = row.querySelector('[name*="[nota_semestre_1]"]');
-                const semestre2Field = row.querySelector('[name*="[nota_semestre_2]"]');
-
-                // Atualiza o campo de Nota Final
-                notaFinalField.value = notaFinal;
-                formatarNotaFinal(notaFinalField); // Aplica estilos
-
-                // Formatação dos campos Semestre 1 e 2
-                formatarNota(semestre1Field);
-                formatarNota(semestre2Field);
-
-                // Lógica para o campo de Nota Exame
-                if (parseFloat(notaFinal) > 7) {
-                    notaExameField.value = "N/A";
-                    notaExameField.setAttribute('readonly', 'readonly'); // Desabilita o campo
-                    notaExameField.classList.remove("nota-vermelha", "nota-amarela");
-                    notaExameField.classList.add("nota-verde"); // Verde para "N/A"
-                } else {
-                    notaExameField.value = "";
-                    notaExameField.removeAttribute('readonly'); // Habilita o campo
-                    notaExameField.classList.remove("nota-verde");
+        // Função para formatar valores numéricos, convertendo vírgulas em pontos e ajustando o valor
+        function formatarValor(input) {
+            let value = parseFloat(input.value.replace(",", "."));
+            if (!isNaN(value)) {
+                // Ajusta valores maiores que 10 e menores ou iguais a 100
+                if (value > 10 && value <= 100) {
+                    value = value / 10;
                 }
+                // Restringe o valor ao intervalo de 0 a 10
+                value = Math.min(Math.max(value, 0), 10);
+                // Atualiza o campo com 2 casas decimais
+                input.value = value.toFixed(2).replace(".", ",");
+            } else {
+                input.value = ""; // Limpa o campo se o valor não for válido
             }
-        });
+        }
 
         // Função para aplicar estilos gerais (Semestre 1 e 2)
         function formatarNota(input) {
-            const valor = parseFloat(input.value);
+            const valor = parseFloat(input.value.replace(",", "."));
             input.classList.remove("nota-vermelha", "nota-amarela", "nota-verde");
 
             if (!isNaN(valor)) {
@@ -454,7 +427,7 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
 
         // Função para aplicar estilos SOMENTE ao campo de Nota Final
         function formatarNotaFinal(input) {
-            const valor = parseFloat(input.value);
+            const valor = parseFloat(input.value.replace(",", "."));
             const isNA = input.value === "N/A";
 
             input.classList.remove("nota-vermelha", "nota-amarela", "nota-verde");
@@ -470,37 +443,78 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
             }
         }
 
-        // Aplica estilos iniciais para todas as linhas
-        const rows = document.querySelectorAll('tr');
-        rows.forEach(row => {
-            const notaFinalField = row.querySelector('[name*="[nota_final]"]');
-            const notaExameField = row.querySelector('[name*="[nota_exame]"]');
-            const semestre1Field = row.querySelector('[name*="[nota_semestre_1]"]');
-            const semestre2Field = row.querySelector('[name*="[nota_semestre_2]"]');
+        // Função para inicializar os estilos da tabela ao carregar a página
+        function inicializarTabela() {
+            const rows = tabela.querySelectorAll("tr");
 
-            if (notaFinalField) {
-                formatarNotaFinal(notaFinalField); // Apenas Nota Final recebe estilo
-            }
+            rows.forEach(row => {
+                const notaFinalField = row.querySelector('[name*="[nota_final]"]');
+                const semestre1Field = row.querySelector('[name*="[nota_semestre_1]"]');
+                const semestre2Field = row.querySelector('[name*="[nota_semestre_2]"]');
+                const notaExameField = row.querySelector('[name*="[nota_exame]"]');
 
-            if (semestre1Field) {
-                formatarNota(semestre1Field); // Aplica estilo para Semestre 1
-            }
+                if (semestre1Field) {
+                    formatarValor(semestre1Field); // Aplica formatação de valor
+                    formatarNota(semestre1Field);  // Aplica estilo
+                }
 
-            if (semestre2Field) {
-                formatarNota(semestre2Field); // Aplica estilo para Semestre 2
-            }
+                if (semestre2Field) {
+                    formatarValor(semestre2Field);
+                    formatarNota(semestre2Field);
+                }
 
-            if (notaFinalField && notaExameField) {
-                const notaFinal = parseFloat(notaFinalField.value);
-                if (notaFinal >= 7) {
-                    notaExameField.value = "APR";
-                    notaExameField.setAttribute('readonly', 'readonly');
-                    notaExameField.classList.add("nota-verde");
+                if (notaFinalField) {
+                    formatarValor(notaFinalField);
+                    formatarNotaFinal(notaFinalField);
+                }
+
+                if (notaExameField) {
+                    const notaFinal = parseFloat(notaFinalField?.value.replace(",", "."));
+                    if (notaFinal >= 7) {
+                        notaExameField.value = "N/A";
+                        notaExameField.setAttribute('readonly', 'readonly');
+                        notaExameField.classList.add("nota-verde");
+                    }
+                }
+            });
+        }
+
+        // Chama a função de inicialização ao carregar a página
+        inicializarTabela();
+
+        // Evento de input e blur para formatação e estilos dinâmicos
+        tabela.addEventListener("input", function (event) {
+            const input = event.target;
+            const row = input.closest("tr");
+
+            if (row) {
+                const notaFinalField = row.querySelector('[name*="[nota_final]"]');
+                const semestre1Field = row.querySelector('[name*="[nota_semestre_1]"]');
+                const semestre2Field = row.querySelector('[name*="[nota_semestre_2]"]');
+
+                // Formata e atualiza os valores dinamicamente
+                formatarValor(input);
+                if (input === semestre1Field || input === semestre2Field) {
+                    formatarNota(input);
+                }
+                if (input === notaFinalField) {
+                    formatarNotaFinal(input);
                 }
             }
         });
+
+        tabela.addEventListener("blur", function (event) {
+            const input = event.target;
+            if (input.tagName === "INPUT") {
+                formatarValor(input); // Garante que o valor seja formatado ao sair do campo
+            }
+        }, true);
     });
 </script>
+
+
+
+
 
 
 
