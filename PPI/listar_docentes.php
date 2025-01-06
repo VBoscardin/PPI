@@ -9,9 +9,6 @@ if ($conn->connect_error) {
 $sucesso = "";
 $erro = "";
 
-// Mensagens de sucesso e erro
-$sucesso = "";
-$erro = "";
 
 $stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
 $stmt->bind_param("s", $_SESSION['email']);
@@ -93,7 +90,9 @@ $sql = "
     LEFT JOIN 
         turmas t ON td.turma_numero = t.numero AND td.turma_ano = t.ano
     GROUP BY 
-        d.id;
+        d.id
+    ORDER BY 
+        d.nome ASC;
 ";
 
 $result = $conn->query($sql);
@@ -229,290 +228,47 @@ while ($disciplina = $disciplinas_result->fetch_assoc()) {
                         </div>
                     <?php endif; ?>
 
+
                     <div class="card shadow">
                         <div class="card-body">
-                            <!-- Campos de Filtros -->
-                            <div class="mb-3 row g-3">
-                                <div class="col-md-3">
-                                    <input type="text" id="filterNome" class="form-control" placeholder="Filtrar por Nome">
-                                </div>
-                                <div class="col-md-3">
-                                    <input type="text" id="filterEmail" class="form-control" placeholder="Filtrar por Email">
-                                </div>
-                                <div class="col-md-3">
-                                    <input type="text" id="filterSiape" class="form-control" placeholder="Filtrar por Siape">
-                                </div>
-                                <div class="col-md-3">
-                                    <select id="filterDisciplinas" class="form-select">
-                                        <option value="">Todas as Disciplinas</option>
-                                        <?php
-                                        // Preencher o dropdown com as disciplinas disponíveis
-                                        foreach ($disciplinas_options as $disciplina) {
-                                            echo "<option value='" . htmlspecialchars($disciplina['nome']) . "'>" . htmlspecialchars($disciplina['nome']) . "</option>";
-                                        }
-                                        ?>
-                                    </select>
-                                </div>
-                            </div>
+                           <!-- Campos de Filtros -->
+        <div class="mb-3 row g-3">
+            <div class="col-md-3">
+                <input type="text" id="filterNome" class="form-control" placeholder="Filtrar por Nome" onkeyup="filterTable()">
+            </div>
+            <div class="col-md-3">
+                <input type="text" id="filterEmail" class="form-control" placeholder="Filtrar por Email" onkeyup="filterTable()">
+            </div>
+            <div class="col-md-3">
+                <input type="text" id="filterSiape" class="form-control" placeholder="Filtrar por Siape" onkeyup="filterTable()">
+            </div>
+</div>
+
+
 
                             <div class="row">
                                 <!-- Primeira coluna -->
-                                <div class="col-md-6">
+                                
                                     <div class="table-responsive">
-                                        <table id="docentesTable1" class="table table-bordered table-hover table-sm align-middle">
-                                            <thead class="table-dark">
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Foto</th>
-                                                    <th>Nome</th>
-                                                    <th>Email</th>
-                                                    <th>Siape</th>
-                                                    <th>Ações</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php
-                                                // Inicializando as variáveis para separar os docentes em duas tabelas
-                                                $pares = [];
-                                                $impares = [];
-                                                if ($result->num_rows > 0):
-                                                    $index = 0;  // Iniciamos o contador para dividir os docentes entre par e ímpar
-                                                    while($row = $result->fetch_assoc()):
-                                                        if ($index % 2 == 0) {
-                                                            $pares[] = $row;  // Adiciona à primeira tabela (pares)
-                                                        } else {
-                                                            $impares[] = $row;  // Adiciona à segunda tabela (ímpares)
-                                                        }
-                                                        $index++;
-                                                    endwhile;
-                                                endif;
+                                    <table id="docentesTable1" class="table table-bordered table-hover table-sm align-middle">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Nome</th>
+                                                <th>Email</th>
+                                                <th>Siape</th>
+                                                <th>Ações</th>
+                                                <p id="noResultsMessage" class="text-center text-danger" style="display:none;">Nenhum Docente encontrado.</p>
 
-                                                // Exibindo os docentes para a primeira tabela (pares)
-                                                foreach ($pares as $row):
-                                                ?>
-                                                    <tr>
-                                                        <td><?php echo $row['docente_id']; ?></td>
-                                                        <td>
-                                                            <?php if ($row['foto_perfil']): ?>
-                                                                <img src="<?php echo $row['foto_perfil']; ?>" alt="Foto de <?php echo $row['docente_nome']; ?>" width="50" height="50">
-                                                            <?php else: ?>
-                                                                <img src="path/to/default/image.jpg" alt="Foto padrão" width="50" height="50">
-                                                            <?php endif; ?>
-                                                        </td>
-                                                        <td><?php echo $row['docente_nome']; ?></td>
-                                                        <td><?php echo $row['docente_email']; ?></td>
-                                                        <td><?php echo $row['docente_siape']; ?></td>
-                                                        <td class="text-center">
-                                                    <button class="btn btn-info btn-sm" onclick="toggleDetalhes(<?php echo $row['docente_id']; ?>)">
-                                                        <i class="fas fa-eye" id="eye-icon-<?php echo $row['docente_id']; ?>"></i>
-                                                        <span id="toggle-text-<?php echo $row['docente_id']; ?>">Ver Mais</span>
-                                                    </button>
-                                                </td>
                                             </tr>
-
-                                            <!-- Detalhes do Docente - Esta linha será exibida/ocultada -->
-                                            <tr id="detalhes-<?php echo $row['docente_id']; ?>" class="detalhes-linha" style="display:none;">
-                                            <td colspan="7">
-                                                <table class="table table-bordered" style="background-color: white;">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Nome Completo</th>
-                                                            <th>Email</th>
-                                                            <th>Siape</th>
-                                                            <th>Disciplinas e Turmas</th> <!-- Coluna combinada -->
-                                                            <th>Ações</th> <!-- Coluna para os botões -->
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody style="background-color: white;"> <!-- Fundo branco no corpo da tabela -->
-                                                        <tr>
-                                                            <td style="background-color: white;"><?php echo $row['docente_nome']; ?></td>
-                                                            <td style="background-color: white;"><?php echo $row['docente_email']; ?></td>
-                                                            <td style="background-color: white;"><?php echo $row['docente_siape']; ?></td>
-                                                            <td style="background-color: white;">
-                                                                <?php
-                                                                $docente_id = $row['docente_id'];
-                                                                
-                                                                // Consultar disciplinas e turmas associadas ao docente
-                                                                $sql_disciplinas_turmas = "
-                                                                    SELECT 
-                                                                        d.nome AS disciplina_nome,
-                                                                        t.numero AS turma_numero,
-                                                                        t.ano AS turma_ano
-                                                                    FROM 
-                                                                        docentes_disciplinas dd
-                                                                    JOIN 
-                                                                        disciplinas d ON dd.disciplina_id = d.id
-                                                                    JOIN 
-                                                                        turmas_disciplinas td ON d.id = td.disciplina_id
-                                                                    JOIN 
-                                                                        turmas t ON td.turma_numero = t.numero
-                                                                    WHERE 
-                                                                        dd.docente_id = ?
-                                                                    ORDER BY d.nome ASC, t.ano DESC, t.numero ASC;
-                                                                ";
-                                                                $stmt_disciplinas_turmas = $conn->prepare($sql_disciplinas_turmas);
-                                                                $stmt_disciplinas_turmas->bind_param("i", $docente_id);
-                                                                $stmt_disciplinas_turmas->execute();
-                                                                $result_disciplinas_turmas = $stmt_disciplinas_turmas->get_result();
-
-                                                                if ($result_disciplinas_turmas->num_rows > 0) {
-                                                                    $disciplinas_turmas = [];
-                                                                    while ($row_discip_turma = $result_disciplinas_turmas->fetch_assoc()) {
-                                                                        // Exibe o nome da disciplina e da turma no formato desejado
-                                                                        $disciplinas_turmas[] = htmlspecialchars($row_discip_turma['disciplina_nome']) . " - Turma " . htmlspecialchars($row_discip_turma['turma_numero']) . " (" . htmlspecialchars($row_discip_turma['turma_ano']) . ")";
-                                                                    }
-                                                                    // Exibe as disciplinas e turmas concatenadas
-                                                                    echo implode('<br>', $disciplinas_turmas);
-                                                                } else {
-                                                                    echo "Nenhuma disciplina e turma atribuída.";
-                                                                }
-                                                                ?>
-                                                            </td>
-                                                            <td style="background-color: white;">
-                                                                <!-- Botões de Ação (Editar e Excluir) -->
-                                                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $row['docente_id']; ?>">
-                                                                    <i class="fas fa-edit"></i> Editar
-                                                                </button>
-                                                                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal<?php echo $row['docente_id']; ?>">
-                                                                    <i class="fas fa-trash-alt"></i> Excluir
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </td>
-
-                                        </tr>
-                                        <!-- Modal de Edição -->
-            
-                                        <!-- Modal Editar -->
-                                        <div class="modal fade" id="editarModal<?php echo $row['docente_id']; ?>" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
-                                                <div class="modal-dialog modal-lg">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header bg-warning text-white">
-                                                            <h5 class="modal-title" id="editarModalLabel"><i class="fas fa-edit"></i> Editar Docente</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                        </div>
-                                                        <form action="" method="POST">
-                                                            <div class="modal-body">
-                                                                <input type="hidden" name="edit_docente" value="1">
-                                                                <input type="hidden" name="docente_id" value="<?php echo $row['docente_id']; ?>">
-                                                                <div class="mb-3">
-                                                                    <label for="nome" class="form-label">Nome</label>
-                                                                    <input type="text" name="nome" class="form-control" value="<?php echo $row['docente_nome']; ?>" required>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <label for="email" class="form-label">Email</label>
-                                                                    <input type="email" name="email" class="form-control" value="<?php echo $row['docente_email']; ?>" required>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <label for="siape" class="form-label">Siape</label>
-                                                                    <input type="text" name="siape" class="form-control" value="<?php echo $row['docente_siape']; ?>" required>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <label for="disciplinas" class="form-label">Disciplinas e Turmas</label><br>
-                                                                    <?php
-                                                                    // Listar todas as disciplinas e turmas disponíveis
-                                                                    foreach ($disciplinas_options as $disciplina) {
-                                                                        $disciplinas_docente = [];
-                                                                        $sql_check = "SELECT disciplina_id FROM docentes_disciplinas WHERE docente_id = ?";
-                                                                        $stmt_check = $conn->prepare($sql_check);
-                                                                        $stmt_check->bind_param("i", $row['docente_id']);
-                                                                        $stmt_check->execute();
-                                                                        $result_check = $stmt_check->get_result();
-
-                                                                        while ($checked_row = $result_check->fetch_assoc()) {
-                                                                            $disciplinas_docente[] = $checked_row['disciplina_id'];
-                                                                        }
-
-                                                                        $checked = in_array($disciplina['id'], $disciplinas_docente) ? 'checked' : '';
-
-                                                                        $sql_turma = "
-                                                                            SELECT t.numero AS turma_numero, t.ano AS turma_ano
-                                                                            FROM turmas_disciplinas td
-                                                                            JOIN turmas t ON td.turma_numero = t.numero
-                                                                            WHERE td.disciplina_id = ?";
-                                                                        $stmt_turma = $conn->prepare($sql_turma);
-                                                                        $stmt_turma->bind_param("i", $disciplina['id']);
-                                                                        $stmt_turma->execute();
-                                                                        $result_turma = $stmt_turma->get_result();
-
-                                                                        if ($result_turma->num_rows > 0) {
-                                                                            while ($turma_row = $result_turma->fetch_assoc()) {
-                                                                                echo "<input type='checkbox' name='disciplinas[]' value='" . $disciplina['id'] . "' $checked> " . $disciplina['nome'] . " (Turma " . $turma_row['turma_numero'] . " - " . $turma_row['turma_ano'] . ")<br>";
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                    ?>
-                                                                </div>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                                <button type="submit" class="btn btn-success">Salvar Alterações</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                                        <!-- Modal Excluir -->
-                                                        <div class="modal fade" id="deleteModal<?php echo $row['docente_id']; ?>" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-                                                <div class="modal-dialog modal-md">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header bg-danger text-white">
-                                                            <h5 class="modal-title" id="deleteModalLabel"><i class="fas fa-trash-alt"></i> Excluir Docente</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                        </div>
-                                                        <form method="POST" action="">
-                                                            <div class="modal-body">
-                                                                <input type="hidden" name="delete_docente" value="1">
-                                                                <input type="hidden" name="docente_id" value="<?php echo $row['docente_id']; ?>">
-                                                                <p>Tem certeza de que deseja excluir o docente <strong><?php echo $row['docente_nome']; ?></strong>?</p>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                                <button type="submit" class="btn btn-danger">Excluir</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                <!-- Segunda coluna -->
-                                <div class="col-md-6">
-                                    <div class="table-responsive">
-                                        <table id="docentesTable2" class="table table-bordered table-hover table-sm align-middle">
-                                            <thead class="table-dark">
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Foto</th>
-                                                    <th>Nome</th>
-                                                    <th>Email</th>
-                                                    <th>Siape</th>
-                                                    <th>Ações</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php
-                                                // Exibindo os docentes para a segunda tabela (ímpares)
-                                                foreach ($impares as $row):
-                                                ?>
+                                        </thead>
+                                        <tbody>
+                                            <?php
+                                            if ($result && $result->num_rows > 0) {
+                                                while ($row = $result->fetch_assoc()) {
+                                                    ?>
                                                     <tr>
                                                         <td><?php echo $row['docente_id']; ?></td>
-                                                        <td>
-                                                            <?php if ($row['foto_perfil']): ?>
-                                                                <img src="<?php echo $row['foto_perfil']; ?>" alt="Foto de <?php echo $row['docente_nome']; ?>" width="50" height="50">
-                                                            <?php else: ?>
-                                                                <img src="path/to/default/image.jpg" alt="Foto padrão" width="50" height="50">
-                                                            <?php endif; ?>
-                                                        </td>
                                                         <td><?php echo $row['docente_nome']; ?></td>
                                                         <td><?php echo $row['docente_email']; ?></td>
                                                         <td><?php echo $row['docente_siape']; ?></td>
@@ -522,10 +278,175 @@ while ($disciplina = $disciplinas_result->fetch_assoc()) {
                                                                 <span id="toggle-text-<?php echo $row['docente_id']; ?>">Ver Mais</span>
                                                             </button>
                                                         </td>
+                                                        
                                                     </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
+
+                                                    <!-- Linha de detalhes -->
+                                                    <tr id="detalhes-<?php echo $row['docente_id']; ?>" class="detalhes-linha" style="display:none;">
+                                                        <td colspan="5">
+                                                            <table class="table table-bordered" style="background-color: white;">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Disciplinas e Turmas</th>
+                                                                        <th>Ações</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody style="background-color: white;">
+                                                                    <tr>
+                                                                        <td style="background-color: white;">
+                                                                            <?php
+                                                                            $docente_id = $row['docente_id'];
+                                                                            // Consultar disciplinas e turmas associadas ao docente
+                                                                            $sql_disciplinas_turmas = "
+                                                                                SELECT 
+                                                                                    d.nome AS disciplina_nome,
+                                                                                    t.numero AS turma_numero,
+                                                                                    t.ano AS turma_ano
+                                                                                FROM 
+                                                                                    docentes_disciplinas dd
+                                                                                JOIN 
+                                                                                    disciplinas d ON dd.disciplina_id = d.id
+                                                                                JOIN 
+                                                                                    turmas_disciplinas td ON d.id = td.disciplina_id
+                                                                                JOIN 
+                                                                                    turmas t ON td.turma_numero = t.numero
+                                                                                WHERE 
+                                                                                    dd.docente_id = ?
+                                                                                ORDER BY d.nome ASC, t.ano DESC, t.numero ASC;
+                                                                            ";
+                                                                            $stmt_disciplinas_turmas = $conn->prepare($sql_disciplinas_turmas);
+                                                                            $stmt_disciplinas_turmas->bind_param("i", $docente_id);
+                                                                            $stmt_disciplinas_turmas->execute();
+                                                                            $result_disciplinas_turmas = $stmt_disciplinas_turmas->get_result();
+
+                                                                            if ($result_disciplinas_turmas->num_rows > 0) {
+                                                                                $disciplinas_turmas = [];
+                                                                                while ($row_discip_turma = $result_disciplinas_turmas->fetch_assoc()) {
+                                                                                    $disciplinas_turmas[] = htmlspecialchars($row_discip_turma['disciplina_nome']) . " - Turma " . htmlspecialchars($row_discip_turma['turma_numero']) . " (" . htmlspecialchars($row_discip_turma['turma_ano']) . ")";
+                                                                                }
+                                                                                echo implode('<br>', $disciplinas_turmas);
+                                                                            } else {
+                                                                                echo "Nenhuma disciplina e turma atribuída.";
+                                                                            }
+                                                                            ?>
+                                                                        </td>
+                                                                        <td style="background-color: white;">
+                                                                            <!-- Botões de Ação -->
+                                                                            <button class="btn btn-warning btn-sm custom-btn" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $row['docente_id']; ?>">
+                                                                                <i class="fas fa-edit me-2"></i> Editar
+                                                                            </button>
+                                                                            <button class="btn btn-danger btn-sm custom-btn" data-bs-toggle="modal" data-bs-target="#deleteModal<?php echo $row['docente_id']; ?>">
+                                                                                <i class="fas fa-trash-alt me-2"></i> Excluir
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+
+                                                    <!-- Modal de Edição -->
+                                                    <div class="modal fade" id="editarModal<?php echo $row['docente_id']; ?>" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
+                                                        <div class="modal-dialog modal-lg">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header bg-warning text-white">
+                                                                    <h5 class="modal-title" id="editarModalLabel"><i class="fas fa-edit"></i> Editar Docente</h5>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                </div>
+                                                                <form action="" method="POST">
+                                                                    <div class="modal-body">
+                                                                        <input type="hidden" name="edit_docente" value="1">
+                                                                        <input type="hidden" name="docente_id" value="<?php echo $row['docente_id']; ?>">
+                                                                        <div class="mb-3">
+                                                                            <label for="nome" class="form-label">Nome</label>
+                                                                            <input type="text" name="nome" class="form-control" value="<?php echo $row['docente_nome']; ?>" required>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label for="email" class="form-label">Email</label>
+                                                                            <input type="email" name="email" class="form-control" value="<?php echo $row['docente_email']; ?>" required>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label for="siape" class="form-label">Siape</label>
+                                                                            <input type="text" name="siape" class="form-control" value="<?php echo $row['docente_siape']; ?>" required>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label for="disciplinas" class="form-label">Disciplinas e Turmas</label><br>
+                                                                            <?php
+                                                                            // Listar todas as disciplinas e turmas disponíveis
+                                                                            foreach ($disciplinas_options as $disciplina) {
+                                                                                $disciplinas_docente = [];
+                                                                                $sql_check = "SELECT disciplina_id FROM docentes_disciplinas WHERE docente_id = ?";
+                                                                                $stmt_check = $conn->prepare($sql_check);
+                                                                                $stmt_check->bind_param("i", $row['docente_id']);
+                                                                                $stmt_check->execute();
+                                                                                $result_check = $stmt_check->get_result();
+
+                                                                                while ($checked_row = $result_check->fetch_assoc()) {
+                                                                                    $disciplinas_docente[] = $checked_row['disciplina_id'];
+                                                                                }
+
+                                                                                $checked = in_array($disciplina['id'], $disciplinas_docente) ? 'checked' : '';
+
+                                                                                $sql_turma = "
+                                                                                    SELECT t.numero AS turma_numero, t.ano AS turma_ano
+                                                                                    FROM turmas_disciplinas td
+                                                                                    JOIN turmas t ON td.turma_numero = t.numero
+                                                                                    WHERE td.disciplina_id = ?";
+                                                                                $stmt_turma = $conn->prepare($sql_turma);
+                                                                                $stmt_turma->bind_param("i", $disciplina['id']);
+                                                                                $stmt_turma->execute();
+                                                                                $result_turma = $stmt_turma->get_result();
+
+                                                                                if ($result_turma->num_rows > 0) {
+                                                                                    while ($turma_row = $result_turma->fetch_assoc()) {
+                                                                                        echo "<input type='checkbox' name='disciplinas[]' value='" . $disciplina['id'] . "' $checked> " . $disciplina['nome'] . " (Turma " . $turma_row['turma_numero'] . " - " . $turma_row['turma_ano'] . ")<br>";
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                            ?>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="modal-footer">
+                                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                                        <button type="submit" class="btn btn-success">Salvar Alterações</button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Modal Excluir -->
+                                                    <div class="modal fade" id="deleteModal<?php echo $row['docente_id']; ?>" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                                                        <div class="modal-dialog modal-md">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header bg-danger text-white">
+                                                                    <h5 class="modal-title" id="deleteModalLabel"><i class="fas fa-trash-alt"></i> Excluir Docente</h5>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                </div>
+                                                                <form method="POST" action="">
+                                                                    <div class="modal-body">
+                                                                        <input type="hidden" name="delete_docente" value="1">
+                                                                        <input type="hidden" name="docente_id" value="<?php echo $row['docente_id']; ?>">
+                                                                        <p>Tem certeza de que deseja excluir o docente <strong><?php echo $row['docente_nome']; ?></strong>?</p>
+                                                                    
+                                                                        <div class="modal-footer">
+                                                                        <div class="d-flex gap-2 justify-content-center">
+                                                                        <button type="button" class="btn btn-secondary custom-btn" data-bs-dismiss="modal">Cancelar</button>
+                                                                        <button type="submit" class="btn btn-danger custom-btn">Excluir</button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <?php
+                                                }
+                                            } else {
+                                                echo "<tr><td colspan='5' class='text-center'>Nenhum docente encontrado.</td></tr>";
+                                            }
+                                            ?>
+                                        </tbody>
+                                    </table>
                                     </div>
                                 </div>
                             </div>
@@ -539,74 +460,101 @@ while ($disciplina = $disciplinas_result->fetch_assoc()) {
 
     <script>
         function toggleDetalhes(docenteId) {
-            const detalhesRow = document.getElementById("detalhes-" + docenteId);
-            const eyeIcon = document.getElementById("eye-icon-" + docenteId);
-            const toggleText = document.getElementById("toggle-text-" + docenteId);
+    const detalhesLinha = document.getElementById(`detalhes-${docenteId}`);
+    const eyeIcon = document.getElementById(`eye-icon-${docenteId}`);
+    const toggleText = document.getElementById(`toggle-text-${docenteId}`);
 
-            if (detalhesRow.style.display === "none") {
-                detalhesRow.style.display = "table-row";
-                eyeIcon.classList.remove("fa-eye");
-                eyeIcon.classList.add("fa-eye-slash");
-                toggleText.innerText = "Ver Menos";
-            } else {
-                detalhesRow.style.display = "none";
-                eyeIcon.classList.remove("fa-eye-slash");
-                eyeIcon.classList.add("fa-eye");
-                toggleText.innerText = "Ver Mais";
-            }
-        }
+    if (detalhesLinha.style.display === "none") {
+        // Exibe a linha de detalhes
+        detalhesLinha.style.display = "table-row";
+        eyeIcon.classList.remove("fa-eye");
+        eyeIcon.classList.add("fa-eye-slash");
+        toggleText.textContent = "Ver Menos";
+    } else {
+        // Oculta a linha de detalhes
+        detalhesLinha.style.display = "none";
+        eyeIcon.classList.remove("fa-eye-slash");
+        eyeIcon.classList.add("fa-eye");
+        toggleText.textContent = "Ver Mais";
+    }
+
+    // Remova esta linha abaixo (opcional):
+    // filterTable();
+}
+
+
+
     </script>
 </body>
 </html>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"> </script>
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Elementos dos campos de filtro
-        const filterNome = document.getElementById("filterNome");
-        const filterEmail = document.getElementById("filterEmail");
-        const filterSiape = document.getElementById("filterSiape");
-        const filterDisciplinas = document.getElementById("filterDisciplinas");
-        const tableRows = document.querySelectorAll("#docentesTable tbody tr");
+// Função de filtro para a tabela
+function filterTable() {
+    const nomeFilter = document.getElementById('filterNome').value.trim().toLowerCase();
+    const emailFilter = document.getElementById('filterEmail').value.trim().toLowerCase();
+    const siapeFilter = document.getElementById('filterSiape').value.trim().toLowerCase();
+    const rows = document.querySelectorAll('#docentesTable1 tbody tr');
+    let resultsFound = false; // Variável para verificar se há resultados
 
-        // Função para filtrar as linhas da tabela
-        function filterTable() {
-            const nome = filterNome.value.toLowerCase();
-            const email = filterEmail.value.toLowerCase();
-            const siape = filterSiape.value.toLowerCase();
-            const disciplina = filterDisciplinas.value.toLowerCase();
-
-            tableRows.forEach(row => {
-                const nomeText = row.children[2].textContent.toLowerCase(); // Coluna Nome
-                const emailText = row.children[3].textContent.toLowerCase(); // Coluna Email
-                const siapeText = row.children[4].textContent.toLowerCase(); // Coluna Siape
-                const disciplinasText = row.children[5].textContent.toLowerCase(); // Coluna Disciplinas
-
-                // Verificar se cada filtro corresponde
-                const matchNome = nome === "" || nomeText.includes(nome);
-                const matchEmail = email === "" || emailText.includes(email);
-                const matchSiape = siape === "" || siapeText.includes(siape);
-                const matchDisciplina = disciplina === "" || disciplinasText.includes(disciplina);
-
-                // Mostrar ou esconder a linha com base nos filtros
-                row.style.display = matchNome && matchEmail && matchSiape && matchDisciplina ? "" : "none";
-            });
+    rows.forEach(row => {
+        // Ignora as linhas de detalhes (id começa com "detalhes-")
+        if (row.id.startsWith("detalhes-")) {
+            return;
         }
 
-        // Adicionar eventos de escuta nos campos de filtro
-        filterNome.addEventListener("input", filterTable);
-        filterEmail.addEventListener("input", filterTable);
-        filterSiape.addEventListener("input", filterTable);
-        filterDisciplinas.addEventListener("change", filterTable);
-    });zz
+        const nome = row.cells[1]?.textContent.trim().toLowerCase() || '';
+        const email = row.cells[2]?.textContent.trim().toLowerCase() || '';
+        const siape = row.cells[3]?.textContent.trim().toLowerCase() || '';
+
+        // Aplica os filtros (verifica se todos os filtros batem)
+        if (
+            nome.includes(nomeFilter) &&
+            email.includes(emailFilter) &&
+            siape.includes(siapeFilter)
+        ) {
+            row.style.display = ''; // Mostra a linha principal
+            const detalhesRow = document.getElementById(`detalhes-${row.cells[0].textContent}`);
+            if (detalhesRow) {
+                detalhesRow.style.display = 'none'; // Oculta os detalhes inicialmente
+            }
+            resultsFound = true; // Encontrou resultados
+        } else {
+            row.style.display = 'none'; // Esconde a linha principal
+            const detalhesRow = document.getElementById(`detalhes-${row.cells[0].textContent}`);
+            if (detalhesRow) {
+                detalhesRow.style.display = 'none'; // Esconde também os detalhes
+            }
+        }
+    });
+
+    // Exibe ou oculta a mensagem de "Nenhum resultado encontrado"
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    if (resultsFound) {
+        noResultsMessage.style.display = 'none'; // Esconde a mensagem se houver resultados
+    } else {
+        noResultsMessage.style.display = 'block'; // Exibe a mensagem se não houver resultados
+    }
+}
 
 
-    // Ocultar mensagens automaticamente após 5 segundos
-    setTimeout(() => {
-            const sucesso = document.getElementById('mensagem-sucesso');
-            const erro = document.getElementById('mensagem-erro');
-            if (sucesso) sucesso.style.display = 'none';
-            if (erro) erro.style.display = 'none';
-        }, 3000); // 5 segundos
+
+
+
+
+
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"> </script>
+<script>
+// Ocultar mensagens automaticamente após 5 segundos
+setTimeout(() => {
+    const sucesso = document.getElementById('mensagem-sucesso');
+    const erro = document.getElementById('mensagem-erro');
+    if (sucesso) sucesso.style.display = 'none'; // Ocultar mensagem de sucesso
+    if (erro) erro.style.display = 'none'; // Ocultar mensagem de erro
+}, 5000); // 5 segundos
+
 </script>
 
 <?php

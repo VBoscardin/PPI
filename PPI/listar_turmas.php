@@ -233,7 +233,7 @@ $disciplinas_result = $conn->query($disciplinas_query);
             <div class="container">
                     <div class="header-container">
                         <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
-                        <div class="title ms-3">Listar e Editar Disciplinas</div>
+                        <div class="title ms-3">Listar e Editar Turmas</div>
                         <div class="ms-auto d-flex align-items-center">
                             <div class="profile-info d-flex align-items-center">
                             <div class="profile-details me-2">
@@ -264,7 +264,7 @@ $disciplinas_result = $conn->query($disciplinas_query);
                         <!-- Tabela de Turmas -->
 
                         <div class="table-responsive">
-                            <table id="turmasTable" class="table table-striped table-bordered table-hover table-sm align-middle rounded">
+                            <table id="turmasTable" class="table table-bordered table-hover table-sm align-middle">
                                 <thead class="table-dark">
                                     <tr>
                                         <th>Número</th>
@@ -295,7 +295,7 @@ $disciplinas_result = $conn->query($disciplinas_query);
                                                 }
                                                 ?>
                                             </td>
-                                            <td>
+                                            <td class="text-center">
 
                                             <button class="btn btn-info btn-sm" onclick="toggleDetalhes(<?php echo $row['numero']; ?>)">
                                                 <i class="fas fa-eye" id="eye-icon-<?php echo $row['numero']; ?>"></i>
@@ -316,11 +316,9 @@ $disciplinas_result = $conn->query($disciplinas_query);
                                                 <thead class="bg-danger text-light">
                                                 <tr>
                                                     <thead class="bg-danger text-light">
-                                                        <tr>
-                                                            
+                                                        <tr>                                         
                                                             <th>Ano de Ingresso</th>
                                                             <th>Ano de Oferta</th>
-                                                            
                                                             <th>Presidente da Turma</th>
                                                             <th>Disciplinas</th>
                                                             <th>Discentes</th>
@@ -331,9 +329,7 @@ $disciplinas_result = $conn->query($disciplinas_query);
                                                         <tr>
                                                             
                                                             <td><?php echo htmlspecialchars($row['ano_ingresso']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['ano_oferta']); ?></td>
-                                                            
-                                                            
+                                                            <td><?php echo htmlspecialchars($row['ano_oferta']); ?></td>                                 
                                                             <td><?php echo htmlspecialchars($row['presidente_nome']) ?: "Sem Presidente"; ?></td>
                                                             <td>
                                                                 <?php
@@ -377,7 +373,7 @@ $disciplinas_result = $conn->query($disciplinas_query);
                                                             </td>
                                                             <td>
                                                                 <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $row['numero']; ?>">
-                                                                    <i class="fas fa-edit"></i> Editar
+                                                                    <i class="fas fa-edit me-2"></i> Editar
                                                                 </button>
                                                             </td>
                                                         </tr>

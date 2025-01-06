@@ -211,23 +211,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['matricula'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Listar Discentes</title>
+    <title>Editar Discentes</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Forum:wght@700&display=swap" rel="stylesheet">
-    <link href="style.css" rel="stylesheet" type="text/css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    <link href="style.css" rel="stylesheet" type="text/css">
     <style>
         h3{
             font-family: "Forum", "serif";
         }
-
+        
     </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
+            
             <!-- Barra lateral -->
             <div class="col-md-3 sidebar">
                 <div class="separator mb-3"></div>
@@ -246,7 +246,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['matricula'])) {
                             <i class="fas fa-plus"></i> Cadastrar Discente
                         </button>
                     </div>
-                
+                    <div class="expandable-menu">
+                        <button onclick="location.href='cadastrar_notas_globais.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Notas Globais
+                        </button>
+                    </div>
                     <div class="expandable-menu">
                         <button onclick="location.href='editar_discente.php'">
                             <i class="fas fa-plus"></i> Editar Discente
@@ -260,7 +264,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['matricula'])) {
                     <i class="fas fa-sign-out-alt"></i> Sair
                 </button>
             </div>
-
             <!-- Conteúdo principal -->
             <div class="col-md-9 main-content">
                 <div class="container">
@@ -287,83 +290,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['matricula'])) {
                         <div class="col-12">
                             <div class="card shadow mb-4">
                                 <div class="card-body"> 
-                                <!-- Seção de Escolher Turma -->
                                 <?php if ($displayTurmas): ?>
-                                    <div class="col-12">
-                                        <div class="card shadow mb-4">
-                                            <div class="card-body">
-                                                <h3 class="card-title">Escolha a Turma para Verificar os Discentes</h3>
-                                                <hr>
-                                                <div class="row">
-                                                    <?php if ($result_cursos->num_rows > 0): ?>
-                                                        <?php while ($curso = $result_cursos->fetch_assoc()): ?>
-                                                            <div class="col-md-4 mb-3">
-                                                                <div class="card text-center">
-                                                                    <div class="card-header">
-                                                                        <h4 class="card-title"><?php echo htmlspecialchars($curso['nome']); ?></h4>
-                                                                    </div>
-                                                                    <div class="card-body">
-                                                                        <?php if (isset($turmas_por_curso[$curso['nome']])): ?>
-                                                                            <?php foreach ($turmas_por_curso[$curso['nome']] as $turma): ?>
-                                                                                <button class="btn btn-success mb-2" onclick='listarDiscentes(<?php echo htmlspecialchars($turma['numero']); ?>, <?php echo htmlspecialchars($turma['ano']); ?>)'>
-                                                                                    Turma <?php echo htmlspecialchars($turma['numero']); ?> - Ano <?php echo htmlspecialchars($turma['ano']); ?>
-                                                                                </button><br>
-                                                                            <?php endforeach; ?>
-                                                                        <?php else: ?>
-                                                                            <p>Sem turmas cadastradas.</p>
-                                                                        <?php endif; ?>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        <?php endwhile; ?>
-                                                    <?php else: ?>
-                                                        <p class="text-center">Nenhum curso encontrado.</p>
-                                                    <?php endif; ?>
-                                                </div>
+                                    <div class="mb-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar por Nome...">
                                             </div>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
+                                            <div class="col-md-3">
+                                                <input type="text" id="filterTurma" class="form-control" placeholder="Filtrar por Turma...">
+                                            </div>
 
-                                <!-- Seção de Discentes -->
-                                <?php if (!$displayTurmas && isset($result_discentes)): ?>
-                                    <div class="col-12">
-                                        <div class="card shadow mb-4">
-                                            <div class="card-body">
-                                                <h3 class="card-title mb-4">Discentes da Turma <?php echo htmlspecialchars($turma_numero); ?> - Ano <?php echo htmlspecialchars($turma_ano); ?></h3>
-                                                <hr>
-                                                <?php if ($result_discentes->num_rows > 0): ?>
-                                                    <div class="row">
-                                                        <?php while ($row = $result_discentes->fetch_assoc()): ?>
-                                                            <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
-                                                                <div class="card shadow-sm">
-                                                                    <div class="card-body">
-                                                                        <h5 class="card-title"><?php echo htmlspecialchars($row['discente_nome']); ?></h5>
-                                                                        <button class="btn btn-primary btn-block" onclick='exibirInformacoes(<?php echo htmlspecialchars($row['numero_matricula']); ?>)'>
-                                                                            Ver Informações
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        <?php endwhile; ?>
-                                                    </div>
-                                                <?php else: ?>
-                                                    <button class="btn btn-primary mb-4" onclick="window.location.href='listar_discentes.php';">
-                                                        <i class="fas fa-arrow-left"></i> Voltar para a lista de turmas
-                                                    </button>
-                                                    <p class="text-center">Não há discentes cadastrados para esta turma.</p>
-                                                <?php endif; ?>
-                                            </div>
+                                            <div class="col-md-3">
+                                                <input type="text" id="filterCurso" class="form-control" placeholder="Filtrar por Curso...">
+                                            </div> 
                                         </div>
-                                    </div>
-                                <?php endif; ?>
+
+
+                                    <table  id="discentesTable" class="table table-bordered table-hover table-sm align-middle">
+                                    <thead class="table-dark">
+                                            <tr>
+                                                <th>Discente</th>
+                                                <th>Turma</th>
+                                                <th>Curso</th>
+                                                <th>Ação</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        <p id="noResultsMessage" style="display: none; color: red;">Nenhum resultado encontrado</p> <!-- Mensagem -->
+                                            <?php
+                                            // Exibir discentes por turma e curso
+                                            foreach ($turmas_por_curso as $curso_nome => $turmas): 
+                                                foreach ($turmas as $turma):
+                                                    $turma_numero = $turma['numero'];
+                                                    $turma_ano = $turma['ano'];
+                                                    $discentes_query = "
+                                                        SELECT d.numero_matricula, d.nome AS discente_nome 
+                                                        FROM discentes d
+                                                        JOIN discentes_turmas dt ON d.numero_matricula = dt.numero_matricula
+                                                        WHERE dt.turma_numero = ? AND dt.turma_ano = ?
+                                                        ORDER BY d.nome;
+                                                    ";
+                                                    
+                                                    $stmt = $conn->prepare($discentes_query);
+                                                    $stmt->bind_param("ii", $turma_numero, $turma_ano);
+                                                    $stmt->execute();
+                                                    $result_discentes = $stmt->get_result();
+                                                    while ($discente = $result_discentes->fetch_assoc()):
+                                            ?>
+                                                        <tr class="discente-row">
+                                                        <td class="discente-nome"><?php echo htmlspecialchars($discente['discente_nome']); ?></td>
+                                                        <td class="discente-turma"><?php echo htmlspecialchars($turma_numero) . " - " . htmlspecialchars($turma_ano); ?></td>
+                                                        <td class="discente-curso"><?php echo htmlspecialchars($curso_nome); ?></td>
+                                                            
+                                                        <td class="text-center">
+                                                            <button class="btn btn-warning bt-sm custom-btn" onclick="exibirInformacoes(<?php echo $discente['numero_matricula']; ?>)">
+                                                                <i class="fas fa-edit" style="margin-right: 8px;"></i>
+                                                                <span>Editar/Ver Detalhes</span>
+                                                            </button>
+                                                        </td>
+
+
+                                                        </tr>
+                                            <?php
+                                                    endwhile;
+                                                endforeach;
+                                            endforeach;
+                                            ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
 
                                 <!-- Seção de Informações do Discente -->
                                 <?php if ($displayDiscenteInfo && isset($discente_info)): ?>
                                     <div class="col-12">
-                                        <div class="card shadow mb-4">
-                                            <div class="card-body">
-                                                <h3 class="card-title">Informações do Discente</h3>
+                                        
+                                                <h3 class="card-title">Informações de <?php echo htmlspecialchars($discente_info['discente_nome']); ?></h3>
                                                 <hr>
                                                 <form method="POST" action="">
                                                     <input type="hidden" name="matricula" value="<?php echo htmlspecialchars($discente_info['numero_matricula']); ?>">
@@ -412,35 +416,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['matricula'])) {
                                                                         <td><input type="text" class="form-control" name="reprovacoes" value="<?php echo htmlspecialchars($discente_info['reprovacoes']); ?>" required></td>
                                                                         
                                                                         <tr>
-                                                                    <td><strong>Acompanhamento?</strong></td>
+                                                                    <td><strong>Turma:</strong></td>
                                                                     <td>
-                                                                        <select class="form-select" name="turma" id="turma">
-                                                                            <option value="">Selecione a turma</option>
-                                                                            <?php foreach ($turmas_por_curso as $curso_nome => $turmas): ?>
-                                                                                <optgroup label="<?php echo $curso_nome; ?>">
-                                                                                    <?php foreach ($turmas as $turma): ?>
-                                                                                        <?php 
-                                                                                            // Cria o valor do option com a combinação de número e ano da turma
-                                                                                            $turma_value = $turma['numero'] . "|" . $turma['ano'];
+    <select class="form-select" name="nova_turma" id="turma">
+        <option value="">Selecione a turma</option>
+        <?php foreach ($turmas_por_curso as $curso_nome => $turmas): ?>
+            <optgroup label="<?php echo $curso_nome; ?>">
+                <?php foreach ($turmas as $turma): ?>
+                    <?php
+                        // Cria o valor do option com a combinação de número e ano da turma
+                        $turma_value = $turma['numero'] . "|" . $turma['ano'];
 
-                                                                                            // Verifica se o discente tem uma turma e compara com a turma atual
-                                                                                            $selected = '';
-                                                                                            if (isset($discente_info['turma_numero']) && isset($discente_info['turma_ano'])) {
-                                                                                                // Verifica se o número e ano da turma correspondem aos valores do discente
-                                                                                                if ($discente_info['turma_numero'] == $turma['numero'] && $discente_info['turma_ano'] == $turma['ano']) {
-                                                                                                    $selected = 'selected'; // Marca como selecionada
-                                                                                                }
-                                                                                            }
-                                                                                        ?>
-                                                                                        <option value="<?php echo $turma_value; ?>" <?php echo $selected; ?>>
-                                                                                            <?php echo $turma['numero'] . ' - ' . $turma['ano']; ?>
-                                                                                        </option>
-                                                                                    <?php endforeach; ?>
-                                                                                </optgroup>
-                                                                            <?php endforeach; ?>
-                                                                        </select>           
+                        // Verifica se a turma do discente já foi definida
+                        $selected = '';
+                        // Garantir que os dados do discente estejam presentes
+                        if (isset($discente_info['turma_numero']) && isset($discente_info['turma_ano'])) {
+                            // Verifica se o número e ano da turma correspondem aos dados do discente
+                            $discente_turma_value = $discente_info['turma_numero'] . "|" . $discente_info['turma_ano'];
+                            if ($discente_turma_value == $turma_value) {
+                                $selected = 'selected'; // Marca como selecionada
+                            }
+                        }
+                    ?>
+                    <option value="<?php echo $turma_value; ?>" <?php echo $selected; ?>>
+                        <?php echo $turma['numero'] . ' - ' . $turma['ano']; ?>
+                    </option>
+                <?php endforeach; ?>
+            </optgroup>
+        <?php endforeach; ?>
+    </select>
+</td>
 
-                                                                    </tr>
+
+
                                                                     </table>
                                                                 </div>
                                                             </div>
@@ -540,48 +548,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['matricula'])) {
                                                         </div> <!-- Fim da primeira linha -->
                                                         
                                                         <div class="text-end mt-3">
-    <button type="submit" class="btn btn-success btn-block">
-        <i class="fas fa-save"></i> Salvar Alterações
-    </button>
-</div>
+                                                        <a href="editar_discente.php" class="btn btn-secondary btn-sm ms-2">
+                                                            <i class="fas fa-arrow-left"></i> Voltar
+                                                        </a>
+                                                        <button type="submit" class="btn btn-success btn-block">
+                                                            <i class="fas fa-save"></i> Salvar Alterações
+                                                        </button>
+                                                        
+                                                    </div>
+
 
                                                     
                                                     </form>
 
                                                     <div class="card-body">
-                                                        <hr>
-                                                        <h3 class="mt-4">Notas de <?php echo htmlspecialchars($discente_info['discente_nome']); ?></h3>
-                                                        <table class="table table-bordered table-hover table-sm" style="border-radius: 4px; overflow: hidden;">
-                                                            <thead class="table-dark">
-                                                                <tr>
-                                                                    <th>Disciplina</th>
-                                                                    <th>1º Parcial</th>
-                                                                    <th>1º Semestre</th>
-                                                                    <th>2º Parcial</th>
-                                                                    <th>2º Semestre</th>
-                                                                    <th>Nota Final</th>
-                                                                    <th>Exame</th>
-                                                                    <th>Faltas</th>
-                                                                    <th>Observações</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <?php while ($nota = $result_notas->fetch_assoc()): ?>
-                                                                    <tr>
-                                                                        <td><?php echo htmlspecialchars($nota['disciplina_nome']); ?></td>
-                                                                        <td><?php echo htmlspecialchars($nota['parcial_1']); ?></td>
-                                                                        <td><?php echo htmlspecialchars($nota['nota_semestre_1']); ?></td>
-                                                                        <td><?php echo htmlspecialchars($nota['parcial_2']); ?></td>
-                                                                        <td><?php echo htmlspecialchars($nota['nota_semestre_2']); ?></td>
-                                                                        <td><?php echo htmlspecialchars($nota['nota_final']); ?></td>
-                                                                        <td><?php echo isset($nota['exame']) ? htmlspecialchars($nota['exame']) : 'N/A'; ?></td>
-                                                                        <td><?php echo htmlspecialchars($nota['faltas']); ?></td>
-                                                                        <td><?php echo htmlspecialchars($nota['observacoes']); ?></td>
-                                                                    </tr>
-                                                                <?php endwhile; ?>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
+    <hr>
+    <h3 class="mt-4">Notas de <?php echo htmlspecialchars($discente_info['discente_nome']); ?></h3>
+    <table class="table table-bordered table-hover table-sm" style="border-radius: 4px; overflow: hidden;">
+        <thead class="table-dark">
+            <tr>
+                <th>Disciplina</th>
+                <th>1º Parcial</th>
+                <th>1º Semestre</th>
+                <th>2º Parcial</th>
+                <th>2º Semestre</th>
+                <th>Nota Final</th>
+                <th>Exame</th>
+                <th>Faltas</th>
+                <th>Observações</th>
+                <th>Ais</th> <!-- Nova coluna para Ais -->
+                <th>Mostra Ciências</th> <!-- Nova coluna para Mostra Ciências -->
+                <th>PPI</th> <!-- Nova coluna para PPI -->
+            </tr>
+        </thead>
+        <tbody>
+            <?php while ($nota = $result_notas->fetch_assoc()): ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($nota['disciplina_nome']); ?></td>
+                    <td><?php echo htmlspecialchars($nota['parcial_1']); ?></td>
+                    <td><?php echo htmlspecialchars($nota['nota_semestre_1']); ?></td>
+                    <td><?php echo htmlspecialchars($nota['parcial_2']); ?></td>
+                    <td><?php echo htmlspecialchars($nota['nota_semestre_2']); ?></td>
+                    <td><?php echo htmlspecialchars($nota['nota_final']); ?></td>
+                    <td><?php echo isset($nota['nota_exame']) ? htmlspecialchars($nota['nota_exame']) : 'N/A'; ?></td>
+                    <td><?php echo htmlspecialchars($nota['faltas']); ?></td>
+                    <td><?php echo htmlspecialchars($nota['observacoes']); ?></td>
+                    <td><?php echo isset($nota['ais']) ? htmlspecialchars($nota['ais']) : 'N/A'; ?></td> <!-- Exibe a nota Ais -->
+                    <td><?php echo isset($nota['mostra_ciencias']) ? htmlspecialchars($nota['mostra_ciencias']) : 'N/A'; ?></td> <!-- Exibe a nota Mostra Ciências -->
+                    <td><?php echo isset($nota['ppi']) ? htmlspecialchars($nota['ppi']) : 'N/A'; ?></td> <!-- Exibe a nota PPI -->
+                </tr>
+            <?php endwhile; ?>
+        </tbody>
+    </table>
+</div>
+
                                                 </div>
                                             </div>
                                         </div>
@@ -594,9 +614,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['matricula'])) {
     </div>
 <?php endif; ?>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // Captura os elementos de entrada de pesquisa
+    const searchInput = document.getElementById('searchInput');
+    const filterTurma = document.getElementById('filterTurma');
+    const filterCurso = document.getElementById('filterCurso');  // Filtro de curso
+    const tableRows = document.querySelectorAll('.discente-row'); // Todas as linhas da tabela
+    const noResultsMessage = document.getElementById('noResultsMessage'); // Mensagem de "Nenhum resultado encontrado"
 
+    // Função de filtragem
+    function filterTable() {
+        const searchValue = searchInput.value.toLowerCase();
+        const turmaValue = filterTurma.value.toLowerCase(); // Filtro pela turma
+        const cursoValue = filterCurso.value.toLowerCase(); // Filtro pelo curso
 
+        let hasResults = false;
 
+        // Percorre todas as linhas da tabela
+        tableRows.forEach(row => {
+            // Captura os valores das colunas relevantes
+            const nomeDiscente = row.querySelector('.discente-nome').textContent.toLowerCase();
+            const turma = row.querySelector('.discente-turma').textContent.split('-')[0].trim().toLowerCase(); // Apenas o número da turma
+            const curso = row.querySelector('.discente-curso').textContent.toLowerCase(); // Curso do discente
+
+            // Verifica se os valores digitados correspondem ao conteúdo das colunas
+            const matchesSearch = !searchValue || nomeDiscente.includes(searchValue);
+            const matchesTurma = !turmaValue || turma.includes(turmaValue); // Compara apenas o número da turma
+            const matchesCurso = !cursoValue || curso.includes(cursoValue); // Verifica se o filtro de curso corresponde
+
+            // Exibe ou oculta a linha com base na correspondência
+            if (matchesSearch && matchesTurma && matchesCurso) {
+                row.style.display = ""; // Mostra a linha
+                hasResults = true;
+            } else {
+                row.style.display = "none"; // Oculta a linha
+            }
+        });
+
+        // Exibe ou oculta a mensagem de "Nenhum resultado encontrado"
+        noResultsMessage.style.display = hasResults ? "none" : "";
+    }
+
+    // Adiciona os eventos de digitação (input) nos campos de pesquisa
+    searchInput.addEventListener('input', filterTable);
+    filterTurma.addEventListener('input', filterTable); // Filtro apenas pelo número da turma
+    filterCurso.addEventListener('input', filterTable); // Filtro pelo curso (mudança do valor)
+});
+
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 

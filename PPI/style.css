@@ -182,7 +182,7 @@ body {
 
 .btn-warning {
     background-color: #ffc107; /* Amarelo */
-}
+}s
 
 .btn-warning:hover {
     background-color: #e0a800;
@@ -257,4 +257,12 @@ h4{
 .fa-eye-slash {
     transform: scale(0); /* Diminui o ícone para simular que ele desaparece */
     opacity: 0; /* Torna o ícone invisível */
+}
+
+.custom-btn {
+    width: 100%;          /* Faz os botões ocuparem toda a largura disponível */
+    height: 36px;         /* Define a altura do botão para todos */
+    display: flex;        /* Flexbox para alinhamento */
+    align-items: center;  /* Alinha o conteúdo verticalmente */
+    justify-content: center; /* Alinha o conteúdo horizontalmente */
 }

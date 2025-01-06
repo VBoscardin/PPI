@@ -241,14 +241,17 @@ $conn->close();
                                             <td><?php echo htmlspecialchars($row['curso_nome']); ?></td>
                                             <td><?php echo htmlspecialchars($row['coordenador_nome']); ?></td>
                                             <td>
-                                                <!-- Botões de ação com ícones estilizados -->
-                                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $row['id']; ?>">
-                                                    <i class="fas fa-edit"></i> Editar
-                                                </button>
-                                                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#excluirModal<?php echo $row['id']; ?>">
-                                                    <i class="fas fa-trash-alt"></i> Excluir
-                                                </button>
+                                                <!-- Botões de ação com ícones estilizados lado a lado -->
+                                                <div class="d-flex gap-2">
+                                                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $row['id']; ?>">
+                                                        <i class="fas fa-edit me-2"></i> Editar
+                                                    </button>
+                                                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#excluirModal<?php echo $row['id']; ?>">
+                                                        <i class="fas fa-trash-alt me-2"></i> Excluir
+                                                    </button>
+                                                </div>
                                             </td>
+
                                         </tr>
 
                                         <!-- Modal Editar -->
@@ -301,9 +304,11 @@ $conn->close();
                                                             <p>Tem certeza que deseja excluir o curso "<strong><?php echo htmlspecialchars($row['curso_nome']); ?></strong>"?</p>
                                                         </div>
                                                         <div class="modal-footer">
-                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                            <button type="submit" name="delete_curso" class="btn btn-danger">Excluir</button>
-                                                        </div>
+                                                            <div class="d-flex gap-2 justify-content-center">
+                                                                <button type="button" class="btn btn-secondary custom-btn" data-bs-dismiss="modal">Cancelar</button>
+                                                                <button type="submit" name="delete_curso" class="btn btn-danger custom-btn">Excluir</button>
+                                                            </div>
+                                                        </div>                
                                                     </form>
                                                 </div>
                                             </div>

@@ -101,6 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_id'])) {
 }
 
 // Selecionar disciplinas com turma e docentes associados
+// Selecionar disciplinas com turma e docentes associados
 $query = "
     SELECT 
         disciplinas.id, 
@@ -120,14 +121,43 @@ $query = "
         docentes ON docentes_disciplinas.docente_id = docentes.id
     GROUP BY 
         disciplinas.id
-    ORDER BY disciplinas.nome ASC    ";
-    
+    ORDER BY disciplinas.nome ASC
+";
 
 $disciplinas = $conn->query($query)->fetch_all(MYSQLI_ASSOC);
 
-// Obter lista de turmas e docentes
-$turmas = $conn->query("SELECT numero, ano FROM turmas")->fetch_all(MYSQLI_ASSOC);
-$docentes = $conn->query("SELECT id, nome FROM docentes")->fetch_all(MYSQLI_ASSOC);
+// Consultar as notas para cada disciplina
+foreach ($disciplinas as &$disciplina) {
+    $notasQuery = "
+        SELECT 
+            notas.id, 
+            discentes.nome AS discente_nome,
+            notas.parcial_1, 
+            notas.ais, 
+            notas.nota_semestre_1,
+            notas.parcial_2, 
+            notas.mostra_ciencias, 
+            notas.ppi,
+            notas.nota_semestre_2, 
+            notas.nota_final, 
+            notas.nota_exame, 
+            notas.faltas
+        FROM 
+            notas
+        JOIN 
+            discentes ON notas.discente_id = discentes.numero_matricula
+        WHERE 
+            notas.disciplina_id = ? AND notas.turma_numero = ?
+    ";
+    
+    $stmt = $conn->prepare($notasQuery);
+    $stmt->bind_param("ii", $disciplina['id'], $disciplina['turma_numero']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $disciplina['notas'] = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+}
+
 ?>
 
 
@@ -258,33 +288,19 @@ $docentes = $conn->query("SELECT id, nome FROM docentes")->fetch_all(MYSQLI_ASSO
                     <div class="card-body">
                    
                         <!-- Campo de Pesquisa -->
-                        <div class="mb-3">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar por Nome ou ID...">
-                                </div>
-                                <div class="col-md-3">
-                                    <select id="filterTurma" class="form-select">
-                                        <option value="">Todas as Turmas</option>
-                                        <?php foreach ($turmas as $turma): ?>
-                                            <option value="<?php echo htmlspecialchars($turma['numero']); ?>">
-                                                <?php echo htmlspecialchars($turma['numero']); ?> - <?php echo htmlspecialchars($turma['ano']); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <select id="filterDocente" class="form-select">
-                                        <option value="">Todos os Docentes</option>
-                                        <?php foreach ($docentes as $docente): ?>
-                                            <option value="<?php echo htmlspecialchars($docente['nome']); ?>">
-                                                <?php echo htmlspecialchars($docente['nome']); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
+<div class="mb-3">
+    <div class="row">
+        <div class="col-md-6">
+            <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar por Nome da Disciplina...">
+        </div>
+        <div class="col-md-3">
+            <input type="text" id="filterTurma" class="form-control" placeholder="Filtrar por Turma...">
+        </div>
+        <div class="col-md-3">
+            <input type="text" id="filterDocente" class="form-control" placeholder="Filtrar por Docente...">
+        </div>
+    </div>
+</div>
 
                         <!-- Tabela de Disciplinas -->
                         <?php if (!empty($disciplinas)): ?>
@@ -301,23 +317,63 @@ $docentes = $conn->query("SELECT id, nome FROM docentes")->fetch_all(MYSQLI_ASSO
                                     </thead>
                                     <tbody>
                                         <?php foreach ($disciplinas as $disciplina): ?>
-                                            <tr>
+                                            <tr class="disciplina-row">
+                                            <p id="noResultsMessage" class="text-center text-danger" style="display:none;">Nenhuma Disciplina encontrada.</p>
+
                                                 <td class="text-center"><?php echo htmlspecialchars($disciplina['id']); ?></td>
-                                                <td><?php echo htmlspecialchars($disciplina['disciplina_nome']); ?></td>
-                                                <td><?php echo htmlspecialchars($disciplina['turma_numero']); ?> - <?php echo htmlspecialchars($disciplina['turma_ano']); ?></td>
-                                                <td><?php echo htmlspecialchars($disciplina['docentes_nomes']); ?></td>
+                                                <td class="disciplina-nome"><?php echo htmlspecialchars($disciplina['disciplina_nome']); ?></td>
+                                                <td class="disciplina-turma"><?php echo htmlspecialchars($disciplina['turma_numero']); ?> - <?php echo htmlspecialchars($disciplina['turma_ano']); ?></td>
+                                                <td class="disciplina-docentes"><?php echo htmlspecialchars($disciplina['docentes_nomes']); ?></td>
                                                 <td class="text-center">
-                                                    <div class="d-flex gap-2">
-                                                        <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $disciplina['id']; ?>">
+                                                    <div class="d-flex gap-2 justify-content-center ">
+                                                        <button class="btn btn-warning btn-sm custom-btn" data-bs-toggle="modal" data-bs-target="#editarModal<?php echo $disciplina['id']; ?>">
                                                             <i class="fas fa-edit me-2"></i> Editar
                                                         </button>
-                                                        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#excluirModal<?php echo $disciplina['id']; ?>">
+                                                        <button class="btn btn-success btn-sm custom-btn" type="button" onclick="toggleNotas(<?php echo $disciplina['id']; ?>)">
+                                                            <i class="fas fa-book me-2"></i> Ver Notas
+                                                        </button><button class="btn btn-danger btn-sm custom-btn" data-bs-toggle="modal" data-bs-target="#excluirModal<?php echo $disciplina['id']; ?>">
                                                             <i class="fas fa-trash-alt me-2"></i> Excluir
                                                         </button>
+                                                        
                                                     </div>
                                                 </td>
                                             </tr>
-                                             <!-- Modal Editar -->
+
+                                            <!-- Tabela de Notas (oculta inicialmente) -->
+                                            <tr id="notasRow<?php echo $disciplina['id']; ?>" style="display: none;">
+                                                <td colspan="5">
+                                                    <table class="table  table-hover table-bordered">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Nome do Aluno</th>
+                                                                <th>Parcial 1</th>
+                                                                <th>Nota Semestre 1</th>
+                                                                <th>Parcial 2</th>
+                                                                <th>Nota Semestre 2</th>
+                                                                <th>Nota Final</th>
+                                                                <th>Nota Exame</th>
+                                                                <th>Faltas</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <?php foreach ($disciplina['notas'] as $nota): ?>
+                                                                <tr>
+                                                                    <td><?php echo htmlspecialchars($nota['discente_nome']); ?></td>
+                                                                    <td><?php echo htmlspecialchars($nota['parcial_1']); ?></td>
+                                                                    <td><?php echo htmlspecialchars($nota['nota_semestre_1']); ?></td>
+                                                                    <td><?php echo htmlspecialchars($nota['parcial_2']); ?></td>
+                                                                    <td><?php echo htmlspecialchars($nota['nota_semestre_2']); ?></td>
+                                                                    <td><?php echo htmlspecialchars($nota['nota_final']); ?></td>
+                                                                    <td><?php echo isset($nota['exame']) ? htmlspecialchars($nota['exame']) : 'N/A'; ?></td>
+                                                                    <td><?php echo htmlspecialchars($nota['faltas']); ?></td>
+                                                                </tr>
+                                                            <?php endforeach; ?>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            
+                                            <!-- Modal Editar -->
                                             <div class="modal fade" id="editarModal<?php echo $disciplina['id']; ?>" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
                                                 <div class="modal-dialog modal-lg">
                                                     <div class="modal-content">
@@ -328,30 +384,62 @@ $docentes = $conn->query("SELECT id, nome FROM docentes")->fetch_all(MYSQLI_ASSO
                                                         <form action="" method="POST">
                                                             <div class="modal-body">
                                                                 <input type="hidden" name="editar_id" value="<?php echo $disciplina['id']; ?>">
+                                                                
+                                                                <!-- Nome da Disciplina -->
                                                                 <div class="mb-3">
                                                                     <label for="novo_nome" class="form-label">Nome da Disciplina</label>
                                                                     <input type="text" name="novo_nome" class="form-control" value="<?php echo htmlspecialchars($disciplina['disciplina_nome']); ?>" required>
                                                                 </div>
+                                                                
+                                                                <!-- Turma -->
                                                                 <div class="mb-3">
                                                                     <label for="nova_turma" class="form-label">Turma</label>
                                                                     <select name="nova_turma" class="form-select" required>
                                                                         <option value="">Selecione uma turma</option>
-                                                                        <?php foreach ($turmas as $turma): ?>
-                                                                            <option value="<?php echo htmlspecialchars($turma['numero']); ?>" <?php echo ($turma['numero'] === $disciplina['turma_numero']) ? 'selected' : ''; ?>>
-                                                                                <?php echo htmlspecialchars($turma['numero']); ?> - <?php echo htmlspecialchars($turma['ano']); ?>
+                                                                        <?php
+                                                                        // Consultar todas as turmas
+                                                                        $stmt = $conn->prepare("SELECT numero, ano FROM turmas");
+                                                                        $stmt->execute();
+                                                                        $result = $stmt->get_result();
+
+                                                                        // Carregar as turmas e selecionar a turma da disciplina
+                                                                        while ($row = $result->fetch_assoc()): ?>
+                                                                            <option value="<?php echo htmlspecialchars($row['numero']); ?>" 
+                                                                                <?php echo ($row['numero'] == $disciplina['turma_numero']) ? 'selected' : ''; ?>>
+                                                                                <?php echo htmlspecialchars($row['numero']); ?> - <?php echo htmlspecialchars($row['ano']); ?>
                                                                             </option>
-                                                                        <?php endforeach; ?>
+                                                                        <?php endwhile; ?>
                                                                     </select>
                                                                 </div>
+                                                                
+                                                                <!-- Docentes -->
                                                                 <div class="mb-3">
                                                                     <label for="docentes" class="form-label">Docentes</label>
                                                                     <select name="docentes[]" class="form-select" multiple required>
-                                                                        <?php foreach ($docentes as $docente): ?>
-                                                                            <option value="<?php echo htmlspecialchars($docente['id']); ?>"
-                                                                                <?php echo (strpos($disciplina['docentes_nomes'], htmlspecialchars($docente['nome'])) !== false) ? 'selected' : ''; ?>>
-                                                                                <?php echo htmlspecialchars($docente['nome']); ?>
+                                                                        <?php
+                                                                        // Buscar docentes associados à disciplina atual
+                                                                        $stmt = $conn->prepare("SELECT d.id, d.nome FROM docentes d
+                                                                                                JOIN docentes_disciplinas dd ON d.id = dd.docente_id
+                                                                                                WHERE dd.disciplina_id = ?");
+                                                                        $stmt->bind_param("i", $disciplina['id']);
+                                                                        $stmt->execute();
+                                                                        $result = $stmt->get_result();
+                                                                        $docentesSelecionados = [];
+                                                                        while ($row = $result->fetch_assoc()) {
+                                                                            $docentesSelecionados[] = $row['id'];
+                                                                        }
+                                                                        $stmt->close();
+
+                                                                        // Exibir todos os docentes e marcar os selecionados
+                                                                        $stmt = $conn->prepare("SELECT id, nome FROM docentes");
+                                                                        $stmt->execute();
+                                                                        $result = $stmt->get_result();
+                                                                        while ($row = $result->fetch_assoc()): ?>
+                                                                            <option value="<?php echo htmlspecialchars($row['id']); ?>"
+                                                                                <?php echo in_array($row['id'], $docentesSelecionados) ? 'selected' : ''; ?>>
+                                                                                <?php echo htmlspecialchars($row['nome']); ?>
                                                                             </option>
-                                                                        <?php endforeach; ?>
+                                                                        <?php endwhile; ?>
                                                                     </select>
                                                                     <small>Segure Ctrl para selecionar múltiplos docentes</small>
                                                                 </div>
@@ -364,6 +452,7 @@ $docentes = $conn->query("SELECT id, nome FROM docentes")->fetch_all(MYSQLI_ASSO
                                                     </div>
                                                 </div>
                                             </div>
+
 
                                             <!-- Modal Excluir -->
                                             <div class="modal fade" id="excluirModal<?php echo $disciplina['id']; ?>" tabindex="-1" aria-labelledby="excluirModalLabel" aria-hidden="true">
@@ -379,13 +468,19 @@ $docentes = $conn->query("SELECT id, nome FROM docentes")->fetch_all(MYSQLI_ASSO
                                                                 <p>Tem certeza que deseja excluir a disciplina "<strong><?php echo htmlspecialchars($disciplina['disciplina_nome']); ?></strong>"?</p>
                                                             </div>
                                                             <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                                <button type="submit" class="btn btn-danger">Excluir</button>
-                                                            </div>
+                                                                <div class="d-flex gap-2 justify-content-center">
+                                                                    <button type="button" class="btn btn-secondary custom-btn" data-bs-dismiss="modal">Cancelar</button>
+                                                                    <button type="submit" class="btn btn-danger custom-btn">Excluir</button>
+                                                                </div>
+                                                            </div>    
                                                         </form>
                                                     </div>
                                                 </div>
                                             </div>
+                                            
+                                           
+
+
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
@@ -405,27 +500,55 @@ $docentes = $conn->query("SELECT id, nome FROM docentes")->fetch_all(MYSQLI_ASSO
      <!-- Scripts -->
      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
      <script>
-        // Função de pesquisa e filtros
-        function filtrarTabela() {
-            const searchValue = document.getElementById('searchInput').value.toLowerCase();
-            const turmaValue = document.getElementById('filterTurma').value;
-            const docenteValue = document.getElementById('filterDocente').value;
-            const rows = document.querySelectorAll('#disciplinasTable tbody tr');
+    document.addEventListener("DOMContentLoaded", function () {
+        // Captura os elementos de entrada de pesquisa
+        const searchInput = document.getElementById('searchInput');
+        const filterTurma = document.getElementById('filterTurma');
+        const filterDocente = document.getElementById('filterDocente');
+        const tableRows = document.querySelectorAll('.disciplina-row'); // Todas as linhas da tabela
+        const noResultsMessage = document.getElementById('noResultsMessage'); // Mensagem de "Nenhum resultado encontrado"
 
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                const idNomeMatch = cells[0].textContent.toLowerCase().includes(searchValue) || cells[1].textContent.toLowerCase().includes(searchValue);
-                const turmaMatch = turmaValue === "" || cells[2].textContent.includes(turmaValue);
-                const docenteMatch = docenteValue === "" || cells[3].textContent.includes(docenteValue);
+        // Função de filtragem
+        function filterTable() {
+            const searchValue = searchInput.value.toLowerCase();
+            const turmaValue = filterTurma.value.toLowerCase();
+            const docenteValue = filterDocente.value.toLowerCase();
 
-                row.style.display = idNomeMatch && turmaMatch && docenteMatch ? '' : 'none';
+            let hasResults = false;
+
+            // Percorre todas as linhas da tabela
+            tableRows.forEach(row => {
+                // Captura os valores das colunas relevantes
+                const nomeDisciplina = row.querySelector('.disciplina-nome').textContent.toLowerCase();
+                const turma = row.querySelector('.disciplina-turma').textContent.split('-')[0].trim().toLowerCase(); // Apenas o número da turma
+                const docentes = row.querySelector('.disciplina-docentes').textContent.toLowerCase();
+
+                // Verifica se os valores digitados correspondem ao conteúdo das colunas
+                const matchesSearch = !searchValue || nomeDisciplina.includes(searchValue);
+                const matchesTurma = !turmaValue || turma.includes(turmaValue); // Compara apenas o número da turma
+                const matchesDocente = !docenteValue || docentes.includes(docenteValue);
+
+                // Exibe ou oculta a linha com base na correspondência
+                if (matchesSearch && matchesTurma && matchesDocente) {
+                    row.style.display = ""; // Mostra a linha
+                    hasResults = true;
+                } else {
+                    row.style.display = "none"; // Oculta a linha
+                }
             });
+
+            // Exibe ou oculta a mensagem de "Nenhum resultado encontrado"
+            noResultsMessage.style.display = hasResults ? "none" : "";
         }
 
-        // Eventos nos campos de pesquisa e filtros
-        document.getElementById('searchInput').addEventListener('keyup', filtrarTabela);
-        document.getElementById('filterTurma').addEventListener('change', filtrarTabela);
-        document.getElementById('filterDocente').addEventListener('change', filtrarTabela);
+        // Adiciona os eventos de digitação (input) nos campos de pesquisa
+        searchInput.addEventListener('input', filterTable);
+        filterTurma.addEventListener('input', filterTable);
+        filterDocente.addEventListener('input', filterTable);
+    });
+</script>
+
+<script>
 
         // Ocultar mensagens automaticamente após 5 segundos
         setTimeout(() => {
@@ -435,6 +558,18 @@ $docentes = $conn->query("SELECT id, nome FROM docentes")->fetch_all(MYSQLI_ASSO
             if (erro) erro.style.display = 'none';
         }, 3000); // 5 segundos
     </script>
+<script>
+    // Função para exibir ou ocultar as notas
+    function toggleNotas(disciplinaId) {
+        var notasRow = document.getElementById('notasRow' + disciplinaId);
+        // Alternar a exibição das notas
+        if (notasRow.style.display === 'none') {
+            notasRow.style.display = 'table-row';  // Exibir as notas
+        } else {
+            notasRow.style.display = 'none';  // Ocultar as notas
+        }
+    }
+</script>
 
 </body>
 </html>

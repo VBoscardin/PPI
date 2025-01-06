@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['disciplina_id'])) {
         $parcial_2 = floatval($nota_data['parcial_2']);
         $nota_semestre_2 = floatval($nota_data['nota_semestre_2']);
         $nota_final = isset($nota_data['nota_final']) ? floatval($nota_data['nota_final']) : null;
-        $nota_exame = isset($nota_data['nota_exame']) ? floatval($nota_data['nota_exame']) : null;
+        
         $faltas = intval($nota_data['faltas']);
         $observacoes = isset($nota_data['observacoes']) ? $nota_data['observacoes'] : null;
 
@@ -91,22 +91,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['disciplina_id'])) {
             $stmt = $conn->prepare("
                 UPDATE notas 
                 SET parcial_1 = ?, nota_semestre_1 = ?, parcial_2 = ?, nota_semestre_2 = ?, 
-                    nota_final = ?, nota_exame = ?, faltas = ?, observacoes = ? 
+                    nota_final = ?, faltas = ?, observacoes = ? 
                 WHERE discente_id = ? AND disciplina_id = ?
             ");
             $stmt->bind_param("dddddisssi", 
                 $parcial_1, $nota_semestre_1, $parcial_2, $nota_semestre_2, 
-                $nota_final, $nota_exame, $faltas, $observacoes, $matricula, $selected_discipline_id);
+                $nota_final, $faltas, $observacoes, $matricula, $selected_discipline_id);
         } else {
             // Inserir nova nota
             $stmt = $conn->prepare("
                 INSERT INTO notas (discente_id, disciplina_id, turma_numero, parcial_1, nota_semestre_1, parcial_2, nota_semestre_2, 
-                                   nota_final, nota_exame, faltas, observacoes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                   nota_final, faltas, observacoes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
-            $stmt->bind_param("iiiddddddis", 
+            $stmt->bind_param("iiidddddis", 
                 $matricula, $selected_discipline_id, $turma_numero, $parcial_1, $nota_semestre_1, 
-                $parcial_2, $nota_semestre_2, $nota_final, $nota_exame, $faltas, $observacoes);
+                $parcial_2, $nota_semestre_2, $nota_final, $faltas, $observacoes);
         }
 
         if (!$stmt->execute()) {
@@ -229,9 +229,6 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
                         ds.nome, 
                         MAX(n.parcial_1) AS parcial_1, 
                         MAX(n.nota_semestre_1) AS nota_semestre_1,
-                        MAX(n.ais) AS ais, 
-                        MAX(n.ppi) AS ppi, 
-                        MAX(n.mostra_ciencias) AS mostra_ciencias,
                         MAX(n.parcial_2) AS parcial_2, 
                         MAX(n.nota_semestre_2) AS nota_semestre_2,
                         MAX(n.nota_final) AS nota_final, 
@@ -269,7 +266,7 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
                             <input type="hidden" name="disciplina_id" value="<?= $selected_discipline_id ?>">
                             <hr>
                             <div class="table-responsive">
-                                <table class="table table-striped table-bordered table-hover "> <!-- Largura mínima ajustada -->
+                                <table class="table table-bordered table-hover "> <!-- Largura mínima ajustada -->
                                     <thead class="table-dark text-center">
                                         
                                     <?php if ($selected_discipline_id): ?>
@@ -296,11 +293,8 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
                                         <tr>
                                             <th>Aluno</th>
                                             <th>Parcial 1</th>
-                                            <th>AIS</th>
                                             <th>Semestre 1</th>
                                             <th>Parcial 2</th>
-                                            <th>MC</th>
-                                            <th>PPI</th>
                                             <th>Semestre 2</th>
                                             <th>Nota Final</th>
                                             <th>Nota Exame</th>
@@ -318,11 +312,7 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
                                                         name="notas[<?= $student['numero_matricula'] ?>][parcial_1]" 
                                                         value="<?= number_format($student['parcial_1'], 2, '.', '') ?>"></td>
 
-                                                <!-- AIS - Somente leitura -->
-                                                <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
-                                                        name="notas[<?= $student['numero_matricula'] ?>][ais]" 
-                                                        value="<?= htmlspecialchars($student['ais']) ?>" readonly></td>
-
+                                            
                                                 <!-- Nota semestre 1 -->
                                                 <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
                                                         name="notas[<?= $student['numero_matricula'] ?>][nota_semestre_1]" 
@@ -332,16 +322,6 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
                                                 <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
                                                         name="notas[<?= $student['numero_matricula'] ?>][parcial_2]" 
                                                         value="<?= number_format($student['parcial_2'], 2, '.', '') ?>"></td>
-
-                                                <!-- Mostra de Ciências - Somente leitura -->
-                                                <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
-                                                        name="notas[<?= $student['numero_matricula'] ?>][mostra_ciencias]" 
-                                                        value="<?= htmlspecialchars($student['mostra_ciencias']) ?>" readonly></td>
-
-                                                <!-- PPI - Somente leitura -->
-                                                <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
-                                                        name="notas[<?= $student['numero_matricula'] ?>][ppi]" 
-                                                        value="<?= htmlspecialchars($student['ppi']) ?>" readonly></td>
 
                                                 <!-- Nota semestre 2 -->
                                                 <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
@@ -390,133 +370,162 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const tabela = document.querySelector("table");
+    const tabela = document.querySelector("table");
 
-        // Função para formatar valores numéricos, convertendo vírgulas em pontos e ajustando o valor
-        function formatarValor(input) {
-            let value = parseFloat(input.value.replace(",", "."));
-            if (!isNaN(value)) {
-                // Ajusta valores maiores que 10 e menores ou iguais a 100
-                if (value > 10 && value <= 100) {
-                    value = value / 10;
-                }
-                // Restringe o valor ao intervalo de 0 a 10
-                value = Math.min(Math.max(value, 0), 10);
-                // Atualiza o campo com 2 casas decimais
-                input.value = value.toFixed(2).replace(".", ",");
-            } else {
-                input.value = ""; // Limpa o campo se o valor não for válido
+    // Função para formatar valores somente ao sair do campo
+    function formatarValor(input) {
+        let value = input.value.replace(",", "."); // Substitui vírgulas por pontos
+        value = parseFloat(value); // Converte para número
+
+        if (!isNaN(value)) {
+            if (value >= 100) {
+                value = value / 100; // Ajusta valores no formato como 875 -> 8,75
+            } else if (value > 10 && value < 100) {
+                value = value / 10; // Ajusta valores no formato como 87 -> 8,7
+            }
+            value = Math.min(Math.max(value, 0), 10); // Restringe ao intervalo de 0 a 10
+            input.value = value.toFixed(2).replace(".", ","); // Atualiza o valor com duas casas decimais
+        } else {
+            input.value = ""; // Limpa o campo se o valor não for válido
+        }
+    }
+
+    // Função para calcular a Nota Final
+    function calcularNotaFinal(row) {
+        const semestre1Field = row.querySelector('[name*="[nota_semestre_1]"]');
+        const semestre2Field = row.querySelector('[name*="[nota_semestre_2]"]');
+        const notaFinalField = row.querySelector('[name*="[nota_final]"]');
+        const notaExameField = row.querySelector('[name*="[nota_exame]"]');
+
+        const semestre1 = parseFloat(semestre1Field?.value.replace(",", "."));
+        const semestre2 = parseFloat(semestre2Field?.value.replace(",", "."));
+
+        // Exemplo de cálculo: média simples entre Semestre 1 e Semestre 2
+        if (!isNaN(semestre1) && !isNaN(semestre2)) {
+            const notaFinal = (semestre1 + semestre2) / 2;
+            notaFinalField.value = notaFinal.toFixed(2).replace(".", ",");
+        } else {
+            notaFinalField.value = ""; // Limpa a Nota Final se os valores forem inválidos
+        }
+
+        formatarNotaFinal(notaFinalField); // Aplica estilos à Nota Final
+
+        // Verifica se Nota Final >= 7 para limpar ou liberar o campo Nota Exame
+        const notaFinal = parseFloat(notaFinalField?.value.replace(",", "."));
+        if (notaFinal >= 7) {
+            notaExameField.value = ""; // Limpa o campo Nota Exame
+            notaExameField.setAttribute("readonly", "readonly"); // Torna o campo somente leitura
+            notaExameField.classList.remove("nota-vermelha", "nota-amarela", "nota-verde"); // Remove qualquer estilo
+        } else {
+            notaExameField.removeAttribute("readonly"); // Desbloqueia o campo para edição
+        }
+    }
+
+    // Função para aplicar estilos gerais (incluindo Parcial 1 e Parcial 2)
+    function formatarNota(input) {
+        const valor = parseFloat(input.value.replace(",", "."));
+        input.classList.remove("nota-vermelha", "nota-amarela", "nota-verde");
+
+        if (!isNaN(valor)) {
+            if (valor < 6) {
+                input.classList.add("nota-vermelha");
+            } else if (valor >= 6 && valor < 7) {
+                input.classList.add("nota-amarela");
+            } else if (valor >= 7) {
+                input.classList.add("nota-verde");
             }
         }
+    }
 
-        // Função para aplicar estilos gerais (Semestre 1 e 2)
-        function formatarNota(input) {
-            const valor = parseFloat(input.value.replace(",", "."));
-            input.classList.remove("nota-vermelha", "nota-amarela", "nota-verde");
+    // Função para aplicar estilos SOMENTE ao campo de Nota Final
+    function formatarNotaFinal(input) {
+        const valor = parseFloat(input.value.replace(",", "."));
+        const isNA = input.value === "N/A";
 
-            if (!isNaN(valor)) {
-                if (valor < 6) {
-                    input.classList.add("nota-vermelha");
-                } else if (valor >= 6 && valor < 7) {
-                    input.classList.add("nota-amarela");
-                } else if (valor >= 7) {
-                    input.classList.add("nota-verde");
-                }
+        input.classList.remove("nota-vermelha", "nota-amarela", "nota-verde");
+
+        if (isNA || valor >= 7) {
+            input.classList.add("nota-verde");
+        } else if (!isNaN(valor)) {
+            if (valor < 6) {
+                input.classList.add("nota-vermelha");
+            } else if (valor >= 6 && valor < 7) {
+                input.classList.add("nota-amarela");
             }
         }
+    }
 
-        // Função para aplicar estilos SOMENTE ao campo de Nota Final
-        function formatarNotaFinal(input) {
-            const valor = parseFloat(input.value.replace(",", "."));
-            const isNA = input.value === "N/A";
+    // Função para inicializar os estilos da tabela ao carregar a página
+    function inicializarTabela() {
+        const rows = tabela.querySelectorAll("tr");
 
-            input.classList.remove("nota-vermelha", "nota-amarela", "nota-verde");
+        rows.forEach(row => {
+            const parcial1Field = row.querySelector('[name*="[parcial_1]"]');
+            const parcial2Field = row.querySelector('[name*="[parcial_2]"]');
+            const notaFinalField = row.querySelector('[name*="[nota_final]"]');
+            const semestre1Field = row.querySelector('[name*="[nota_semestre_1]"]');
+            const semestre2Field = row.querySelector('[name*="[nota_semestre_2]"]');
+            const notaExameField = row.querySelector('[name*="[nota_exame]"]');
 
-            if (isNA || valor >= 7) {
-                input.classList.add("nota-verde"); // Verde para "N/A" ou maior que 7
-            } else if (!isNaN(valor)) {
-                if (valor < 6) {
-                    input.classList.add("nota-vermelha");
-                } else if (valor >= 6 && valor < 7) {
-                    input.classList.add("nota-amarela");
-                }
+            if (parcial1Field) {
+                formatarValor(parcial1Field); // Formata valores
+                formatarNota(parcial1Field); // Aplica estilo
             }
-        }
 
-        // Função para inicializar os estilos da tabela ao carregar a página
-        function inicializarTabela() {
-            const rows = tabela.querySelectorAll("tr");
+            if (parcial2Field) {
+                formatarValor(parcial2Field);
+                formatarNota(parcial2Field);
+            }
 
-            rows.forEach(row => {
-                const notaFinalField = row.querySelector('[name*="[nota_final]"]');
-                const semestre1Field = row.querySelector('[name*="[nota_semestre_1]"]');
-                const semestre2Field = row.querySelector('[name*="[nota_semestre_2]"]');
-                const notaExameField = row.querySelector('[name*="[nota_exame]"]');
+            if (semestre1Field) {
+                formatarValor(semestre1Field);
+                formatarNota(semestre1Field);
+            }
 
-                if (semestre1Field) {
-                    formatarValor(semestre1Field); // Aplica formatação de valor
-                    formatarNota(semestre1Field);  // Aplica estilo
-                }
+            if (semestre2Field) {
+                formatarValor(semestre2Field);
+                formatarNota(semestre2Field);
+            }
 
-                if (semestre2Field) {
-                    formatarValor(semestre2Field);
-                    formatarNota(semestre2Field);
-                }
+            if (notaFinalField) {
+                calcularNotaFinal(row); // Calcula Nota Final ao carregar
+            }
 
-                if (notaFinalField) {
-                    formatarValor(notaFinalField);
-                    formatarNotaFinal(notaFinalField);
-                }
-
-                if (notaExameField) {
-                    const notaFinal = parseFloat(notaFinalField?.value.replace(",", "."));
-                    if (notaFinal >= 7) {
-                        notaExameField.value = "N/A";
-                        notaExameField.setAttribute('readonly', 'readonly');
-                        notaExameField.classList.add("nota-verde");
-                    }
-                }
-            });
-        }
-
-        // Chama a função de inicialização ao carregar a página
-        inicializarTabela();
-
-        // Evento de input e blur para formatação e estilos dinâmicos
-        tabela.addEventListener("input", function (event) {
-            const input = event.target;
-            const row = input.closest("tr");
-
-            if (row) {
-                const notaFinalField = row.querySelector('[name*="[nota_final]"]');
-                const semestre1Field = row.querySelector('[name*="[nota_semestre_1]"]');
-                const semestre2Field = row.querySelector('[name*="[nota_semestre_2]"]');
-
-                // Formata e atualiza os valores dinamicamente
-                formatarValor(input);
-                if (input === semestre1Field || input === semestre2Field) {
-                    formatarNota(input);
-                }
-                if (input === notaFinalField) {
-                    formatarNotaFinal(input);
+            if (notaExameField) {
+                const notaFinal = parseFloat(notaFinalField?.value.replace(",", "."));
+                if (notaFinal >= 7) {
+                    notaExameField.value = ""; // Limpa o campo Nota Exame
+                    notaExameField.setAttribute("readonly", "readonly"); // Torna o campo somente leitura
+                    notaExameField.classList.remove("nota-vermelha", "nota-amarela", "nota-verde");
+                } else {
+                    notaExameField.removeAttribute("readonly"); // Desbloqueia o campo para edição
                 }
             }
         });
+    }
 
-        tabela.addEventListener("blur", function (event) {
-            const input = event.target;
-            if (input.tagName === "INPUT") {
-                formatarValor(input); // Garante que o valor seja formatado ao sair do campo
+    // Chama a função de inicialização ao carregar a página
+    inicializarTabela();
+
+    // Evento de input e blur para formatação e estilos dinâmicos
+    tabela.addEventListener("blur", function (event) {
+        const input = event.target;
+        const row = input.closest("tr");
+
+        if (row) {
+            const parcial1Field = row.querySelector('[name*="[parcial_1]"]');
+            const parcial2Field = row.querySelector('[name*="[parcial_2]"]');
+            const semestre1Field = row.querySelector('[name*="[nota_semestre_1]"]');
+            const semestre2Field = row.querySelector('[name*="[nota_semestre_2]"]');
+
+            if (input === parcial1Field || input === parcial2Field || input === semestre1Field || input === semestre2Field) {
+                formatarValor(input); // Aplica formatação de valor
+                formatarNota(input); // Aplica estilos
+                calcularNotaFinal(row); // Recalcula a Nota Final
             }
-        }, true);
-    });
+        }
+    }, true);
+});
+
 </script>
-
-
-
-
-
-
-
-
 </html>

@@ -67,7 +67,11 @@ $conn->close();
                             <i class="fas fa-plus"></i> Cadastrar Discente
                         </button>
                     </div>
-                
+                    <div class="expandable-menu">
+                        <button onclick="location.href='cadastrar_notas_globais.php'">
+                            <i class="fas fa-plus"></i> Cadastrar Notas Globais
+                        </button>
+                    </div>
                     <div class="expandable-menu">
                         <button onclick="location.href='editar_discente.php'">
                             <i class="fas fa-plus"></i> Editar Discente

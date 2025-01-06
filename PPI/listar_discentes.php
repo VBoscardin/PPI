@@ -82,12 +82,14 @@ if (isset($_GET['matricula'])) {
     SELECT 
         di.nome AS disciplina_nome, 
         n.parcial_1, n.nota_semestre_1, n.parcial_2, n.nota_semestre_2,
-        n.nota_final, n.nota_exame, n.faltas, n.observacoes
+        n.ais, n.mostra_ciencias, n.ppi, n.nota_exame,
+        n.nota_final, n.faltas, n.observacoes
     FROM notas n
     JOIN disciplinas di ON n.disciplina_id = di.id
     WHERE n.discente_id = ? 
     ORDER BY di.nome;
-    ";
+";
+
 
     $stmt = $conn->prepare($query_notas);
     $stmt->bind_param("i", $matricula);
@@ -120,7 +122,7 @@ while ($row = $result_turmas->fetch_assoc()) {
 }
 
 // Fechar a conexão com o banco de dados
-$conn->close();
+
 
 ?>
 
@@ -134,13 +136,9 @@ $conn->close();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Forum:wght@700&display=swap" rel="stylesheet">
+    
     <link href="style.css" rel="stylesheet" type="text/css">
-    <style>
-        h3{
-            font-family: "Forum", "serif";
-        }
-        
-    </style>
+    
 </head>
 
 <body>
@@ -227,7 +225,7 @@ $conn->close();
                 <div class="container">
                     <div class="header-container">
                         <img src="imgs/iffar.png" alt="Logo do IFFAR" class="logo">
-                        <div class="title ms-3">Listar e Editar Discentes</div>
+                        <div class="title ms-3">Listar Discentes</div>
                         <div class="ms-auto d-flex align-items-center">
                             <div class="profile-info d-flex align-items-center">
                                 <div class="profile-details me-2">
@@ -264,79 +262,83 @@ $conn->close();
                     <?php endif; ?>
 
                     <div class="row">
-                        <!-- Seção de Escolher Turma -->
-                        <?php if ($displayTurmas): ?>
-                        <div class="col-12">
-                            <div class="card shadow mb-4">
-                                <div class="card-body">
-                                    <h3 class="card-title">Escolha a Turma para Verificar os Discentes</h3>
-                                    <hr>
-                                    <div class="row">
-                                        <?php if ($result_cursos->num_rows > 0): ?>
-                                            <?php while ($curso = $result_cursos->fetch_assoc()): ?>
-                                                <div class="col-md-4 mb-3">
-                                                    <div class="card text-center">
-                                                        <div class="card-header">
-                                                            <h4 class="card-title"><?php echo htmlspecialchars($curso['nome']); ?></h4>
-                                                        </div>
-                                                        <div class="card-body">
-                                                            <?php if (isset($turmas_por_curso[$curso['nome']])): ?>
-                                                                <?php foreach ($turmas_por_curso[$curso['nome']] as $turma): ?>
-                                                                    <button class="btn btn-success mb-2" onclick='listarDiscentes(<?php echo htmlspecialchars($turma['numero']); ?>, <?php echo htmlspecialchars($turma['ano']); ?>)'>
-                                                                        Turma <?php echo htmlspecialchars($turma['numero']); ?> - Ano <?php echo htmlspecialchars($turma['ano']); ?>
-                                                                    </button><br>
-                                                                <?php endforeach; ?>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            <?php endwhile; ?>
-                                        <?php else: ?>
-                                            <p>Nenhum curso encontrado.</p>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <?php endif; ?>
+                        
+                    <!-- Exibir todos os discentes agrupados por curso -->
+    <?php if ($displayTurmas): ?>
+    <div class="col-12">
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="mb-3">
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar por Nome...">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" id="filterTurma" class="form-control" placeholder="Filtrar por Turma...">
+                    </div>
 
-                        <!-- Seção de Discentes -->
-                        <?php if (!$displayTurmas && isset($result_discentes)): ?>
-                        <div class="col-12">
-                            <div class="card shadow mb-4">
-                            <div class="card-body">
-                    <h3 class="card-title mb-4">Discentes da Turma <?php echo htmlspecialchars($turma_numero); ?> - Ano <?php echo htmlspecialchars($turma_ano); ?></h3>
-                    <hr>
-                    <?php if ($result_discentes->num_rows > 0): ?>
-                        <!-- Início da lista de discentes -->
-                        <div class="row">
-                            <?php while ($row = $result_discentes->fetch_assoc()): ?>
-                                <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
-                                    <div class="card shadow-sm">
-                                        <div class="card-body">
-                                            <h5 class="card-title"><?php echo htmlspecialchars($row['discente_nome']); ?></h5>
-                                            <button class="btn btn-primary btn-block" onclick='exibirInformacoes(<?php echo htmlspecialchars($row['numero_matricula']); ?>)'>
-                                                Ver Informações
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endwhile; ?>
-                        </div>
-                        <!-- Fim da lista de discentes -->
-                    <?php else: ?>
-                        <!-- Mensagem caso não existam discentes -->
-                        <!-- Botão de Voltar para a Turma -->
-                        <button class="btn btn-primary mb-4" onclick="window.location.href='listar_discentes.php';">
-                                        <i class="fas fa-arrow-left"></i> Voltar para a lista de turmas
-                                    </button>
-                        <p class="text-center">Não há discentes cadastrados para esta turma.</p>
-                    <?php endif; ?>
+                    <div class="col-md-3">
+                        <input type="text" id="filterCurso" class="form-control" placeholder="Filtrar por Curso...">
+                    </div> 
                 </div>
 
-            </div>
+
+            <table  id="discentesTable" class="table table-bordered table-hover table-sm align-middle">
+            <thead class="table-dark">
+                    <tr>
+                        <th>Discente</th>
+                        <th>Turma</th>
+                        <th>Curso</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <p id="noResultsMessage" style="display: none; color: red;">Nenhum resultado encontrado</p> <!-- Mensagem -->
+                    <?php
+                    // Exibir discentes por turma e curso
+                    foreach ($turmas_por_curso as $curso_nome => $turmas): 
+                        foreach ($turmas as $turma):
+                            $turma_numero = $turma['numero'];
+                            $turma_ano = $turma['ano'];
+                            $discentes_query = "
+                                SELECT d.numero_matricula, d.nome AS discente_nome 
+                                FROM discentes d
+                                JOIN discentes_turmas dt ON d.numero_matricula = dt.numero_matricula
+                                WHERE dt.turma_numero = ? AND dt.turma_ano = ?
+                                ORDER BY d.nome;
+                            ";
+                            
+                            $stmt = $conn->prepare($discentes_query);
+                            $stmt->bind_param("ii", $turma_numero, $turma_ano);
+                            $stmt->execute();
+                            $result_discentes = $stmt->get_result();
+                            while ($discente = $result_discentes->fetch_assoc()):
+                    ?>
+                                <tr class="discente-row">
+                                <td class="discente-nome"><?php echo htmlspecialchars($discente['discente_nome']); ?></td>
+                                <td class="discente-turma"><?php echo htmlspecialchars($turma_numero) . " - " . htmlspecialchars($turma_ano); ?></td>
+                                <td class="discente-curso"><?php echo htmlspecialchars($curso_nome); ?></td>
+                                    
+                                    <td class="text-center">
+                                        <button class="btn btn-info btn-sm" onclick="exibirInformacoes(<?php echo $discente['numero_matricula']; ?>)">
+                                            <i class="fas fa-eye" style="margin-right: 8px;"></i>
+                                            <span>Ver Detalhes</span>
+                                        </button>
+                                    </td>
+
+                                </tr>
+                    <?php
+                            endwhile;
+                        endforeach;
+                    endforeach;
+                    ?>
+                </tbody>
+            </table>
         </div>
-        <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
+
 
         <!-- Seção de Informações do Discente -->
         <?php if (!$displayTurmas && isset($discente_info)): ?>
@@ -350,8 +352,8 @@ $conn->close();
                         <i class="fas fa-arrow-left"></i> Voltar para a Turma
                     </button>
                     <hr>
-                    <table class="table table-bordered table-hover table-sm" style="border-radius: 4px; overflow: hidden;">
-                                <thead class="table-dark">
+                    <table class="table table-bordered table-hover table-sm align-middle">
+                        <thead class="table-dark">
                         <tbody>
                             <tr><td><strong>Nome:</strong></td><td><?php echo htmlspecialchars($discente_info['discente_nome']); ?></td></tr>
                             <tr><td><strong>Matrícula:</strong></td><td><?php echo htmlspecialchars($discente_info['numero_matricula']); ?></td></tr>
@@ -383,13 +385,16 @@ $conn->close();
                     <br>
                     <hr>
                     <h3 class="mt-4">Notas de <?php echo htmlspecialchars($discente_info['discente_nome']); ?></h3>
-                    <table class="table table-bordered table-hover table-sm" style="border-radius: 4px; overflow: hidden;">
+                    <table class="table table-bordered table-hover table-sm align-middle">
                                 <thead class="table-dark">
                             <tr>
                                 <th>Disciplina</th>
                                 <th>1º Parcial</th>
-                                <th>1º Semestre</th>
+                                <th>AIS</th>
+                                <th>1º Semestre</th>  
                                 <th>2º Parcial</th>
+                                <th>M.C.</th>
+                                <th>PPI</th>
                                 <th>2º Semestre</th>
                                 <th>Nota Final</th>
                                 <th>Exame</th>
@@ -402,8 +407,11 @@ $conn->close();
                                 <tr>
                                     <td><?php echo htmlspecialchars($nota['disciplina_nome']); ?></td>
                                     <td><?php echo htmlspecialchars($nota['parcial_1']); ?></td>
+                                    <td><?php echo htmlspecialchars($nota['ais']); ?></td>
                                     <td><?php echo htmlspecialchars($nota['nota_semestre_1']); ?></td>
                                     <td><?php echo htmlspecialchars($nota['parcial_2']); ?></td>
+                                    <td><?php echo htmlspecialchars($nota['mostra_ciencias']); ?></td>
+                                    <td><?php echo htmlspecialchars($nota['ppi']); ?></td>
                                     <td><?php echo htmlspecialchars($nota['nota_semestre_2']); ?></td>
                                     <td><?php echo htmlspecialchars($nota['nota_final']); ?></td>
                                     <td><?php echo isset($nota['exame']) ? htmlspecialchars($nota['exame']) : 'N/A'; ?></td>
@@ -419,6 +427,58 @@ $conn->close();
         <?php endif; ?>
     </div>
 </div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // Captura os elementos de entrada de pesquisa
+    const searchInput = document.getElementById('searchInput');
+    const filterTurma = document.getElementById('filterTurma');
+    const filterCurso = document.getElementById('filterCurso');  // Filtro de curso
+    const tableRows = document.querySelectorAll('.discente-row'); // Todas as linhas da tabela
+    const noResultsMessage = document.getElementById('noResultsMessage'); // Mensagem de "Nenhum resultado encontrado"
+
+    // Função de filtragem
+    function filterTable() {
+        const searchValue = searchInput.value.toLowerCase();
+        const turmaValue = filterTurma.value.toLowerCase(); // Filtro pela turma
+        const cursoValue = filterCurso.value.toLowerCase(); // Filtro pelo curso
+
+        let hasResults = false;
+
+        // Percorre todas as linhas da tabela
+        tableRows.forEach(row => {
+            // Captura os valores das colunas relevantes
+            const nomeDiscente = row.querySelector('.discente-nome').textContent.toLowerCase();
+            const turma = row.querySelector('.discente-turma').textContent.split('-')[0].trim().toLowerCase(); // Apenas o número da turma
+            const curso = row.querySelector('.discente-curso').textContent.toLowerCase(); // Curso do discente
+
+            // Verifica se os valores digitados correspondem ao conteúdo das colunas
+            const matchesSearch = !searchValue || nomeDiscente.includes(searchValue);
+            const matchesTurma = !turmaValue || turma.includes(turmaValue); // Compara apenas o número da turma
+            const matchesCurso = !cursoValue || curso.includes(cursoValue); // Verifica se o filtro de curso corresponde
+
+            // Exibe ou oculta a linha com base na correspondência
+            if (matchesSearch && matchesTurma && matchesCurso) {
+                row.style.display = ""; // Mostra a linha
+                hasResults = true;
+            } else {
+                row.style.display = "none"; // Oculta a linha
+            }
+        });
+
+        // Exibe ou oculta a mensagem de "Nenhum resultado encontrado"
+        noResultsMessage.style.display = hasResults ? "none" : "";
+    }
+
+    // Adiciona os eventos de digitação (input) nos campos de pesquisa
+    searchInput.addEventListener('input', filterTable);
+    filterTurma.addEventListener('input', filterTable); // Filtro apenas pelo número da turma
+    filterCurso.addEventListener('input', filterTable); // Filtro pelo curso (mudança do valor)
+});
+
+</script>
+
 
 
 <script>

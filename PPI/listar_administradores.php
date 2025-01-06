@@ -67,8 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_adm'])) {
     }
 
     // Atualizar informações no banco de dados
-    $stmt = $conn->prepare("UPDATE usuarios SET username = ?, email = ?, tipo = ?, foto_perfil = ? WHERE id = ?");
-    $stmt->bind_param('ssssi', $username, $email, $tipo, $foto_perfil, $id);
+    $stmt = $conn->prepare("UPDATE usuarios SET username = ?, email = ?,  foto_perfil = ? WHERE id = ?");
+    $stmt->bind_param('sssi', $username, $email, $foto_perfil, $id);
 
     if ($stmt->execute()) {
         $_SESSION['mensagem_sucesso'] = 'Administrador atualizado com sucesso!';
@@ -106,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_adm'])) {
     header("Location: listar_administradores.php");
     exit();
 }
+
 
 // Obter o nome e a foto do perfil do administrador logado
 $stmt = $conn->prepare("SELECT username, foto_perfil FROM usuarios WHERE email = ?");
@@ -247,94 +248,139 @@ $conn->close();
 
                     <div class="card shadow">
                         <div class="card-body">
-                            <?php if ($result->num_rows > 0): ?>
-                                <table class="table table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Nome de Usuário</th>
-                                            <th>Email</th>
-                                            <th>Foto de Perfil</th>
-                                            <th>Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    <?php while ($row = $result->fetch_assoc()): ?>
-                                        <tr>
-                                            <td><?php echo $row['id']; ?></td>
-                                            <td><?php echo htmlspecialchars($row['username']); ?></td>
-                                            <td><?php echo htmlspecialchars($row['email']); ?></td>
-                                            <td>
-                                                <?php if (!empty($row['foto_perfil']) && file_exists('uploads/' . basename($row['foto_perfil']))): ?>
-                                                    <img src="uploads/<?php echo htmlspecialchars(basename($row['foto_perfil'])); ?>" alt="Foto" class="img-thumbnail" width="50">
-                                                <?php else: ?>
-                                                    <img src="imgs/admin-photo.png" alt="Foto" class="img-thumbnail" width="50">
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal"
-                                                        data-id="<?php echo $row['id']; ?>"
-                                                        data-username="<?php echo htmlspecialchars($row['username']); ?>"
-                                                        data-email="<?php echo htmlspecialchars($row['email']); ?>">
-                                                    Editar
-                                                </button>
-                                                <form action="listar_administradores.php" method="post" class="d-inline">
-                                                    <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                                                    <button type="submit" name="delete_adm" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja excluir este administrador?');">Excluir</button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    <?php endwhile; ?>
-                                    </tbody>
-                                </table>
-                            <?php else: ?>
-                                <p>Nenhum administrador encontrado.</p>
-                            <?php endif; ?>
-                        </div>
+                             <!-- Campo de Pesquisa -->
+<div class="mb-3">
+    <div class="row">
+        <div class="col-md-6">
+            <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar por Nome do Administrador...">
+        </div>
+        <div class="col-md-3">
+            <input type="text" id="filterEmail" class="form-control" placeholder="Filtrar por E-mail...">
+        </div>
+        
+    </div>
+</div>
+                        <?php if ($result->num_rows > 0): ?>
+    <div class="table-responsive">
+    <table id="admTable" class="table table-bordered table-hover table-sm align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Nome de Usuário</th>
+                <th>Email</th>
+                <th>Foto de Perfil</th>
+                <th>Ações</th>
+                <p id="noResultsMessage" class="text-center text-danger" style="display:none;">Nenhum Administrador encontrado.</p>
+
+            </tr>
+        </thead>
+        <tbody>
+            
+        <?php while ($row = $result->fetch_assoc()): ?>
+            <tr class="adm-row">
+                <td class="adm-id"><?php echo $row['id']; ?></td>
+                <td class="adm-nome"><?php echo htmlspecialchars($row['username']); ?></td>
+                <td class="adm-email"><?php echo htmlspecialchars($row['email']); ?></td>
+                <td>
+                    <?php if (!empty($row['foto_perfil']) && file_exists('uploads/' . basename($row['foto_perfil']))): ?>
+                        <img src="uploads/<?php echo htmlspecialchars(basename($row['foto_perfil'])); ?>" alt="Foto" class="img-thumbnail" width="50">
+                    <?php else: ?>
+                        <img src="imgs/admin-photo.png" alt="Foto" class="img-thumbnail" width="50">
+                    <?php endif; ?>
+                </td>
+                <td class="text-center">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button class="btn btn-warning btn-sm custom-btn" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editarModal<?php echo $row['id']; ?>" 
+                            data-id="<?php echo $row['id']; ?>"
+                            data-username="<?php echo htmlspecialchars($row['username']); ?>"
+                            data-email="<?php echo htmlspecialchars($row['email']); ?>"
+                            data-foto="<?php echo htmlspecialchars($row['foto_perfil']); ?>">
+                            <i class="fas fa-edit me-2"></i> Editar
+                        </button>
+
+                        <button class="btn btn-danger btn-sm custom-btn" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#excluirModal<?php echo $row['id']; ?>">
+                            <i class="fas fa-trash-alt me-2"></i> Excluir
+                        </button>
                     </div>
-                </div>
-                
-                <!-- Modal de Edição -->
-                <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="editModalLabel">Editar Administrador</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
+                </td>
+            </tr>
+
+            <!-- Modal Editar -->
+            <div class="modal fade" id="editarModal<?php echo $row['id']; ?>" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-warning text-white">
+                            <h5 class="modal-title" id="editarModalLabel"><i class="fas fa-edit"></i> Editar Administrador</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form id="editForm" action="listar_administradores.php" method="post" enctype="multipart/form-data">
                             <div class="modal-body">
-                                <form id="editForm" action="listar_administradores.php" method="post" enctype="multipart/form-data">
-                                    <input type="hidden" name="id" id="editId">
-                                    <div class="mb-3">
-                                        <label for="editUsername" class="form-label">Nome de Usuário</label>
-                                        <input type="text" name="username" id="editUsername" class="form-control" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="editEmail" class="form-label">Email</label>
-                                        <input type="email" name="email" id="editEmail" class="form-control" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="editTipo" class="form-label">Tipo</label>
-                                        <select name="tipo" id="editTipo" class="form-select" required>
-                                            <option value="administrador">Administrador</option>
-                                            <!-- Adicione outros tipos se necessário -->
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="editFotoPerfil" class="form-label">Foto de Perfil</label>
-                                        <input type="file" name="foto_perfil" id="editFotoPerfil" class="form-control">
-                                    </div>
-                                    <div class="d-flex">
-                                        <button type="submit" name="update_adm" class="btn btn-light me-2">Salvar</button>
-                                        <a href="listar_administradores.php" class="btn btn-danger">Cancelar</a>
-                                    </div>
-                                </form>
+                                <input type="hidden" name="id" id="editId">
+                                <div class="mb-3">
+                                    <label for="editUsername" class="form-label">Nome de Usuário</label>
+                                    <input type="text" name="username" id="editUsername" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editEmail" class="form-label">Email</label>
+                                    <input type="email" name="email" id="editEmail" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editFotoPerfil" class="form-label">Foto de Perfil</label>
+                                    <input type="file" name="foto_perfil" id="editFotoPerfil" class="form-control">
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" name="update_adm" class="btn btn-success">Salvar</button>
+                                    <a href="listar_administradores.php" class="btn btn-secondary">Cancelar</a>
+                                </div>
                             </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Excluir -->
+            <div class="modal fade" id="excluirModal<?php echo $row['id']; ?>" tabindex="-1" aria-labelledby="excluirModalLabel<?php echo $row['id']; ?>" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="excluirModalLabel"><i class="fas fa-trash-alt"></i> Excluir Administrador</h5>                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="listar_administradores.php" method="POST">
+                            <div class="modal-body">
+                                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                <p>Tem certeza que deseja excluir o administrador "<strong><?php echo htmlspecialchars($row['username']); ?></strong>"?</p>
+                            </div>
+                            <div class="modal-footer">
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <button type="button" class="btn btn-secondary custom-btn" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="submit" name="delete_adm" class="btn btn-danger custom-btn">Excluir</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        <?php endwhile; ?>
+        </tbody>
+    </table>
+    </div>
+<?php else: ?>
+    <div class="alert alert-info">Nenhum administrador encontrado.</div>
+<?php endif; ?>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
     <script>
         // Remover a mensagem de sucesso ou erro após 5 segundos
         setTimeout(function() {
@@ -346,25 +392,79 @@ $conn->close();
             if (mensagemErro) {
                 mensagemErro.style.display = 'none';
             }
-        }, 5000);
+        }, 3000);
 
-        // Preencher o modal com dados do administrador
-        document.addEventListener('DOMContentLoaded', function() {
-            var editModal = document.getElementById('editModal');
-            editModal.addEventListener('show.bs.modal', function (event) {
-                var button = event.relatedTarget; // Botão que acionou o modal
-                var id = button.getAttribute('data-id');
-                var username = button.getAttribute('data-username');
-                var email = button.getAttribute('data-email');
-                var tipo = button.getAttribute('data-tipo');
-                
-                var modal = editModal.querySelector('form');
-                modal.querySelector('#editId').value = id;
-                modal.querySelector('#editUsername').value = username;
-                modal.querySelector('#editEmail').value = email;
-                modal.querySelector('#editTipo').value = tipo;
-            });
+        document.addEventListener('DOMContentLoaded', function () {
+    var editModals = document.querySelectorAll('[data-bs-target^="#editarModal"]');
+    editModals.forEach(function (button) {
+        button.addEventListener('click', function () {
+            var modalId = button.getAttribute('data-bs-target');
+            var modal = document.querySelector(modalId);
+            var id = button.getAttribute('data-id');
+            var username = button.getAttribute('data-username');
+            var email = button.getAttribute('data-email');
+            var foto = button.getAttribute('data-foto');
+
+            modal.querySelector('#editId').value = id;
+            modal.querySelector('#editUsername').value = username;
+            modal.querySelector('#editEmail').value = email;
+
+            if (foto && foto !== '') {
+                modal.querySelector('#editFotoPerfilPreview').src = 'uploads/' + foto;
+            } else {
+                modal.querySelector('#editFotoPerfilPreview').src = 'imgs/admin-photo.png';
+            }
         });
+    });
+});
+
     </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Captura os elementos de entrada de pesquisa
+        const searchInput = document.getElementById('searchInput');
+        const filterEmail = document.getElementById('filterEmail');
+
+        const tableRows = document.querySelectorAll('.adm-row'); // Todas as linhas da tabela
+        const noResultsMessage = document.getElementById('noResultsMessage'); // Mensagem de "Nenhum resultado encontrado"
+
+        // Função de filtragem
+        function filterTable() {
+            const searchValue = searchInput.value.toLowerCase();
+            const emailValue = filterEmail.value.toLowerCase();
+
+            let hasResults = false;
+
+            // Percorre todas as linhas da tabela
+            tableRows.forEach(row => {
+                // Captura os valores das colunas relevantes
+                const nomeUsuario = row.querySelector('.adm-nome').textContent.toLowerCase();
+                const email = row.querySelector('.adm-email').textContent.toLowerCase();
+
+                // Verifica se os valores digitados correspondem ao conteúdo das colunas
+                const matchesSearch = !searchValue || nomeUsuario.includes(searchValue);
+                const matchesEmail = !emailValue || email.includes(emailValue);
+
+                // Exibe ou oculta a linha com base na correspondência
+                if (matchesSearch && matchesEmail) {
+                    row.style.display = ""; // Mostra a linha
+                    hasResults = true;
+                } else {
+                    row.style.display = "none"; // Oculta a linha
+                }
+            });
+
+            // Exibe ou oculta a mensagem de "Nenhum resultado encontrado"
+            if (noResultsMessage) {
+                noResultsMessage.style.display = hasResults ? "none" : "block";
+            }
+        }
+
+        // Adiciona os eventos de digitação (input) nos campos de pesquisa
+        searchInput.addEventListener('input', filterTable);
+        filterEmail.addEventListener('input', filterTable);
+    });
+</script>
+
 </body>
 </html>
