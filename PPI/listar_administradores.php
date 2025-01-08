@@ -131,6 +131,12 @@ $conn->close();
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Forum:wght@700&display=swap" rel="stylesheet">
     <link href="style.css" rel="stylesheet" type="text/css">
+    <style>
+        #admTable td {
+            background-color: white; /* Sem aspas no valor */
+        }
+    </style>
+
 </head>
 <body>
     <div class="container-fluid">
@@ -249,129 +255,129 @@ $conn->close();
                     <div class="card shadow">
                         <div class="card-body">
                              <!-- Campo de Pesquisa -->
-<div class="mb-3">
-    <div class="row">
-        <div class="col-md-6">
-            <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar por Nome do Administrador...">
-        </div>
-        <div class="col-md-3">
-            <input type="text" id="filterEmail" class="form-control" placeholder="Filtrar por E-mail...">
-        </div>
-        
-    </div>
-</div>
+                            <div class="mb-3">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar por Nome do Administrador...">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="text" id="filterEmail" class="form-control" placeholder="Filtrar por E-mail...">
+                                    </div>
+                                    
+                                </div>
+                            </div>
                         <?php if ($result->num_rows > 0): ?>
-    <div class="table-responsive">
-    <table id="admTable" class="table table-bordered table-hover table-sm align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>Nome de Usuário</th>
-                <th>Email</th>
-                <th>Foto de Perfil</th>
-                <th>Ações</th>
-                <p id="noResultsMessage" class="text-center text-danger" style="display:none;">Nenhum Administrador encontrado.</p>
+                                    <div class="table-responsive">
+                                <table id="admTable" class="table table-bordered table-hover table-sm align-middle">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nome de Usuário</th>
+                                            <th>Email</th>
+                                            <th>Foto de Perfil</th>
+                                            <th>Ações</th>
+                                            <p id="noResultsMessage" class="text-center text-danger" style="display:none;">Nenhum Administrador encontrado.</p>
 
-            </tr>
-        </thead>
-        <tbody>
-            
-        <?php while ($row = $result->fetch_assoc()): ?>
-            <tr class="adm-row">
-                <td class="adm-id"><?php echo $row['id']; ?></td>
-                <td class="adm-nome"><?php echo htmlspecialchars($row['username']); ?></td>
-                <td class="adm-email"><?php echo htmlspecialchars($row['email']); ?></td>
-                <td>
-                    <?php if (!empty($row['foto_perfil']) && file_exists('uploads/' . basename($row['foto_perfil']))): ?>
-                        <img src="uploads/<?php echo htmlspecialchars(basename($row['foto_perfil'])); ?>" alt="Foto" class="img-thumbnail" width="50">
-                    <?php else: ?>
-                        <img src="imgs/admin-photo.png" alt="Foto" class="img-thumbnail" width="50">
-                    <?php endif; ?>
-                </td>
-                <td class="text-center">
-                    <div class="d-flex gap-2 justify-content-center">
-                        <button class="btn btn-warning btn-sm custom-btn" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#editarModal<?php echo $row['id']; ?>" 
-                            data-id="<?php echo $row['id']; ?>"
-                            data-username="<?php echo htmlspecialchars($row['username']); ?>"
-                            data-email="<?php echo htmlspecialchars($row['email']); ?>"
-                            data-foto="<?php echo htmlspecialchars($row['foto_perfil']); ?>">
-                            <i class="fas fa-edit me-2"></i> Editar
-                        </button>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        
+                                    <?php while ($row = $result->fetch_assoc()): ?>
+                                        <tr class="adm-row">
+                                            <td class="adm-id"><?php echo $row['id']; ?></td>
+                                            <td class="adm-nome"><?php echo htmlspecialchars($row['username']); ?></td>
+                                            <td class="adm-email"><?php echo htmlspecialchars($row['email']); ?></td>
+                                            <td>
+                                                <?php if (!empty($row['foto_perfil']) && file_exists('uploads/' . basename($row['foto_perfil']))): ?>
+                                                    <img src="uploads/<?php echo htmlspecialchars(basename($row['foto_perfil'])); ?>" alt="Foto" class="img-thumbnail" width="50">
+                                                <?php else: ?>
+                                                    <img src="imgs/admin-photo.png" alt="Foto" class="img-thumbnail" width="50">
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="d-flex gap-2 justify-content-center">
+                                                    <button class="btn btn-warning btn-sm custom-btn" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#editarModal<?php echo $row['id']; ?>" 
+                                                        data-id="<?php echo $row['id']; ?>"
+                                                        data-username="<?php echo htmlspecialchars($row['username']); ?>"
+                                                        data-email="<?php echo htmlspecialchars($row['email']); ?>"
+                                                        data-foto="<?php echo htmlspecialchars($row['foto_perfil']); ?>">
+                                                        <i class="fas fa-edit me-2"></i> Editar
+                                                    </button>
 
-                        <button class="btn btn-danger btn-sm custom-btn" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#excluirModal<?php echo $row['id']; ?>">
-                            <i class="fas fa-trash-alt me-2"></i> Excluir
-                        </button>
-                    </div>
-                </td>
-            </tr>
+                                                    <button class="btn btn-danger btn-sm custom-btn" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#excluirModal<?php echo $row['id']; ?>">
+                                                        <i class="fas fa-trash-alt me-2"></i> Excluir
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
 
-            <!-- Modal Editar -->
-            <div class="modal fade" id="editarModal<?php echo $row['id']; ?>" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header bg-warning text-white">
-                            <h5 class="modal-title" id="editarModalLabel"><i class="fas fa-edit"></i> Editar Administrador</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form id="editForm" action="listar_administradores.php" method="post" enctype="multipart/form-data">
-                            <div class="modal-body">
-                                <input type="hidden" name="id" id="editId">
-                                <div class="mb-3">
-                                    <label for="editUsername" class="form-label">Nome de Usuário</label>
-                                    <input type="text" name="username" id="editUsername" class="form-control" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="editEmail" class="form-label">Email</label>
-                                    <input type="email" name="email" id="editEmail" class="form-control" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="editFotoPerfil" class="form-label">Foto de Perfil</label>
-                                    <input type="file" name="foto_perfil" id="editFotoPerfil" class="form-control">
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="submit" name="update_adm" class="btn btn-success">Salvar</button>
-                                    <a href="listar_administradores.php" class="btn btn-secondary">Cancelar</a>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
+                                        <!-- Modal Editar -->
+                                        <div class="modal fade" id="editarModal<?php echo $row['id']; ?>" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-warning text-white">
+                                                        <h5 class="modal-title" id="editarModalLabel"><i class="fas fa-edit"></i> Editar Administrador</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <form id="editForm" action="listar_administradores.php" method="post" enctype="multipart/form-data">
+                                                        <div class="modal-body">
+                                                            <input type="hidden" name="id" id="editId">
+                                                            <div class="mb-3">
+                                                                <label for="editUsername" class="form-label">Nome de Usuário</label>
+                                                                <input type="text" name="username" id="editUsername" class="form-control" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label for="editEmail" class="form-label">Email</label>
+                                                                <input type="email" name="email" id="editEmail" class="form-control" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label for="editFotoPerfil" class="form-label">Foto de Perfil</label>
+                                                                <input type="file" name="foto_perfil" id="editFotoPerfil" class="form-control">
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="submit" name="update_adm" class="btn btn-success">Salvar</button>
+                                                                <a href="listar_administradores.php" class="btn btn-secondary">Cancelar</a>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
 
-            <!-- Modal Excluir -->
-            <div class="modal fade" id="excluirModal<?php echo $row['id']; ?>" tabindex="-1" aria-labelledby="excluirModalLabel<?php echo $row['id']; ?>" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title" id="excluirModalLabel"><i class="fas fa-trash-alt"></i> Excluir Administrador</h5>                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form action="listar_administradores.php" method="POST">
-                            <div class="modal-body">
-                                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                                <p>Tem certeza que deseja excluir o administrador "<strong><?php echo htmlspecialchars($row['username']); ?></strong>"?</p>
-                            </div>
-                            <div class="modal-footer">
-                                <div class="d-flex gap-2 justify-content-center">
-                                    <button type="button" class="btn btn-secondary custom-btn" data-bs-dismiss="modal">Cancelar</button>
-                                    <button type="submit" name="delete_adm" class="btn btn-danger custom-btn">Excluir</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
+                                        <!-- Modal Excluir -->
+                                        <div class="modal fade" id="excluirModal<?php echo $row['id']; ?>" tabindex="-1" aria-labelledby="excluirModalLabel<?php echo $row['id']; ?>" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-danger text-white">
+                                                    <h5 class="modal-title" id="excluirModalLabel"><i class="fas fa-trash-alt"></i> Excluir Administrador</h5>                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <form action="listar_administradores.php" method="POST">
+                                                        <div class="modal-body">
+                                                            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                                            <p>Tem certeza que deseja excluir o administrador "<strong><?php echo htmlspecialchars($row['username']); ?></strong>"?</p>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <div class="d-flex gap-2 justify-content-center">
+                                                                <button type="button" class="btn btn-secondary custom-btn" data-bs-dismiss="modal">Cancelar</button>
+                                                                <button type="submit" name="delete_adm" class="btn btn-danger custom-btn">Excluir</button>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
 
-        <?php endwhile; ?>
-        </tbody>
-    </table>
-    </div>
-<?php else: ?>
-    <div class="alert alert-info">Nenhum administrador encontrado.</div>
-<?php endif; ?>
+                                    <?php endwhile; ?>
+                                    </tbody>
+                                </table>
+                                </div>
+                            <?php else: ?>
+                                <div class="alert alert-info">Nenhum administrador encontrado.</div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>

@@ -57,27 +57,27 @@ $conn->close();
                 <button onclick="location.href='f_pagina_setor.php'">
                     <i class="fas fa-home"></i> Início
                 </button>
-                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
-                    <i id="toggle-icon" class="fas fa-plus"></i> Discentes
+                <button onclick="location.href='cadastrar_notas_globais.php'">
+                    <i class="fas fa-th-list"></i> Cadastrar Notas Globais
                 </button>
+                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
+                    <i id="toggle-icon" class="fas fa-users"></i> Discentes
+                </button>
+
                 <!-- Menu expansível com Bootstrap -->
                 <div id="expandable-menu" class="collapse expandable-container">
                     <div class="expandable-menu">
                         <button onclick="location.href='cadastrar_discentes.php'">
-                            <i class="fas fa-plus"></i> Cadastrar Discente
-                        </button>
-                    </div>
-                    <div class="expandable-menu">
-                        <button onclick="location.href='cadastrar_notas_globais.php'">
-                            <i class="fas fa-plus"></i> Cadastrar Notas Globais
+                            <i class="fas fa-user-plus"></i> Cadastrar Discente
                         </button>
                     </div>
                     <div class="expandable-menu">
                         <button onclick="location.href='editar_discente.php'">
-                            <i class="fas fa-plus"></i> Editar Discente
+                            <i class="fas fa-user-edit"></i> Editar Discente
                         </button>
                     </div>
                 </div>
+
                 <button onclick="location.href='meu_perfil.php'">
                     <i class="fas fa-user"></i> Meu Perfil
                 </button>

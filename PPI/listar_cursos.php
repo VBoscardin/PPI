@@ -104,6 +104,11 @@ $conn->close();
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Forum:wght@700&display=swap" rel="stylesheet">
     <link href="style.css" rel="stylesheet" type="text/css">
+    <style>
+        #cursoTable td {
+            background-color: white; /* Sem aspas no valor */
+        }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
@@ -225,7 +230,7 @@ $conn->close();
                         </div>
                         
                         <?php if ($result->num_rows > 0): ?>
-                            <table class="table table-bordered table-hover table-sm" style="border-radius: 4px; overflow: hidden;">
+                            <table id="cursoTable" class="table table-bordered table-hover table-sm">
                                 <thead class="table-dark">
                                     <tr>
                                         <th>ID</th>

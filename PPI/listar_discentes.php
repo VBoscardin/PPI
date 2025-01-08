@@ -80,14 +80,24 @@ if (isset($_GET['matricula'])) {
     // Consultar as notas do discente
     $query_notas = "
     SELECT 
-        di.nome AS disciplina_nome, 
-        n.parcial_1, n.nota_semestre_1, n.parcial_2, n.nota_semestre_2,
-        n.ais, n.mostra_ciencias, n.ppi, n.nota_exame,
-        n.nota_final, n.faltas, n.observacoes
-    FROM notas n
-    JOIN disciplinas di ON n.disciplina_id = di.id
-    WHERE n.discente_id = ? 
-    ORDER BY di.nome;
+    di.nome AS disciplina_nome, 
+    MAX(n.parcial_1) AS parcial_1, 
+    MAX(n.nota_semestre_1) AS nota_semestre_1,
+    MAX(n.parcial_2) AS parcial_2, 
+    MAX(n.nota_semestre_2) AS nota_semestre_2,
+    MAX(n.ais) AS ais, 
+    MAX(n.mostra_ciencias) AS mostra_ciencias, 
+    MAX(n.ppi) AS ppi, 
+    MAX(n.nota_exame) AS nota_exame,
+    MAX(n.nota_final) AS nota_final, 
+    MAX(n.faltas) AS faltas, 
+    MAX(n.observacoes) AS observacoes
+FROM notas n
+JOIN disciplinas di ON n.disciplina_id = di.id
+WHERE n.discente_id = ? 
+GROUP BY di.nome
+ORDER BY di.nome;
+
 ";
 
 
@@ -136,9 +146,16 @@ while ($row = $result_turmas->fetch_assoc()) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Forum:wght@700&display=swap" rel="stylesheet">
-    
     <link href="style.css" rel="stylesheet" type="text/css">
+    <style>
     
+    #discentesTable td {
+        background-color: white; /* Sem aspas no valor */
+    }
+    #discentesNota td {
+        background-color: white; /* Sem aspas no valor */
+    }
+    </style>
 </head>
 
 <body>
@@ -284,7 +301,7 @@ while ($row = $result_turmas->fetch_assoc()) {
 
 
             <table  id="discentesTable" class="table table-bordered table-hover table-sm align-middle">
-            <thead class="table-dark">
+                <thead class="table-dark">
                     <tr>
                         <th>Discente</th>
                         <th>Turma</th>
@@ -385,42 +402,68 @@ while ($row = $result_turmas->fetch_assoc()) {
                     <br>
                     <hr>
                     <h3 class="mt-4">Notas de <?php echo htmlspecialchars($discente_info['discente_nome']); ?></h3>
-                    <table class="table table-bordered table-hover table-sm align-middle">
-                                <thead class="table-dark">
-                            <tr>
-                                <th>Disciplina</th>
-                                <th>1º Parcial</th>
-                                <th>AIS</th>
-                                <th>1º Semestre</th>  
-                                <th>2º Parcial</th>
-                                <th>M.C.</th>
-                                <th>PPI</th>
-                                <th>2º Semestre</th>
-                                <th>Nota Final</th>
-                                <th>Exame</th>
-                                <th>Faltas</th>
-                                <th>Observações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($nota = $result_notas->fetch_assoc()): ?>
+                        <table id="discentesNota" class="table table-bordered table-hover table-sm align-middle">
+                            <thead class="table-dark">
                                 <tr>
-                                    <td><?php echo htmlspecialchars($nota['disciplina_nome']); ?></td>
-                                    <td><?php echo htmlspecialchars($nota['parcial_1']); ?></td>
-                                    <td><?php echo htmlspecialchars($nota['ais']); ?></td>
-                                    <td><?php echo htmlspecialchars($nota['nota_semestre_1']); ?></td>
-                                    <td><?php echo htmlspecialchars($nota['parcial_2']); ?></td>
-                                    <td><?php echo htmlspecialchars($nota['mostra_ciencias']); ?></td>
-                                    <td><?php echo htmlspecialchars($nota['ppi']); ?></td>
-                                    <td><?php echo htmlspecialchars($nota['nota_semestre_2']); ?></td>
-                                    <td><?php echo htmlspecialchars($nota['nota_final']); ?></td>
-                                    <td><?php echo isset($nota['exame']) ? htmlspecialchars($nota['exame']) : 'N/A'; ?></td>
-                                    <td><?php echo htmlspecialchars($nota['faltas']); ?></td>
-                                    <td><?php echo htmlspecialchars($nota['observacoes']); ?></td>
+                                    <th>Disciplina</th>
+                                    <th>1º Parcial</th>
+                                    <th>AIS</th>
+                                    <th>1º Semestre</th>  
+                                    <th>2º Parcial</th>
+                                    <th>M.C.</th>
+                                    <th>PPI</th>
+                                    <th>2º Semestre</th>
+                                    <th>Nota Final</th>
+                                    <th>Exame</th>
+                                    <th>Faltas</th>
+                                    <th>Observações</th>
                                 </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody id="notas-tabela">
+                                <?php while ($nota = $result_notas->fetch_assoc()): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($nota['disciplina_nome']); ?></td>
+                                        <td><?php echo htmlspecialchars($nota['parcial_1']); ?></td>
+                                        <td><?php echo htmlspecialchars($nota['ais']); ?></td>
+                                        <td><?php echo htmlspecialchars($nota['nota_semestre_1']); ?></td>
+                                        <td><?php echo htmlspecialchars($nota['parcial_2']); ?></td>
+                                        <td><?php echo htmlspecialchars($nota['mostra_ciencias']); ?></td>
+                                        <td><?php echo htmlspecialchars($nota['ppi']); ?></td>
+                                        <td><?php echo htmlspecialchars($nota['nota_semestre_2']); ?></td>
+                                        <td class="nota-final"><?php echo htmlspecialchars($nota['nota_final']); ?></td>
+                                        <td class="nota-exame"><?php echo isset($nota['nota_exame']) ? htmlspecialchars($nota['nota_exame']) : 'N/A'; ?></td>
+                                        <td><?php echo htmlspecialchars($nota['faltas']); ?></td>
+                                        <td><?php echo htmlspecialchars($nota['observacoes']); ?></td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+
+                        <script>
+                            document.addEventListener("DOMContentLoaded", function() {
+                                const linhas = document.querySelectorAll("#notas-tabela tr");
+
+                                linhas.forEach(linha => {
+                                    const notaFinalCelula = linha.querySelector(".nota-final");
+                                    const notaExameCelula = linha.querySelector(".nota-exame");
+
+                                    if (notaFinalCelula && notaExameCelula) {
+                                        const notaFinal = parseFloat(notaFinalCelula.textContent);
+
+                                        if (!isNaN(notaFinal)) {
+                                            // Alterar a cor da "Nota Final" com base no valor
+                                            if (notaFinal >= 7) {
+                                                notaFinalCelula.style.color = "green";
+                                                notaExameCelula.textContent = "N/A"; // Ajustar o campo Exame
+                                            } else {
+                                                notaFinalCelula.style.color = "red";
+                                            }
+                                        }
+                                    }
+                                });
+                            });
+                        </script>
+
                 </div>
             </div>
         </div>

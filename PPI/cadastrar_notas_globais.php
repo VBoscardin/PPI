@@ -119,8 +119,19 @@ $selected_turma_ano = isset($_GET['turma_ano']) ? intval($_GET['turma_ano']) : n
 
 if ($selected_turma_numero && $selected_turma_ano) {
     $studentsQuery = $conn->prepare(
-        "SELECT d.numero_matricula, d.nome, n.ais, n.mostra_ciencias, n.ppi, n.nota_exame FROM discentes_turmas dt JOIN discentes d ON dt.numero_matricula = d.numero_matricula LEFT JOIN notas n ON n.discente_id = dt.numero_matricula AND n.turma_numero = ? AND n.turma_ano = ? WHERE dt.turma_numero = ? AND dt.turma_ano = ? ORDER BY d.nome ASC"
+        "SELECT d.numero_matricula, d.nome, 
+                MAX(n.ais) AS ais, 
+                MAX(n.mostra_ciencias) AS mostra_ciencias, 
+                MAX(n.ppi) AS ppi, 
+                MAX(n.nota_exame) AS nota_exame 
+         FROM discentes_turmas dt 
+         JOIN discentes d ON dt.numero_matricula = d.numero_matricula 
+         LEFT JOIN notas n ON n.discente_id = dt.numero_matricula AND n.turma_numero = ? AND n.turma_ano = ? 
+         WHERE dt.turma_numero = ? AND dt.turma_ano = ? 
+         GROUP BY d.numero_matricula, d.nome 
+         ORDER BY d.nome ASC"
     );
+    
     $studentsQuery->bind_param("iiii", $selected_turma_numero, $selected_turma_ano, $selected_turma_numero, $selected_turma_ano);
     $studentsQuery->execute();
     $studentsResult = $studentsQuery->get_result();
@@ -153,8 +164,26 @@ if ($selected_turma_numero && $selected_turma_ano) {
                     <i class="fas fa-home"></i> Início
                 </button>
                 <button onclick="location.href='cadastrar_notas_globais.php'">
-                    <i class="fas fa-plus"></i> Cadastrar Notas Globais
+                    <i class="fas fa-th-list"></i> Cadastrar Notas Globais
                 </button>
+                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
+                    <i id="toggle-icon" class="fas fa-users"></i> Discentes
+                </button>
+
+                <!-- Menu expansível com Bootstrap -->
+                <div id="expandable-menu" class="collapse expandable-container">
+                    <div class="expandable-menu">
+                        <button onclick="location.href='cadastrar_discentes.php'">
+                            <i class="fas fa-user-plus"></i> Cadastrar Discente
+                        </button>
+                    </div>
+                    <div class="expandable-menu">
+                        <button onclick="location.href='editar_discente.php'">
+                            <i class="fas fa-user-edit"></i> Editar Discente
+                        </button>
+                    </div>
+                </div>
+
                 <button onclick="location.href='meu_perfil.php'">
                     <i class="fas fa-user"></i> Meu Perfil
                 </button>
@@ -191,7 +220,7 @@ if ($selected_turma_numero && $selected_turma_ano) {
                             <h3>Selecione a turma:</h3>
                             <div class="d-flex flex-wrap gap-2">
                                 <?php while ($turma = $turmasResult->fetch_assoc()): ?>
-                                    <button class="btn btn-primary mb-2" onclick="window.location.href='cadastrar_notas_globais.php?turma_numero=<?= $turma['numero'] ?>&turma_ano=<?= $turma['ano'] ?>'">
+                                    <button class="btn btn-success mb-2" onclick="window.location.href='cadastrar_notas_globais.php?turma_numero=<?= $turma['numero'] ?>&turma_ano=<?= $turma['ano'] ?>'">
                                         Turma: <?= htmlspecialchars($turma['numero']) ?> | Ano: <?= htmlspecialchars($turma['ano']) ?>
                                     </button><br>
                                 <?php endwhile; ?>
@@ -199,56 +228,103 @@ if ($selected_turma_numero && $selected_turma_ano) {
 
                             <?php if ($selected_turma_numero && $selected_turma_ano): ?>
                                 <form method="POST" class="mt-4">
-                                    <input type="hidden" name="turma_numero" value="<?= $selected_turma_numero ?>">
-                                    <input type="hidden" name="turma_ano" value="<?= $selected_turma_ano ?>">
-                                    <hr>
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-bordered table-hover">
-                                            <thead class="table-dark text-center">
-                                                <tr>
-                                                    <th>Aluno</th>
-                                                    <th>AIS</th>
-                                                    <th>Mostra de Ciências</th>
-                                                    <th>PPI</th>
-                                                    <th>Exame</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php while ($student = $studentsResult->fetch_assoc()): ?>
-                                                    <tr>
-                                                        <td><strong><?= htmlspecialchars($student['nome']) ?></strong></td>
+    <input type="hidden" name="turma_numero" value="<?= $selected_turma_numero ?>">
+    <input type="hidden" name="turma_ano" value="<?= $selected_turma_ano ?>">
+    <hr>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark text-center">
+                <tr>
+                    <th>Aluno</th>
+                    <th>AIS</th>
+                    <th>Mostra de Ciências</th>
+                    <th>PPI</th>
+                    <th>Exame</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php while ($student = $studentsResult->fetch_assoc()): ?>
+                    <tr>
+                        <td><strong><?= htmlspecialchars($student['nome']) ?></strong></td>
 
-                                                        <!-- AIS -->
-                                                        <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
-                                                                name="notas[<?= $student['numero_matricula'] ?>][ais]" 
-                                                                value="<?= number_format($student['ais'], 2, '.', '') ?>"></td>
+                        <!-- AIS -->
+                        <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input"
+                                name="notas[<?= $student['numero_matricula'] ?>][ais]"
+                                value="<?= number_format($student['ais'], 2, ',', '') ?>"
+                                maxlength="5" data-max="10"></td>
 
-                                                        <!-- Mostra de Ciências -->
-                                                        <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
-                                                                name="notas[<?= $student['numero_matricula'] ?>][mostra_ciencias]" 
-                                                                value="<?= number_format($student['mostra_ciencias'], 2, '.', '') ?>"></td>
+                        <!-- Mostra de Ciências -->
+                        <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input"
+                                name="notas[<?= $student['numero_matricula'] ?>][mostra_ciencias]"
+                                value="<?= number_format($student['mostra_ciencias'], 2, ',', '') ?>"
+                                maxlength="5" data-max="10"></td>
 
-                                                        <!-- PPI -->
-                                                        <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
-                                                                name="notas[<?= $student['numero_matricula'] ?>][ppi]" 
-                                                                value="<?= number_format($student['ppi'], 2, '.', '') ?>"></td>
+                        <!-- PPI -->
+                        <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input"
+                                name="notas[<?= $student['numero_matricula'] ?>][ppi]"
+                                value="<?= number_format($student['ppi'], 2, ',', '') ?>"
+                                maxlength="5" data-max="10"></td>
 
-                                                        <!-- Exame -->
-                                                        <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input" 
-                                                                name="notas[<?= $student['numero_matricula'] ?>][nota_exame]" 
-                                                                value="<?= number_format($student['nota_exame'], 2, '.', '') ?>"></td>
-                                                    </tr>
-                                                <?php endwhile; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <hr>
-                                    <div class="text-end mt-3">
-                                        <button type="submit" class="btn btn-success btn-sm">
-                                            <i class="fas fa-save"></i> Salvar Notas
-                                        </button>
-                                    </div>
-                                </form>
+                        <!-- Exame -->
+                        <td><input type="text" inputmode="decimal" step="0.01" class="form-control nota-input"
+                                name="notas[<?= $student['numero_matricula'] ?>][nota_exame]"
+                                value="<?= number_format($student['nota_exame'], 2, ',', '') ?>"
+                                maxlength="5" data-max="10"></td>
+                    </tr>
+                <?php endwhile; ?>
+            </tbody>
+        </table>
+    </div>
+    <hr>
+    <div class="text-end mt-3">
+        <button type="submit" class="btn btn-success btn-sm">
+            <i class="fas fa-save"></i> Salvar Notas
+        </button>
+    </div>
+</form>
+
+<script>
+    document.querySelectorAll('.nota-input').forEach(input => {
+        input.addEventListener('input', function () {
+            let value = this.value.replace(',', '.');  // Convert comma to dot for correct calculation
+
+            // If the user types more than 2 digits, assume it's in cents and format it
+            if (value.length > 2 && !value.includes('.')) {
+                value = value.slice(0, value.length - 2) + '.' + value.slice(value.length - 2);
+            }
+
+            // Ensure the value does not exceed the maximum allowed
+            const max = parseFloat(this.dataset.max);
+            if (parseFloat(value) > max) {
+                value = max.toFixed(2);  // Limit the value to the maximum
+            }
+
+            // Ensure the value has at most 2 decimal places
+            this.value = value
+                .slice(0, 5)  // Limit to 5 characters (max length is '10.00')
+                .replace('.', ',')  // Format back to comma
+                .replace(/(\d+,\d{2})\d*/, '$1');  // Ensure no more than 2 decimals
+
+            // Show feedback message when the value is too high
+            if (parseFloat(value) > max) {
+                this.setCustomValidity(`Valor máximo permitido é ${max.toFixed(2).replace('.', ',')}`);
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        // On focus, replace comma with dot temporarily for input handling
+        input.addEventListener('focus', function () {
+            this.value = this.value.replace(',', '.');
+        });
+
+        // On blur, reformat to comma
+        input.addEventListener('blur', function () {
+            this.value = this.value.replace('.', ',');
+        });
+    });
+</script>
+
                             <?php endif; ?>
                         </div>
                     </div>
@@ -257,5 +333,6 @@ if ($selected_turma_numero && $selected_turma_ano) {
             </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

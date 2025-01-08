@@ -103,15 +103,26 @@ if (isset($_GET['matricula'])) {
 
     // Consultar as notas do discente
     $query_notas = "
-        SELECT 
-            di.nome AS disciplina_nome, 
-            n.parcial_1, n.nota_semestre_1, n.parcial_2, n.nota_semestre_2,
-            n.nota_final, n.nota_exame, n.faltas, n.observacoes
-        FROM notas n
-        JOIN disciplinas di ON n.disciplina_id = di.id
-        WHERE n.discente_id = ? 
-        ORDER BY di.nome;
-    ";
+    SELECT 
+    di.nome AS disciplina_nome, 
+    MAX(n.parcial_1) AS parcial_1, 
+    MAX(n.nota_semestre_1) AS nota_semestre_1,
+    MAX(n.parcial_2) AS parcial_2, 
+    MAX(n.nota_semestre_2) AS nota_semestre_2,
+    MAX(n.ais) AS ais, 
+    MAX(n.mostra_ciencias) AS mostra_ciencias, 
+    MAX(n.ppi) AS ppi, 
+    MAX(n.nota_exame) AS nota_exame,
+    MAX(n.nota_final) AS nota_final, 
+    MAX(n.faltas) AS faltas, 
+    MAX(n.observacoes) AS observacoes
+FROM notas n
+JOIN disciplinas di ON n.disciplina_id = di.id
+WHERE n.discente_id = ? 
+GROUP BY di.nome
+ORDER BY di.nome;
+
+";
 
     $stmt = $conn->prepare($query_notas);
     $stmt->bind_param("i", $matricula);
@@ -236,27 +247,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['matricula'])) {
                 <button onclick="location.href='f_pagina_setor.php'">
                     <i class="fas fa-home"></i> Início
                 </button>
-                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
-                    <i id="toggle-icon" class="fas fa-plus"></i> Discentes
+                <button onclick="location.href='cadastrar_notas_globais.php'">
+                    <i class="fas fa-th-list"></i> Cadastrar Notas Globais
                 </button>
+                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#expandable-menu" aria-expanded="false" aria-controls="expandable-menu">
+                    <i id="toggle-icon" class="fas fa-users"></i> Discentes
+                </button>
+
                 <!-- Menu expansível com Bootstrap -->
                 <div id="expandable-menu" class="collapse expandable-container">
                     <div class="expandable-menu">
                         <button onclick="location.href='cadastrar_discentes.php'">
-                            <i class="fas fa-plus"></i> Cadastrar Discente
-                        </button>
-                    </div>
-                    <div class="expandable-menu">
-                        <button onclick="location.href='cadastrar_notas_globais.php'">
-                            <i class="fas fa-plus"></i> Cadastrar Notas Globais
+                            <i class="fas fa-user-plus"></i> Cadastrar Discente
                         </button>
                     </div>
                     <div class="expandable-menu">
                         <button onclick="location.href='editar_discente.php'">
-                            <i class="fas fa-plus"></i> Editar Discente
+                            <i class="fas fa-user-edit"></i> Editar Discente
                         </button>
                     </div>
                 </div>
+
                 <button onclick="location.href='meu_perfil.php'">
                     <i class="fas fa-user"></i> Meu Perfil
                 </button>
@@ -418,37 +429,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['matricula'])) {
                                                                         <tr>
                                                                     <td><strong>Turma:</strong></td>
                                                                     <td>
-    <select class="form-select" name="nova_turma" id="turma">
-        <option value="">Selecione a turma</option>
-        <?php foreach ($turmas_por_curso as $curso_nome => $turmas): ?>
-            <optgroup label="<?php echo $curso_nome; ?>">
-                <?php foreach ($turmas as $turma): ?>
-                    <?php
-                        // Cria o valor do option com a combinação de número e ano da turma
-                        $turma_value = $turma['numero'] . "|" . $turma['ano'];
+                                                                            <select class="form-select" name="nova_turma" id="turma">
+                                                                                <option value="">Selecione a turma</option>
+                                                                                <?php foreach ($turmas_por_curso as $curso_nome => $turmas): ?>
+                                                                                    <optgroup label="<?php echo $curso_nome; ?>">
+                                                                                        <?php foreach ($turmas as $turma): ?>
+                                                                                            <?php
+                                                                                                // Cria o valor do option com a combinação de número e ano da turma
+                                                                                                $turma_value = $turma['numero'] . "|" . $turma['ano'];
 
-                        // Verifica se a turma do discente já foi definida
-                        $selected = '';
-                        // Garantir que os dados do discente estejam presentes
-                        if (isset($discente_info['turma_numero']) && isset($discente_info['turma_ano'])) {
-                            // Verifica se o número e ano da turma correspondem aos dados do discente
-                            $discente_turma_value = $discente_info['turma_numero'] . "|" . $discente_info['turma_ano'];
-                            if ($discente_turma_value == $turma_value) {
-                                $selected = 'selected'; // Marca como selecionada
-                            }
-                        }
-                    ?>
-                    <option value="<?php echo $turma_value; ?>" <?php echo $selected; ?>>
-                        <?php echo $turma['numero'] . ' - ' . $turma['ano']; ?>
-                    </option>
-                <?php endforeach; ?>
-            </optgroup>
-        <?php endforeach; ?>
-    </select>
-</td>
-
-
-
+                                                                                                // Verifica se a turma do discente já foi definida
+                                                                                                $selected = '';
+                                                                                                // Garantir que os dados do discente estejam presentes
+                                                                                                if (isset($discente_info['turma_numero']) && isset($discente_info['turma_ano'])) {
+                                                                                                    // Verifica se o número e ano da turma correspondem aos dados do discente
+                                                                                                    $discente_turma_value = $discente_info['turma_numero'] . "|" . $discente_info['turma_ano'];
+                                                                                                    if ($discente_turma_value == $turma_value) {
+                                                                                                        $selected = 'selected'; // Marca como selecionada
+                                                                                                    }
+                                                                                                }
+                                                                                            ?>
+                                                                                            <option value="<?php echo $turma_value; ?>" <?php echo $selected; ?>>
+                                                                                                <?php echo $turma['numero'] . ' - ' . $turma['ano']; ?>
+                                                                                            </option>
+                                                                                        <?php endforeach; ?>
+                                                                                    </optgroup>
+                                                                                <?php endforeach; ?>
+                                                                            </select>
+                                                                        </td>
                                                                     </table>
                                                                 </div>
                                                             </div>
@@ -561,52 +569,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['matricula'])) {
                                                     
                                                     </form>
 
-                                                    <div class="card-body">
-    <hr>
-    <h3 class="mt-4">Notas de <?php echo htmlspecialchars($discente_info['discente_nome']); ?></h3>
-    <table class="table table-bordered table-hover table-sm" style="border-radius: 4px; overflow: hidden;">
-        <thead class="table-dark">
-            <tr>
-                <th>Disciplina</th>
-                <th>1º Parcial</th>
-                <th>1º Semestre</th>
-                <th>2º Parcial</th>
-                <th>2º Semestre</th>
-                <th>Nota Final</th>
-                <th>Exame</th>
-                <th>Faltas</th>
-                <th>Observações</th>
-                <th>Ais</th> <!-- Nova coluna para Ais -->
-                <th>Mostra Ciências</th> <!-- Nova coluna para Mostra Ciências -->
-                <th>PPI</th> <!-- Nova coluna para PPI -->
-            </tr>
-        </thead>
-        <tbody>
-            <?php while ($nota = $result_notas->fetch_assoc()): ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($nota['disciplina_nome']); ?></td>
-                    <td><?php echo htmlspecialchars($nota['parcial_1']); ?></td>
-                    <td><?php echo htmlspecialchars($nota['nota_semestre_1']); ?></td>
-                    <td><?php echo htmlspecialchars($nota['parcial_2']); ?></td>
-                    <td><?php echo htmlspecialchars($nota['nota_semestre_2']); ?></td>
-                    <td><?php echo htmlspecialchars($nota['nota_final']); ?></td>
-                    <td><?php echo isset($nota['nota_exame']) ? htmlspecialchars($nota['nota_exame']) : 'N/A'; ?></td>
-                    <td><?php echo htmlspecialchars($nota['faltas']); ?></td>
-                    <td><?php echo htmlspecialchars($nota['observacoes']); ?></td>
-                    <td><?php echo isset($nota['ais']) ? htmlspecialchars($nota['ais']) : 'N/A'; ?></td> <!-- Exibe a nota Ais -->
-                    <td><?php echo isset($nota['mostra_ciencias']) ? htmlspecialchars($nota['mostra_ciencias']) : 'N/A'; ?></td> <!-- Exibe a nota Mostra Ciências -->
-                    <td><?php echo isset($nota['ppi']) ? htmlspecialchars($nota['ppi']) : 'N/A'; ?></td> <!-- Exibe a nota PPI -->
-                </tr>
-            <?php endwhile; ?>
-        </tbody>
-    </table>
-</div>
+                                                   
+                                        <hr>
+                                        <h3 class="mt-4">Notas de <?php echo htmlspecialchars($discente_info['discente_nome']); ?></h3>
+                                            <table class="table table-bordered table-hover table-sm align-middle">
+                                                <thead class="table-dark">
+                                                    <tr>
+                                                        <th>Disciplina</th>
+                                                        <th>1º Parcial</th>
+                                                        <th>AIS</th>
+                                                        <th>1º Semestre</th>  
+                                                        <th>2º Parcial</th>
+                                                        <th>M.C.</th>
+                                                        <th>PPI</th>
+                                                        <th>2º Semestre</th>
+                                                        <th>Nota Final</th>
+                                                        <th>Exame</th>
+                                                        <th>Faltas</th>
+                                                        <th>Observações</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="notas-tabela">
+                                                    <?php while ($nota = $result_notas->fetch_assoc()): ?>
+                                                        <tr>
+                                                            <td><?php echo htmlspecialchars($nota['disciplina_nome']); ?></td>
+                                                            <td><?php echo htmlspecialchars($nota['parcial_1']); ?></td>
+                                                            <td><?php echo htmlspecialchars($nota['ais']); ?></td>
+                                                            <td><?php echo htmlspecialchars($nota['nota_semestre_1']); ?></td>
+                                                            <td><?php echo htmlspecialchars($nota['parcial_2']); ?></td>
+                                                            <td><?php echo htmlspecialchars($nota['mostra_ciencias']); ?></td>
+                                                            <td><?php echo htmlspecialchars($nota['ppi']); ?></td>
+                                                            <td><?php echo htmlspecialchars($nota['nota_semestre_2']); ?></td>
+                                                            <td class="nota-final"><?php echo htmlspecialchars($nota['nota_final']); ?></td>
+                                                            <td class="nota-exame"><?php echo isset($nota['nota_exame']) ? htmlspecialchars($nota['nota_exame']) : 'N/A'; ?></td>
+                                                            <td><?php echo htmlspecialchars($nota['faltas']); ?></td>
+                                                            <td><?php echo htmlspecialchars($nota['observacoes']); ?></td>
+                                                        </tr>
+                                                    <?php endwhile; ?>
+                                                </tbody>
+                                            </table>
 
-                                                </div>
-                                            </div>
+                                            <script>
+                                                document.addEventListener("DOMContentLoaded", function() {
+                                                    const linhas = document.querySelectorAll("#notas-tabela tr");
+
+                                                    linhas.forEach(linha => {
+                                                        const notaFinalCelula = linha.querySelector(".nota-final");
+                                                        const notaExameCelula = linha.querySelector(".nota-exame");
+
+                                                        if (notaFinalCelula && notaExameCelula) {
+                                                            const notaFinal = parseFloat(notaFinalCelula.textContent);
+
+                                                            if (!isNaN(notaFinal)) {
+                                                                // Alterar a cor da "Nota Final" com base no valor
+                                                                if (notaFinal >= 7) {
+                                                                    notaFinalCelula.style.color = "green";
+                                                                    notaExameCelula.textContent = "N/A"; // Ajustar o campo Exame
+                                                                } else {
+                                                                    notaFinalCelula.style.color = "red";
+                                                                }
+                                                            }
+                                                        }
+                                                    });
+                                                });
+                                            </script>
+
                                         </div>
                                     </div>
-                                    </div>                
+                                </div>
+                            </div>
+                        </div>                
                     </div>
                 </div>
             </div>

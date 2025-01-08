@@ -249,7 +249,9 @@ table tr:hover {
 h4{
     font-family: "Forum";
 }
-
+h3{
+    font-family: "Forum";
+}
 .fa-eye {
     transition: all 0.3s ease; /* Transição suave */
 }
@@ -266,3 +268,4 @@ h4{
     align-items: center;  /* Alinha o conteúdo verticalmente */
     justify-content: center; /* Alinha o conteúdo horizontalmente */
 }
+

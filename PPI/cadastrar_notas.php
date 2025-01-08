@@ -87,18 +87,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['disciplina_id'])) {
         $stmt_check->close();
 
         if ($count > 0) {
-            // Atualizar nota
+            // Atualizar nota apenas da disciplina atual
             $stmt = $conn->prepare("
                 UPDATE notas 
                 SET parcial_1 = ?, nota_semestre_1 = ?, parcial_2 = ?, nota_semestre_2 = ?, 
                     nota_final = ?, faltas = ?, observacoes = ? 
                 WHERE discente_id = ? AND disciplina_id = ?
+                AND disciplina_id IS NOT NULL
             ");
-            $stmt->bind_param("dddddisssi", 
+            $stmt->bind_param("ddddisssi", 
                 $parcial_1, $nota_semestre_1, $parcial_2, $nota_semestre_2, 
                 $nota_final, $faltas, $observacoes, $matricula, $selected_discipline_id);
         } else {
-            // Inserir nova nota
+            // Inserir nova nota específica da disciplina
             $stmt = $conn->prepare("
                 INSERT INTO notas (discente_id, disciplina_id, turma_numero, parcial_1, nota_semestre_1, parcial_2, nota_semestre_2, 
                                    nota_final, faltas, observacoes)
@@ -108,6 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['disciplina_id'])) {
                 $matricula, $selected_discipline_id, $turma_numero, $parcial_1, $nota_semestre_1, 
                 $parcial_2, $nota_semestre_2, $nota_final, $faltas, $observacoes);
         }
+        
 
         if (!$stmt->execute()) {
             echo "Erro ao salvar dados para o aluno $matricula: " . $stmt->error . "<br>";
@@ -134,9 +136,6 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
     <link href="https://fonts.googleapis.com/css2?family=Forum:wght@700&display=swap" rel="stylesheet">
     <link href="style.css" rel="stylesheet" type="text/css">
     <style>
-        h3{
-            font-family: "Forum", "serif";
-        }
             /* Estilo customizado para o botão */
         .custom-btn {
             transition: all 0.3s ease;
@@ -160,6 +159,8 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
             color: green;
             
         }
+
+    
     </style>
     
 </head>
@@ -243,7 +244,7 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
                     LEFT JOIN 
                         notas n 
                         ON n.discente_id = dt.numero_matricula 
-                        AND n.disciplina_id = ?
+                        AND (n.disciplina_id = ? OR n.disciplina_id IS NULL) -- Inclui notas globais
                     WHERE 
                         dt.turma_numero = (
                             SELECT turma_numero 
@@ -254,7 +255,8 @@ $selected_discipline_id = isset($_GET['disciplina_id']) ? intval($_GET['discipli
                     GROUP BY 
                         dt.numero_matricula
                     ORDER BY 
-                        ds.nome ASC
+                        ds.nome ASC;
+
                 ");
             
                 $studentsQuery->bind_param("ii", $selected_discipline_id, $selected_discipline_id);
